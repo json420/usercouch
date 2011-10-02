@@ -37,8 +37,7 @@ from microfiber import Server, random_id
 
 __version__ = '11.10.0'
 
-
-SESSION_INI = """
+BASIC = """
 [couch_httpd_auth]
 require_valid_user = true
 
@@ -55,18 +54,6 @@ view_index_dir = {views}
 file = {logfile}
 level = {loglevel}
 
-[admins]
-{username} = {hashed}
-
-[oauth_token_users]
-{token} = {username}
-
-[oauth_token_secrets]
-{token} = {token_secret}
-
-[oauth_consumer_secrets]
-{consumer_key} = {consumer_secret}
-
 [httpd_global_handlers]
 _stats =
 
@@ -77,6 +64,20 @@ stats_aggregator =
 [stats]
 rate =
 samples =
+
+[admins]
+{username} = {hashed}
+"""
+
+OAUTH = BASIC + """
+[oauth_token_users]
+{token} = {username}
+
+[oauth_token_secrets]
+{token} = {token_secret}
+
+[oauth_consumer_secrets]
+{consumer_key} = {consumer_secret}
 """
 
 
@@ -110,13 +111,15 @@ def random_basic():
     )
 
 
-def random_env(port):
-    return {
+def random_env(port, oauth=False):
+    env = {
         'port': port,
         'url': 'http://localhost:{}/'.format(port),
         'basic': random_basic(),
-        'oauth': random_oauth(),
     }
+    if oauth:
+        env['oauth'] = random_oauth()
+    return env
 
 
 def random_salt():
@@ -182,8 +185,32 @@ class UserCouch:
         self.__bootstraped = False
 
     def __del__(self):
-        print('del')
-        print(self.kill())
+        self.kill()
+
+    def bootstrap(self, oauth=False, loglevel='notice'):
+        assert not self.__bootstraped
+        self.__bootstraped = True
+        (sock, port) = random_port()
+        env = random_env(port, oauth)
+        self.server = Server(env)
+        kw = {
+            'port': port,
+            'databases': self.paths.databases,
+            'views': self.paths.views,
+            'logfile': self.paths.logfile,
+            'loglevel': loglevel,
+            'username': env['basic']['username'],
+            'hashed': couch_hashed(env['basic']['password'], random_salt()),
+        }
+        if oauth:
+            kw.update(env['oauth'])
+            config = OAUTH.format(**kw)
+        else:
+            config = BASIC.format(**kw)
+        open(self.ini, 'w').write(config)
+        sock.close()
+        self.start()
+        return deepcopy(env)
 
     def kill(self):
         if self.couchdb is None:
@@ -213,26 +240,13 @@ class UserCouch:
         except socket.error:
             return False
 
-    def bootstrap(self):
-        assert not self.__bootstraped
-        self.__bootstraped = True
-        (sock, port) = random_port()
-        env = random_env(port)
-        self.server = Server(env)
-        kw = {
-            'port': port,
-            'databases': self.paths.databases,
-            'views': self.paths.views,
-            'logfile': self.paths.logfile,
-            'loglevel': 'info',
-            'username': env['basic']['username'],
-            'hashed': couch_hashed(env['basic']['password'], random_salt()),
-        }
-        kw.update(env['oauth'])
-        config = SESSION_INI.format(**kw)
-        open(self.ini, 'w').write(config)
-        sock.close()
-        self.start()
-        return deepcopy(env)
+    def check(self):
+        if not self.isalive():
+            self.kill()
+            self.start()
 
+    def crash(self):
+        if self.couchdb is None:
+            return
+        self.couchdb.terminate()
 

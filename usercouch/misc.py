@@ -25,11 +25,34 @@
 
 from unittest import TestCase
 import tempfile
+import shutil
+
+from usercouch import UserCouch
 
 
-class TempCouch:
-    pass
+class TempCouch(UserCouch):
+    def __init__(self):
+        basedir = tempfile.mkdtemp(prefix='tmpcouch.')
+        super().__init__(basedir)
+        assert self.basedir == basedir
+
+    def __del__(self):
+        super().__del__()
+        shutil.rmtree(self.basedir)
 
 
 class CouchTestCase(TestCase):
-    pass
+    create_databases = []
+    oauth = False
+
+    def setUp(self):
+        self.tmpcouch = TempCouch()
+        self.env = self.tmpcouch.bootstrap(self.oauth)
+        for name in self.create_databases:
+            self.tmpcouch.server.put(None, name)
+
+    def tearDown(self):
+        self.tmpcouch.__del__()
+        self.tmpcouch = None
+        self.env = None
+        
