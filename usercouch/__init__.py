@@ -81,15 +81,6 @@ OAUTH = BASIC + """
 """
 
 
-# If __del__ doesn't work reliabily enough:
-import signal
-
-def on_sigterm(signum, frame):
-    print('sigterm')
-
-signal.signal(signal.SIGTERM, on_sigterm)
-
-
 def random_port():
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.bind(('127.0.0.1', 0))
@@ -185,6 +176,7 @@ class UserCouch:
         self.__bootstraped = False
 
     def __del__(self):
+        print('dell')
         self.kill()
 
     def bootstrap(self, oauth=False, loglevel='notice'):
