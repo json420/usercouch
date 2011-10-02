@@ -155,6 +155,9 @@ class Paths:
     """
     Just a namespace for the various files and directories in *basedir*.
     """
+
+    __slots__ = ('ini', 'databases', 'views', 'log', 'logfile')
+
     def __init__(self, basedir):
         self.ini = path.join(basedir, 'session.ini')
         self.databases = mkdir(basedir, 'databases')
@@ -180,7 +183,10 @@ class UserCouch:
         self.kill()
 
     def bootstrap(self, oauth=False, loglevel='notice'):
-        assert not self.__bootstraped
+        if self.__bootstraped:
+            raise Exception(
+                '{}.bootstrap() already called'.format(self.__class__.__name__)
+            )
         self.__bootstraped = True
         (sock, port) = random_port()
         env = random_env(port, oauth)
@@ -199,7 +205,7 @@ class UserCouch:
             config = OAUTH.format(**kw)
         else:
             config = BASIC.format(**kw)
-        open(self.ini, 'w').write(config)
+        open(self.paths.ini, 'w').write(config)
         sock.close()
         self.start()
         return deepcopy(env)
@@ -213,6 +219,11 @@ class UserCouch:
         return True
 
     def start(self):
+        if not self.__bootstraped:
+            raise Exception(
+                'Must call {0}.bootstrap() before {0}.start()'.format(
+                        self.__class__.__name__)
+            )
         if self.couchdb is not None:
             return False
         self.couchdb = Popen(self.cmd)
