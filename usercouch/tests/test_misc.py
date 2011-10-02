@@ -20,7 +20,8 @@
 #   Jason Gerard DeRose <jderose@novacut.com>
 
 """
-`usercouch` - starts per-user CouchDB instances for fun and unit testing.
+Unit tests for `usercouch.misc` module.
 """
 
-__version__ = '11.10.0'
+from unittest import TestCase
+

@@ -20,7 +20,16 @@
 #   Jason Gerard DeRose <jderose@novacut.com>
 
 """
-`usercouch` - starts per-user CouchDB instances for fun and unit testing.
+`TempCouch` and `CouchTestCase`.
 """
 
-__version__ = '11.10.0'
+from unittest import TestCase
+import tempfile
+
+
+class TempCouch:
+    pass
+
+
+class CouchTestCase(TestCase):
+    pass
