@@ -110,6 +110,80 @@ class TestFunctions(TestCase):
             self.assertEqual(len(value), 24)
             self.assertTrue(set(value).issubset(B32ALPHABET))
 
+    def test_random_env(self):
+        # oauth=False
+        env = usercouch.random_env(5634)
+        self.assertIsInstance(env, dict)
+        self.assertEqual(set(env), set(['port', 'url', 'basic']))
+        self.assertEqual(env['port'], 5634)
+        self.assertEqual(env['url'], 'http://localhost:5634/')
+        self.assertIsInstance(env['basic'], dict)
+        self.assertEqual(
+            set(env['basic']),
+            set(['username', 'password'])
+        )
+        for value in env['basic'].values():
+            self.assertIsInstance(value, str)
+            self.assertEqual(len(value), 24)
+            self.assertTrue(set(value).issubset(B32ALPHABET))
+
+        # oauth=True
+        env = usercouch.random_env(1718, oauth=True)
+        self.assertIsInstance(env, dict)
+        self.assertEqual(set(env), set(['port', 'url', 'basic', 'oauth']))
+        self.assertEqual(env['port'], 1718)
+        self.assertEqual(env['url'], 'http://localhost:1718/')
+        self.assertIsInstance(env['basic'], dict)
+        self.assertEqual(
+            set(env['basic']),
+            set(['username', 'password'])
+        )
+        for value in env['basic'].values():
+            self.assertIsInstance(value, str)
+            self.assertEqual(len(value), 24)
+            self.assertTrue(set(value).issubset(B32ALPHABET))
+        self.assertIsInstance(env['oauth'], dict)
+        self.assertEqual(
+            set(env['oauth']),
+            set(['consumer_key', 'consumer_secret', 'token', 'token_secret'])
+        )
+        for value in env['oauth'].values():
+            self.assertIsInstance(value, str)
+            self.assertEqual(len(value), 24)
+            self.assertTrue(set(value).issubset(B32ALPHABET))
+
+    def test_random_salt(self):
+        salt = usercouch.random_salt()
+        self.assertIsInstance(salt, str)
+        self.assertEqual(len(salt), 32)
+        self.assertEqual(len(bytes.fromhex(salt)), 16)
+        self.assertNotEqual(usercouch.random_salt(), salt)
+
+    def test_couch_hashed(self):
+        salt = 'a' * 32
+        self.assertEqual(
+            usercouch.couch_hashed('very secret', salt),
+            '-hashed-f3051dd7e647cdb7fd1d56c52fcd73724895417b,' + salt
+        )
+        salt = '9' * 32
+        self.assertEqual(
+            usercouch.couch_hashed('very secret', salt),
+            '-hashed-791a7d0f893bfbf6311d36081f797fe166cee072,' + salt
+        )
+
+    def test_get_cmd(self):
+        tmp = TempDir()
+        ini = tmp.join('session.ini')
+        self.assertEqual(
+            usercouch.get_cmd(ini),
+            [
+                '/usr/bin/couchdb',
+                '-n',
+                '-a', '/etc/couchdb/default.ini',
+                '-a', ini,
+            ]
+        )
+
     def test_mkdir(self):
         tmp = TempDir()
 
@@ -165,7 +239,43 @@ class TestFunctions(TestCase):
         )
         self.assertTrue(path.isfile(tmp.join('bar.log.previous')))
         self.assertEqual(os.listdir(tmp.dir), ['bar.log.previous'])
+
+
+class TestPaths(TestCase):
+    def test_init(self):
+        tmp = TempDir()
+        paths = usercouch.Paths(tmp.dir)
+        self.assertEqual(paths.databases, tmp.join('databases'))
+        self.assertEqual(paths.views, tmp.join('views'))
+        self.assertEqual(paths.log, tmp.join('log'))
+        self.assertEqual(paths.logfile, tmp.join('log', 'couchdb.log'))
+        self.assertTrue(path.isdir(paths.databases))
+        self.assertTrue(path.isdir(paths.views))
+        self.assertTrue(path.isdir(paths.log))
+        self.assertEqual(
+            sorted(os.listdir(tmp.dir)),
+            ['databases', 'log', 'views']
+        )
+        self.assertEqual(os.listdir(tmp.join('log')), [])
         
+        tmp.touch('log', 'couchdb.log')
+        paths = usercouch.Paths(tmp.dir)
+        self.assertEqual(paths.databases, tmp.join('databases'))
+        self.assertEqual(paths.views, tmp.join('views'))
+        self.assertEqual(paths.log, tmp.join('log'))
+        self.assertEqual(paths.logfile, tmp.join('log', 'couchdb.log'))
+        self.assertTrue(path.isdir(paths.databases))
+        self.assertTrue(path.isdir(paths.views))
+        self.assertTrue(path.isdir(paths.log))
+        self.assertEqual(
+            sorted(os.listdir(tmp.dir)),
+            ['databases', 'log', 'views']
+        )
+        self.assertEqual(
+            os.listdir(tmp.join('log')),
+            ['couchdb.log.previous']
+        )
+        self.assertTrue(path.isfile(tmp.join('log', 'couchdb.log.previous')))
 
 
 class TestUserCouch(TestCase):

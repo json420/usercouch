@@ -118,6 +118,7 @@ def random_salt():
 
 
 def couch_hashed(password, salt):
+    assert len(salt) == 32
     data = (password + salt).encode('utf-8')
     hexdigest = sha1(data).hexdigest()
     return '-hashed-{},{}'.format(hexdigest, salt)
@@ -130,10 +131,6 @@ def get_cmd(ini):
         '-a', '/etc/couchdb/default.ini',
         '-a', ini,
     ]
-
-
-def write_config(ini, kw):
-    open(self.ini, 'w').write(SESSION_INI.format(**kw))
 
 
 def mkdir(basedir, name):
@@ -176,7 +173,6 @@ class UserCouch:
         self.__bootstraped = False
 
     def __del__(self):
-        print('dell')
         self.kill()
 
     def bootstrap(self, oauth=False, loglevel='notice'):
