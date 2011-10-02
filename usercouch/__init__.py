@@ -24,12 +24,13 @@
 """
 
 import socket
-import signal
 import os
 from os import path
 import stat
 import time
 from subprocess import Popen
+from copy import deepcopy
+from hashlib import sha1, md5
 
 from microfiber import Server, random_id
 
@@ -37,14 +38,14 @@ from microfiber import Server, random_id
 __version__ = '11.10.0'
 
 
-template = """
+SESSION_INI = """
 [couch_httpd_auth]
 require_valid_user = true
 
 [httpd]
 bind_address = 127.0.0.1
 port = {port}
-socket_options = '[{{recbuf, 262144}}, {{sndbuf, 262144}}, {{nodelay, true}}]'
+socket_options = [{{recbuf, 262144}}, {{sndbuf, 262144}}, {{nodelay, true}}]
 
 [couchdb]
 database_dir = {databases}
@@ -79,6 +80,15 @@ samples =
 """
 
 
+# If __del__ doesn't work reliabily enough:
+import signal
+
+def on_sigterm(signum, frame):
+    print('sigterm')
+
+signal.signal(signal.SIGTERM, on_sigterm)
+
+
 def random_port():
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.bind(('127.0.0.1', 0))
@@ -100,11 +110,36 @@ def random_basic():
     )
 
 
-def on_sigterm(signum, frame):
-    print('kill')
+def random_env(port):
+    return {
+        'port': port,
+        'url': 'http://localhost:{}/'.format(port),
+        'basic': random_basic(),
+        'oauth': random_oauth(),
+    }
 
 
-signal.signal(signal.SIGTERM, on_sigterm)
+def random_salt():
+    return md5(os.urandom(16)).hexdigest()
+
+
+def couch_hashed(password, salt):
+    data = (password + salt).encode('utf-8')
+    hexdigest = sha1(data).hexdigest()
+    return '-hashed-{},{}'.format(hexdigest, salt)
+
+
+def get_cmd(ini):
+    return [
+        '/usr/bin/couchdb',
+        '-n',  # reset configuration file chain (including system default)
+        '-a', '/etc/couchdb/default.ini',
+        '-a', ini,
+    ]
+
+
+def write_config(ini, kw):
+    open(self.ini, 'w').write(SESSION_INI.format(**kw))
 
 
 def mkdir(basedir, name):
@@ -127,11 +162,10 @@ def logfile(logdir, name):
 
 class Paths:
     def __init__(self, basedir):
-        self.ini = path.join(basedir, 'session.ini')
         self.databases = mkdir(basedir, 'databases')
         self.views = mkdir(basedir, 'views')
         self.log = mkdir(basedir, 'log')
-        self.logfile = logfile(self.log, 'couchdb.log')
+        self.logfile = logfile(self.log, 'couchdb')
 
 
 class UserCouch:
@@ -142,9 +176,14 @@ class UserCouch:
                 self.__class__.__name__, basedir)
             )
         self.basedir = basedir
+        self.ini = path.join(basedir, 'session.ini')
+        self.cmd = get_cmd(self.ini)
+        self.paths = Paths(basedir)
+        self.__bootstraped = False
 
     def __del__(self):
-        self.kill()
+        print('del')
+        print(self.kill())
 
     def kill(self):
         if self.couchdb is None:
@@ -173,5 +212,27 @@ class UserCouch:
             return True
         except socket.error:
             return False
+
+    def bootstrap(self):
+        assert not self.__bootstraped
+        self.__bootstraped = True
+        (sock, port) = random_port()
+        env = random_env(port)
+        self.server = Server(env)
+        kw = {
+            'port': port,
+            'databases': self.paths.databases,
+            'views': self.paths.views,
+            'logfile': self.paths.logfile,
+            'loglevel': 'info',
+            'username': env['basic']['username'],
+            'hashed': couch_hashed(env['basic']['password'], random_salt()),
+        }
+        kw.update(env['oauth'])
+        config = SESSION_INI.format(**kw)
+        open(self.ini, 'w').write(config)
+        sock.close()
+        self.start()
+        return deepcopy(env)
 
 
