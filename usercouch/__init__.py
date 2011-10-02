@@ -26,16 +26,16 @@
 import socket
 import signal
 import os
+from os import path
+import stat
 import time
 from subprocess import Popen
-import logging
 
 from microfiber import Server, random_id
 
 
 __version__ = '11.10.0'
 
-log = logging.getLogger('usercouch')
 
 template = """
 [couch_httpd_auth]
@@ -47,8 +47,8 @@ port = {port}
 socket_options = '[{{recbuf, 262144}}, {{sndbuf, 262144}}, {{nodelay, true}}]'
 
 [couchdb]
-view_index_dir = {share}
-database_dir = {share}
+database_dir = {databases}
+view_index_dir = {views}
 
 [log]
 file = {logfile}
@@ -107,14 +107,41 @@ def on_sigterm(signum, frame):
 signal.signal(signal.SIGTERM, on_sigterm)
 
 
+def mkdir(basedir, name):
+    dirname = path.join(basedir, name)
+    try:
+        os.mkdir(dirname)
+    except OSError:
+        mode = os.lstat(dirname).st_mode
+        if not stat.S_ISDIR(mode):
+            raise ValueError('not a directory: {!r}'.format(dirname))
+    return dirname
+
+
+def logfile(logdir, name):
+    filename = path.join(logdir, name + '.log')
+    if path.isfile(filename):
+        os.rename(filename, filename + '.previous')
+    return filename
+
+
 class Paths:
     def __init__(self, basedir):
-        self.basedir = basedir   
+        self.ini = path.join(basedir, 'session.ini')
+        self.databases = mkdir(basedir, 'databases')
+        self.views = mkdir(basedir, 'views')
+        self.log = mkdir(basedir, 'log')
+        self.logfile = logfile(self.log, 'couchdb.log')
 
 
 class UserCouch:
-    def __init__(self):
+    def __init__(self, basedir):
         self.couchdb = None
+        if not path.isdir(basedir):
+            raise ValueError('{}.basedir not a directory: {!r}'.format(
+                self.__class__.__name__, basedir)
+            )
+        self.basedir = basedir
 
     def __del__(self):
         self.kill()
