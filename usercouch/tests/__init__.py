@@ -468,3 +468,15 @@ class TestUserCouch(TestCase):
         uc.couchdb.terminate()
         self.assertTrue(uc.check())
 
+    def test_crash(self):
+        tmp = TempDir()
+        uc = usercouch.UserCouch(tmp.dir)
+        self.assertFalse(uc.crash())
+        uc.bootstrap()
+        self.assertTrue(uc.isalive())
+        self.assertTrue(uc.crash())
+        self.assertFalse(uc.isalive())
+        uc.couchdb.wait()
+        uc.couchdb = None
+        self.assertFalse(uc.crash())
+

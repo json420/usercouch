@@ -261,6 +261,7 @@ class UserCouch:
 
     def crash(self):
         if self.couchdb is None:
-            return
+            return False
         self.couchdb.terminate()
+        return True
 
