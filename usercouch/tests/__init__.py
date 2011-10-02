@@ -24,3 +24,59 @@ Unit tests for `usercouch` package.
 """
 
 from unittest import TestCase
+import socket
+
+import usercouch
+
+
+B32ALPHABET = frozenset('234567ABCDEFGHIJKLMNOPQRSTUVWXYZ')
+
+
+class TestFunctions(TestCase):
+
+    def test_random_port(self):
+        (sock, port) = usercouch.random_port()
+        self.assertIsInstance(sock, socket.socket)
+        self.assertIsInstance(port, int)
+        self.assertEqual(sock.getsockname(), ('127.0.0.1', port))
+        self.assertNotEqual(usercouch.random_port()[1], port)
+
+    def test_random_oauth(self):
+        kw = usercouch.random_oauth()
+        self.assertIsInstance(kw, dict)
+        self.assertEqual(
+            set(kw),
+            set(['consumer_key', 'consumer_secret', 'token', 'token_secret'])
+        )
+        for value in kw.values():
+            self.assertIsInstance(value, str)
+            self.assertEqual(len(value), 24)
+            self.assertTrue(set(value).issubset(B32ALPHABET))
+  
+    def test_random_basic(self):
+        kw = usercouch.random_basic()
+        self.assertIsInstance(kw, dict)
+        self.assertEqual(
+            set(kw),
+            set(['username', 'password'])
+        )
+        for value in kw.values():
+            self.assertIsInstance(value, str)
+            self.assertEqual(len(value), 24)
+            self.assertTrue(set(value).issubset(B32ALPHABET))
+        
+        
+        
+class TestUserCouch(TestCase):
+    def test_kill(self):
+        inst = usercouch.UserCouch()
+        self.assertIs(inst.kill(), False)
+        
+    def test_start(self):
+        inst = usercouch.UserCouch()
+        inst.couchdb = 'hello'
+        self.assertIs(inst.start(), False)
+        inst.couchdb = None
+        
+        
+    
