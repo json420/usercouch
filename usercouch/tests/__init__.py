@@ -245,6 +245,7 @@ class TestPaths(TestCase):
     def test_init(self):
         tmp = TempDir()
         paths = usercouch.Paths(tmp.dir)
+        self.assertEqual(paths.ini, tmp.join('session.ini'))
         self.assertEqual(paths.databases, tmp.join('databases'))
         self.assertEqual(paths.views, tmp.join('views'))
         self.assertEqual(paths.log, tmp.join('log'))
@@ -257,9 +258,10 @@ class TestPaths(TestCase):
             ['databases', 'log', 'views']
         )
         self.assertEqual(os.listdir(tmp.join('log')), [])
-        
+
         tmp.touch('log', 'couchdb.log')
         paths = usercouch.Paths(tmp.dir)
+        self.assertEqual(paths.ini, tmp.join('session.ini'))
         self.assertEqual(paths.databases, tmp.join('databases'))
         self.assertEqual(paths.views, tmp.join('views'))
         self.assertEqual(paths.log, tmp.join('log'))
@@ -279,6 +281,37 @@ class TestPaths(TestCase):
 
 
 class TestUserCouch(TestCase):
+    def test_init(self):
+        tmp = TempDir()
+
+        # basedir doesn't exists
+        nope = tmp.join('nope')
+        with self.assertRaises(ValueError) as cm:
+            usercouch.UserCouch(nope)
+        self.assertEqual(
+            str(cm.exception),
+            'UserCouch.basedir not a directory: {!r}'.format(nope)
+        )
+
+        # basedir is a file
+        bad = tmp.touch('bad')
+        with self.assertRaises(ValueError) as cm:
+            usercouch.UserCouch(bad)
+        self.assertEqual(
+            str(cm.exception),
+            'UserCouch.basedir not a directory: {!r}'.format(bad)
+        )
+
+        # When it's all good
+        good = tmp.makedirs('good')
+        uc = usercouch.UserCouch(good)
+        self.assertIsNone(uc.couchdb)
+        self.assertEqual(uc.basedir, good)
+        self.assertIsInstance(uc.paths, usercouch.Paths)
+        self.assertEqual(uc.paths.ini, tmp.join('good', 'session.ini'))
+        self.assertEqual(uc.cmd, usercouch.get_cmd(uc.paths.ini))
+        self.assertIsNone(uc.server)
+
     def test_kill(self):
         tmp = TempDir()
         inst = usercouch.UserCouch(tmp.dir)

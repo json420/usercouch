@@ -152,7 +152,11 @@ def logfile(logdir, name):
 
 
 class Paths:
+    """
+    Just a namespace for the various files and directories in *basedir*.
+    """
     def __init__(self, basedir):
+        self.ini = path.join(basedir, 'session.ini')
         self.databases = mkdir(basedir, 'databases')
         self.views = mkdir(basedir, 'views')
         self.log = mkdir(basedir, 'log')
@@ -167,9 +171,9 @@ class UserCouch:
                 self.__class__.__name__, basedir)
             )
         self.basedir = basedir
-        self.ini = path.join(basedir, 'session.ini')
-        self.cmd = get_cmd(self.ini)
         self.paths = Paths(basedir)
+        self.cmd = get_cmd(self.paths.ini)
+        self.server = None
         self.__bootstraped = False
 
     def __del__(self):
