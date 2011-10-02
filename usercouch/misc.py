@@ -26,6 +26,7 @@
 from unittest import TestCase
 import tempfile
 import shutil
+from os import path
 
 from usercouch import UserCouch
 
@@ -38,7 +39,8 @@ class TempCouch(UserCouch):
 
     def __del__(self):
         super().__del__()
-        shutil.rmtree(self.basedir)
+        if path.isdir(self.basedir):
+            shutil.rmtree(self.basedir)
 
 
 class CouchTestCase(TestCase):
@@ -52,7 +54,6 @@ class CouchTestCase(TestCase):
             self.tmpcouch.server.put(None, name)
 
     def tearDown(self):
-        self.tmpcouch.__del__()
         self.tmpcouch = None
         self.env = None
         
