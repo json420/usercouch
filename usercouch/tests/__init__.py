@@ -423,12 +423,48 @@ class TestUserCouch(TestCase):
         uc.bootstrap()
         self.assertFalse(uc.start())
         self.assertTrue(uc.kill())
+        self.assertIsNone(uc.couchdb)
         self.assertTrue(uc.start())
+        self.assertIsInstance(uc.couchdb, subprocess.Popen)
 
     def test_kill(self):
         tmp = TempDir()
         uc = usercouch.UserCouch(tmp.dir)
         self.assertFalse(uc.kill())
         uc.bootstrap()
+        self.assertIsInstance(uc.couchdb, subprocess.Popen)
         self.assertTrue(uc.kill())
+        self.assertIsNone(uc.couchdb)
+
+    def test_isalive(self):
+        tmp = TempDir()
+        uc = usercouch.UserCouch(tmp.dir)
+
+        with self.assertRaises(Exception) as cm:
+            uc.isalive()
+        self.assertEqual(
+            str(cm.exception),
+            'Must call UserCouch.bootstrap() before UserCouch.isalive()'
+        )
+
+        uc.bootstrap()
+        self.assertTrue(uc.isalive())
+        uc.couchdb.terminate()
+        self.assertFalse(uc.isalive())
+
+    def test_check(self):
+        tmp = TempDir()
+        uc = usercouch.UserCouch(tmp.dir)
+
+        with self.assertRaises(Exception) as cm:
+            uc.check()
+        self.assertEqual(
+            str(cm.exception),
+            'Must call UserCouch.bootstrap() before UserCouch.check()'
+        )
+
+        uc.bootstrap()
+        self.assertFalse(uc.check())
+        uc.couchdb.terminate()
+        self.assertTrue(uc.check())
 

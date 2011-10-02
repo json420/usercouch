@@ -210,14 +210,6 @@ class UserCouch:
         self.start()
         return deepcopy(env)
 
-    def kill(self):
-        if self.couchdb is None:
-            return False
-        self.couchdb.terminate()
-        self.couchdb.wait()
-        self.couchdb = None
-        return True
-
     def start(self):
         if not self.__bootstraped:
             raise Exception(
@@ -236,7 +228,20 @@ class UserCouch:
                 return True
         raise Exception('could not start CouchDB')
 
+    def kill(self):
+        if self.couchdb is None:
+            return False
+        self.couchdb.terminate()
+        self.couchdb.wait()
+        self.couchdb = None
+        return True
+
     def isalive(self):
+        if not self.__bootstraped:
+            raise Exception(
+                'Must call {0}.bootstrap() before {0}.isalive()'.format(
+                        self.__class__.__name__)
+            )
         try:
             self.server.get()
             return True
@@ -244,9 +249,15 @@ class UserCouch:
             return False
 
     def check(self):
+        if not self.__bootstraped:
+            raise Exception(
+                'Must call {0}.bootstrap() before {0}.check()'.format(
+                        self.__class__.__name__)
+            )
         if not self.isalive():
             self.kill()
-            self.start()
+            return self.start()
+        return False
 
     def crash(self):
         if self.couchdb is None:
