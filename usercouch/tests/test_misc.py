@@ -67,7 +67,7 @@ class SelfTest2(CouchTestCase):
             s.get('_all_dbs'),
             ['_replicator', '_users']
         )
-   
+
 
 class SelfTest3(CouchTestCase):
     create_databases = ['foo', 'bar']
