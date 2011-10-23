@@ -1,5 +1,5 @@
-usercouch (11.10.0-0~oneiric) oneiric; urgency=low
+usercouch (11.10.1-0~oneiric) oneiric; urgency=low
 
-  * Upstream 11.10.0 pre-release
+  * Upstream 11.10.1 pre-release
 
  -- Jason Gerard DeRose <jderose@novacut.com>  Wed, 28 Sep 2011 01:34:56 +0000
