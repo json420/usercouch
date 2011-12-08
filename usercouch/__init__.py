@@ -84,7 +84,7 @@ OAUTH = BASIC + """
 
 
 def get_template(auth):
-    if auth is None:
+    if auth == 'open':
         return OPEN
     if auth == 'basic':
         return BASIC
@@ -114,7 +114,9 @@ def random_basic():
     )
 
 
-def random_env(port, auth=None):
+def random_env(port, auth):
+    if auth not in ('open', 'basic', 'oauth'):
+        raise ValueError('invalid auth: {!r}'.format(auth))
     env = {
         'port': port,
         'url': 'http://localhost:{}/'.format(port),

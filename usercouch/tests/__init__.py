@@ -82,7 +82,7 @@ class TempDir(object):
 
 class TestFunctions(TestCase):
     def test_get_template(self):
-        self.assertIs(usercouch.get_template(None), usercouch.OPEN)
+        self.assertIs(usercouch.get_template('open'), usercouch.OPEN)
         self.assertIs(usercouch.get_template('basic'), usercouch.BASIC)
         self.assertIs(usercouch.get_template('oauth'), usercouch.OAUTH)
         with self.assertRaises(ValueError) as cm:
@@ -121,8 +121,13 @@ class TestFunctions(TestCase):
             self.assertTrue(set(value).issubset(B32ALPHABET))
 
     def test_random_env(self):
-        # auth=None
-        env = usercouch.random_env(5634)
+        # Test with bad auth
+        with self.assertRaises(ValueError) as cm:
+            env = usercouch.random_env(5634, 'magic')
+        self.assertEqual(str(cm.exception), "invalid auth: 'magic'")
+
+        # auth='open'
+        env = usercouch.random_env(5634, 'open')
         self.assertIsInstance(env, dict)
         self.assertEqual(set(env), set(['port', 'url']))
         self.assertEqual(env['port'], 5634)
@@ -330,6 +335,39 @@ class TestUserCouch(TestCase):
         self.assertIsNone(uc.server)
 
     def test_bootstrap(self):
+        #######################
+        # Test with auth='open'
+        tmp = TempDir()
+        uc = usercouch.UserCouch(tmp.dir)
+        self.assertFalse(path.exists(uc.paths.ini))
+        env = uc.bootstrap('open')
+        self.assertTrue(path.isfile(uc.paths.ini))
+
+        # check env
+        self.assertIsInstance(env, dict)
+        self.assertEqual(set(env), set(['port', 'url']))
+        port = env['port']
+        self.assertIsInstance(port, int)
+        self.assertGreater(port, 1024)
+        self.assertEqual(env['url'], 'http://localhost:{}/'.format(port))
+
+        # check UserCouch.server
+        self.assertIsInstance(uc.server, microfiber.Server)
+        self.assertEqual(uc.server.env, env)
+        self.assertIsNot(uc.server.env, env)  # Make sure deepcopy() is used
+
+        # check UserCouch.couchdb, make sure UserCouch.start() was called
+        self.assertIsInstance(uc.couchdb, subprocess.Popen)
+        self.assertIsNone(uc.couchdb.returncode)
+
+        # check that Exception is raised if you call bootstrap() more than once
+        with self.assertRaises(Exception) as cm:
+            uc.bootstrap()
+        self.assertEqual(
+            str(cm.exception),
+            'UserCouch.bootstrap() already called'
+        )
+    
         #######################
         # Test with auth='basic'
         tmp = TempDir()
