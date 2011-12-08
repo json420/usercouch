@@ -35,7 +35,7 @@ from hashlib import sha1, md5
 from microfiber import Server, random_id
 
 
-__version__ = '11.11.0'
+__version__ = '11.12.0'
 
 BASIC = """
 [couch_httpd_auth]
