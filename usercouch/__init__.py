@@ -83,6 +83,16 @@ OAUTH = BASIC + """
 """
 
 
+def get_template(auth):
+    if auth is None:
+        return OPEN
+    if auth == 'basic':
+        return BASIC
+    if auth == 'oauth':
+        return OAUTH
+    raise ValueError('invalid auth: {!r}'.format(auth))
+
+
 def random_port():
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.bind(('127.0.0.1', 0))

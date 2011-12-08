@@ -81,6 +81,13 @@ class TempDir(object):
 
 
 class TestFunctions(TestCase):
+    def test_get_template(self):
+        self.assertIs(usercouch.get_template(None), usercouch.OPEN)
+        self.assertIs(usercouch.get_template('basic'), usercouch.BASIC)
+        self.assertIs(usercouch.get_template('oauth'), usercouch.OAUTH)
+        with self.assertRaises(ValueError) as cm:
+            t = usercouch.get_template('nope')
+        self.assertEqual(str(cm.exception), "invalid auth: 'nope'")
 
     def test_random_port(self):
         (sock, port) = usercouch.random_port()
