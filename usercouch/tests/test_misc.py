@@ -44,9 +44,22 @@ class TestTempCouch(TestCase):
         tc.__del__()
         self.assertIsNone(tc.couchdb)
         self.assertFalse(path.exists(tc.basedir))
-
-
+ 
+        
 class SelfTest1(CouchTestCase):
+    auth = 'open'
+
+    def test_self(self):
+        self.assertEqual(set(self.env), set(['port', 'url']))
+        s = microfiber.Server(self.env)
+        self.assertEqual(
+            s.get('_all_dbs'),
+            ['_replicator', '_users']
+        )
+
+
+class SelfTest2(CouchTestCase):
+    auth = 'basic'
 
     def test_self(self):
         self.assertEqual(set(self.env), set(['port', 'url', 'basic']))
@@ -57,8 +70,8 @@ class SelfTest1(CouchTestCase):
         )
 
 
-class SelfTest2(CouchTestCase):
-    oauth = True
+class SelfTest3(CouchTestCase):
+    auth = 'oauth'
 
     def test_self(self):
         self.assertEqual(set(self.env), set(['port', 'url', 'basic', 'oauth']))
@@ -68,8 +81,22 @@ class SelfTest2(CouchTestCase):
             ['_replicator', '_users']
         )
 
+    
+class SelfTest4(CouchTestCase):
+    auth = 'open'
+    create_databases = ['foo', 'bar']
 
-class SelfTest3(CouchTestCase):
+    def test_self(self):
+        self.assertEqual(set(self.env), set(['port', 'url']))
+        s = microfiber.Server(self.env)
+        self.assertEqual(
+            s.get('_all_dbs'),
+            ['_replicator', '_users', 'bar', 'foo']
+        )
+
+
+class SelfTest5(CouchTestCase):
+    auth = 'basic'
     create_databases = ['foo', 'bar']
 
     def test_self(self):
@@ -81,8 +108,8 @@ class SelfTest3(CouchTestCase):
         )
 
 
-class SelfTest4(CouchTestCase):
-    oauth = True
+class SelfTest6(CouchTestCase):
+    auth = 'oauth'
     create_databases = ['foo', 'bar']
 
     def test_self(self):

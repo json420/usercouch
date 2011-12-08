@@ -81,6 +81,13 @@ class TempDir(object):
 
 
 class TestFunctions(TestCase):
+    def test_get_template(self):
+        self.assertIs(usercouch.get_template('open'), usercouch.OPEN)
+        self.assertIs(usercouch.get_template('basic'), usercouch.BASIC)
+        self.assertIs(usercouch.get_template('oauth'), usercouch.OAUTH)
+        with self.assertRaises(ValueError) as cm:
+            t = usercouch.get_template('nope')
+        self.assertEqual(str(cm.exception), "invalid auth: 'nope'")
 
     def test_random_port(self):
         (sock, port) = usercouch.random_port()
@@ -114,8 +121,20 @@ class TestFunctions(TestCase):
             self.assertTrue(set(value).issubset(B32ALPHABET))
 
     def test_random_env(self):
-        # oauth=False
-        env = usercouch.random_env(5634)
+        # Test with bad auth
+        with self.assertRaises(ValueError) as cm:
+            env = usercouch.random_env(5634, 'magic')
+        self.assertEqual(str(cm.exception), "invalid auth: 'magic'")
+
+        # auth='open'
+        env = usercouch.random_env(5634, 'open')
+        self.assertIsInstance(env, dict)
+        self.assertEqual(set(env), set(['port', 'url']))
+        self.assertEqual(env['port'], 5634)
+        self.assertEqual(env['url'], 'http://localhost:5634/')
+
+        # auth='basic'
+        env = usercouch.random_env(5634, 'basic')
         self.assertIsInstance(env, dict)
         self.assertEqual(set(env), set(['port', 'url', 'basic']))
         self.assertEqual(env['port'], 5634)
@@ -130,8 +149,8 @@ class TestFunctions(TestCase):
             self.assertEqual(len(value), 24)
             self.assertTrue(set(value).issubset(B32ALPHABET))
 
-        # oauth=True
-        env = usercouch.random_env(1718, oauth=True)
+        # auth='oauth'
+        env = usercouch.random_env(1718, 'oauth')
         self.assertIsInstance(env, dict)
         self.assertEqual(set(env), set(['port', 'url', 'basic', 'oauth']))
         self.assertEqual(env['port'], 1718)
@@ -317,7 +336,40 @@ class TestUserCouch(TestCase):
 
     def test_bootstrap(self):
         #######################
-        # Test with oauth=False
+        # Test with auth='open'
+        tmp = TempDir()
+        uc = usercouch.UserCouch(tmp.dir)
+        self.assertFalse(path.exists(uc.paths.ini))
+        env = uc.bootstrap('open')
+        self.assertTrue(path.isfile(uc.paths.ini))
+
+        # check env
+        self.assertIsInstance(env, dict)
+        self.assertEqual(set(env), set(['port', 'url']))
+        port = env['port']
+        self.assertIsInstance(port, int)
+        self.assertGreater(port, 1024)
+        self.assertEqual(env['url'], 'http://localhost:{}/'.format(port))
+
+        # check UserCouch.server
+        self.assertIsInstance(uc.server, microfiber.Server)
+        self.assertEqual(uc.server.env, env)
+        self.assertIsNot(uc.server.env, env)  # Make sure deepcopy() is used
+
+        # check UserCouch.couchdb, make sure UserCouch.start() was called
+        self.assertIsInstance(uc.couchdb, subprocess.Popen)
+        self.assertIsNone(uc.couchdb.returncode)
+
+        # check that Exception is raised if you call bootstrap() more than once
+        with self.assertRaises(Exception) as cm:
+            uc.bootstrap()
+        self.assertEqual(
+            str(cm.exception),
+            'UserCouch.bootstrap() already called'
+        )
+    
+        #######################
+        # Test with auth='basic'
         tmp = TempDir()
         uc = usercouch.UserCouch(tmp.dir)
         self.assertFalse(path.exists(uc.paths.ini))
@@ -359,11 +411,11 @@ class TestUserCouch(TestCase):
         )
 
         #######################
-        # Test with oauth=True
+        # Test with auth='oauth'
         tmp = TempDir()
         uc = usercouch.UserCouch(tmp.dir)
         self.assertFalse(path.exists(uc.paths.ini))
-        env = uc.bootstrap(oauth=True)
+        env = uc.bootstrap(auth='oauth')
         self.assertTrue(path.isfile(uc.paths.ini))
 
         # check env

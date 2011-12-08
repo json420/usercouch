@@ -37,10 +37,7 @@ from microfiber import Server, random_id
 
 __version__ = '11.12.0'
 
-BASIC = """
-[couch_httpd_auth]
-require_valid_user = true
-
+OPEN = """
 [httpd]
 bind_address = 127.0.0.1
 port = {port}
@@ -64,6 +61,11 @@ stats_aggregator =
 [stats]
 rate =
 samples =
+"""
+
+BASIC = OPEN + """
+[couch_httpd_auth]
+require_valid_user = true
 
 [admins]
 {username} = {hashed}
@@ -79,6 +81,16 @@ OAUTH = BASIC + """
 [oauth_consumer_secrets]
 {consumer_key} = {consumer_secret}
 """
+
+
+def get_template(auth):
+    if auth == 'open':
+        return OPEN
+    if auth == 'basic':
+        return BASIC
+    if auth == 'oauth':
+        return OAUTH
+    raise ValueError('invalid auth: {!r}'.format(auth))
 
 
 def random_port():
@@ -102,13 +114,17 @@ def random_basic():
     )
 
 
-def random_env(port, oauth=False):
+def random_env(port, auth):
+    if auth not in ('open', 'basic', 'oauth'):
+        raise ValueError('invalid auth: {!r}'.format(auth))
     env = {
         'port': port,
         'url': 'http://localhost:{}/'.format(port),
-        'basic': random_basic(),
     }
-    if oauth:
+    if auth == 'basic':
+        env['basic'] = random_basic()
+    elif auth == 'oauth':
+        env['basic'] = random_basic()
         env['oauth'] = random_oauth()
     return env
 
@@ -182,14 +198,14 @@ class UserCouch:
     def __del__(self):
         self.kill()
 
-    def bootstrap(self, oauth=False, loglevel='notice'):
+    def bootstrap(self, auth='basic', loglevel='notice'):
         if self.__bootstraped:
             raise Exception(
                 '{}.bootstrap() already called'.format(self.__class__.__name__)
             )
         self.__bootstraped = True
         (sock, port) = random_port()
-        env = random_env(port, oauth)
+        env = random_env(port, auth)
         self.server = Server(env)
         kw = {
             'port': port,
@@ -197,14 +213,13 @@ class UserCouch:
             'views': self.paths.views,
             'logfile': self.paths.logfile,
             'loglevel': loglevel,
-            'username': env['basic']['username'],
-            'hashed': couch_hashed(env['basic']['password'], random_salt()),
         }
-        if oauth:
+        if auth in ('basic', 'oauth'):
+            kw['username'] = env['basic']['username']
+            kw['hashed'] = couch_hashed(env['basic']['password'], random_salt())
+        if auth == 'oauth':
             kw.update(env['oauth'])
-            config = OAUTH.format(**kw)
-        else:
-            config = BASIC.format(**kw)
+        config = get_template(auth).format(**kw)
         open(self.paths.ini, 'w').write(config)
         sock.close()
         self.start()
