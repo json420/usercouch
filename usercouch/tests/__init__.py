@@ -114,8 +114,15 @@ class TestFunctions(TestCase):
             self.assertTrue(set(value).issubset(B32ALPHABET))
 
     def test_random_env(self):
-        # oauth=False
+        # auth=None
         env = usercouch.random_env(5634)
+        self.assertIsInstance(env, dict)
+        self.assertEqual(set(env), set(['port', 'url']))
+        self.assertEqual(env['port'], 5634)
+        self.assertEqual(env['url'], 'http://localhost:5634/')
+
+        # auth='basic'
+        env = usercouch.random_env(5634, 'basic')
         self.assertIsInstance(env, dict)
         self.assertEqual(set(env), set(['port', 'url', 'basic']))
         self.assertEqual(env['port'], 5634)
@@ -130,8 +137,8 @@ class TestFunctions(TestCase):
             self.assertEqual(len(value), 24)
             self.assertTrue(set(value).issubset(B32ALPHABET))
 
-        # oauth=True
-        env = usercouch.random_env(1718, oauth=True)
+        # auth='oauth'
+        env = usercouch.random_env(1718, 'oauth')
         self.assertIsInstance(env, dict)
         self.assertEqual(set(env), set(['port', 'url', 'basic', 'oauth']))
         self.assertEqual(env['port'], 1718)

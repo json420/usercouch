@@ -37,7 +37,7 @@ from microfiber import Server, random_id
 
 __version__ = '11.12.0'
 
-BASIC = """
+OPEN = """
 [couch_httpd_auth]
 require_valid_user = true
 
@@ -64,6 +64,9 @@ stats_aggregator =
 [stats]
 rate =
 samples =
+"""
+
+BASIC = OPEN + """
 
 [admins]
 {username} = {hashed}
@@ -102,13 +105,15 @@ def random_basic():
     )
 
 
-def random_env(port, oauth=False):
+def random_env(port, auth=None):
     env = {
         'port': port,
         'url': 'http://localhost:{}/'.format(port),
-        'basic': random_basic(),
     }
-    if oauth:
+    if auth == 'basic':
+        env['basic'] = random_basic()
+    elif auth == 'oauth':
+        env['basic'] = random_basic()
         env['oauth'] = random_oauth()
     return env
 
@@ -189,7 +194,8 @@ class UserCouch:
             )
         self.__bootstraped = True
         (sock, port) = random_port()
-        env = random_env(port, oauth)
+        auth = ('oauth' if oauth else 'basic')
+        env = random_env(port, auth)
         self.server = Server(env)
         kw = {
             'port': port,
