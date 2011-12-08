@@ -38,9 +38,6 @@ from microfiber import Server, random_id
 __version__ = '11.12.0'
 
 OPEN = """
-[couch_httpd_auth]
-require_valid_user = true
-
 [httpd]
 bind_address = 127.0.0.1
 port = {port}
@@ -67,6 +64,8 @@ samples =
 """
 
 BASIC = OPEN + """
+[couch_httpd_auth]
+require_valid_user = true
 
 [admins]
 {username} = {hashed}
