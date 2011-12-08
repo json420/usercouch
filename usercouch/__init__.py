@@ -196,14 +196,13 @@ class UserCouch:
     def __del__(self):
         self.kill()
 
-    def bootstrap(self, oauth=False, loglevel='notice'):
+    def bootstrap(self, auth='basic', loglevel='notice'):
         if self.__bootstraped:
             raise Exception(
                 '{}.bootstrap() already called'.format(self.__class__.__name__)
             )
         self.__bootstraped = True
         (sock, port) = random_port()
-        auth = ('oauth' if oauth else 'basic')
         env = random_env(port, auth)
         self.server = Server(env)
         kw = {
@@ -212,14 +211,13 @@ class UserCouch:
             'views': self.paths.views,
             'logfile': self.paths.logfile,
             'loglevel': loglevel,
-            'username': env['basic']['username'],
-            'hashed': couch_hashed(env['basic']['password'], random_salt()),
         }
-        if oauth:
+        if auth in ('basic', 'oauth'):
+            kw['username'] = env['basic']['username']
+            kw['hashed'] = couch_hashed(env['basic']['password'], random_salt())
+        if auth == 'oauth':
             kw.update(env['oauth'])
-            config = OAUTH.format(**kw)
-        else:
-            config = BASIC.format(**kw)
+        config = get_template(auth).format(**kw)
         open(self.paths.ini, 'w').write(config)
         sock.close()
         self.start()

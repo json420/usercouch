@@ -58,7 +58,7 @@ class SelfTest1(CouchTestCase):
 
 
 class SelfTest2(CouchTestCase):
-    oauth = True
+    auth = 'oauth'
 
     def test_self(self):
         self.assertEqual(set(self.env), set(['port', 'url', 'basic', 'oauth']))
@@ -82,7 +82,7 @@ class SelfTest3(CouchTestCase):
 
 
 class SelfTest4(CouchTestCase):
-    oauth = True
+    auth = 'oauth'
     create_databases = ['foo', 'bar']
 
     def test_self(self):

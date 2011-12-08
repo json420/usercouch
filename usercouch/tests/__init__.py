@@ -331,7 +331,7 @@ class TestUserCouch(TestCase):
 
     def test_bootstrap(self):
         #######################
-        # Test with oauth=False
+        # Test with auth='basic'
         tmp = TempDir()
         uc = usercouch.UserCouch(tmp.dir)
         self.assertFalse(path.exists(uc.paths.ini))
@@ -373,11 +373,11 @@ class TestUserCouch(TestCase):
         )
 
         #######################
-        # Test with oauth=True
+        # Test with auth='oauth'
         tmp = TempDir()
         uc = usercouch.UserCouch(tmp.dir)
         self.assertFalse(path.exists(uc.paths.ini))
-        env = uc.bootstrap(oauth=True)
+        env = uc.bootstrap(auth='oauth')
         self.assertTrue(path.isfile(uc.paths.ini))
 
         # check env

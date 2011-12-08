@@ -45,11 +45,11 @@ class TempCouch(UserCouch):
 
 class CouchTestCase(TestCase):
     create_databases = []
-    oauth = False
+    auth = 'basic'
 
     def setUp(self):
         self.tmpcouch = TempCouch()
-        self.env = self.tmpcouch.bootstrap(self.oauth)
+        self.env = self.tmpcouch.bootstrap(self.auth)
         for name in self.create_databases:
             self.tmpcouch.server.put(None, name)
 
