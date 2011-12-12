@@ -46,6 +46,7 @@ socket_options = [{{recbuf, 262144}}, {{sndbuf, 262144}}, {{nodelay, true}}]
 [couchdb]
 database_dir = {databases}
 view_index_dir = {views}
+uri_file =
 
 [log]
 file = {logfile}
