@@ -53,6 +53,7 @@ file = {logfile}
 level = {loglevel}
 
 [httpd_global_handlers]
+_apps = {{couch_httpd_misc_handlers, handle_utils_dir_req, "/usr/share/couchdb/apps"}}
 _stats =
 
 [daemons]
