@@ -35,7 +35,7 @@ from hashlib import sha1, md5
 from microfiber import Server, random_id
 
 
-__version__ = '12.01.0'
+__version__ = '12.02.0'
 
 OPEN = """
 [httpd]
