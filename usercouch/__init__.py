@@ -31,11 +31,15 @@ import time
 from subprocess import Popen
 from copy import deepcopy
 from hashlib import sha1, md5
+import math
 
-from microfiber import Server, random_id
+from microfiber import Server, NotFound, random_id
 
 
 __version__ = '12.03.0'
+
+# local doc ID for the usercouch admin doc, used for UserCouch.autocompact():
+ADMIN_ID = '_local/usercouch'
 
 OPEN = """
 [httpd]
@@ -239,7 +243,7 @@ class UserCouch:
         self.couchdb = Popen(self.cmd)
         # We give CouchDB ~10.9 seconds to start:
         t = 0.1
-        for i in range(15):
+        for i in range(20):
             time.sleep(t)
             t *= 1.25
             if self.isalive():
@@ -282,4 +286,33 @@ class UserCouch:
             return False
         self.couchdb.terminate()
         return True
+
+    def autocompact(self):
+        if not self.__bootstraped:
+            raise Exception(
+                'Must call {0}.bootstrap() before {0}.autocompact()'.format(
+                        self.__class__.__name__)
+            )
+        s = Server(self.server.env)
+        compacted = []
+        for name in s.get('_all_dbs'):
+            if name.startswith('_'):
+                continue
+            db = s.database(name)
+            try:
+                doc = db.get(ADMIN_ID)
+            except NotFound:
+                doc = {
+                    '_id': ADMIN_ID,
+                    'autocompact': 7,
+                }
+                db.save(doc)
+            update_seq = db.get()['update_seq']
+            exp = int(math.log(update_seq, 2) if update_seq > 0 else 0)
+            if exp > doc['autocompact']:
+                compacted.append(name)
+                doc['autocompact'] = exp
+                db.save(doc)
+                db.post(None, '_compact')
+        return compacted
 
