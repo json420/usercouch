@@ -36,7 +36,7 @@ import math
 from microfiber import Server, NotFound, random_id
 
 
-__version__ = '12.03.0'
+__version__ = '12.04.0'
 
 # local doc ID for the usercouch admin doc, used for UserCouch.autocompact():
 ADMIN_ID = '_local/usercouch'
