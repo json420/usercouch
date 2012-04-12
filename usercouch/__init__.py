@@ -31,7 +31,6 @@ import time
 from subprocess import Popen
 from copy import deepcopy
 from hashlib import sha1, md5
-import math
 
 from microfiber import Server, NotFound, random_id
 
@@ -304,14 +303,15 @@ class UserCouch:
             except NotFound:
                 doc = {
                     '_id': ADMIN_ID,
-                    'autocompact': 7,
+                    'compact_seq': 0,
                 }
                 db.save(doc)
             update_seq = db.get()['update_seq']
-            exp = int(math.log(update_seq, 2) if update_seq > 0 else 0)
-            if exp > doc['autocompact']:
+            compact_seq = doc.get('compact_seq', 0)
+            if update_seq > compact_seq + 500:
                 compacted.append(name)
-                doc['autocompact'] = exp
+                doc['compact_seq'] = update_seq
+                doc['compact_time'] = time.time()
                 db.save(doc)
                 db.post(None, '_compact')
         return compacted

@@ -567,12 +567,12 @@ class TestUserCouch(TestCase):
         for name in names:
             self.assertEqual(s.get(name)['update_seq'], 0)
             doc = s.get(name, ADMIN_ID)
-            self.assertEqual(doc['autocompact'], 7)
+            self.assertEqual(doc['compact_seq'], 0)
 
-        # Get update_seq to 255 for all DBs:
+        # Get update_seq to 500 for all DBs:
         docs = [
             {'_id': microfiber.random_id()}
-            for i in range(255)
+            for i in range(500)
         ]
         for name in names:
             for doc in docs:
@@ -581,27 +581,27 @@ class TestUserCouch(TestCase):
         # Call autocompact again, make sure it still doesn't compact anything
         self.assertEqual(uc.autocompact(), [])
         for name in names:
-            self.assertEqual(s.get(name)['update_seq'], 255)
+            self.assertEqual(s.get(name)['update_seq'], 500)
             doc = s.get(name, ADMIN_ID)
-            self.assertEqual(doc['autocompact'], 7)
+            self.assertEqual(doc['compact_seq'], 0)
 
         # Push 2 DBs over the threshhold for auto-compact
         doc = {'_id': microfiber.random_id()}
         sizes = {}
         for name in names[:2]:
             s.post(doc, name)
-            self.assertEqual(s.get(name)['update_seq'], 256)
+            self.assertEqual(s.get(name)['update_seq'], 501)
             sizes[name] = s.get(name)['disk_size']
 
         self.assertEqual(uc.autocompact(), sorted(names[:2]))
         for name in names[:2]:
-            self.assertEqual(s.get(name)['update_seq'], 256)
+            self.assertEqual(s.get(name)['update_seq'], 501)
             doc = s.get(name, ADMIN_ID)
-            self.assertEqual(doc['autocompact'], 8)
+            self.assertEqual(doc['compact_seq'], 501)
         for name in names[2:]:
-            self.assertEqual(s.get(name)['update_seq'], 255)
+            self.assertEqual(s.get(name)['update_seq'], 500)
             doc = s.get(name, ADMIN_ID)
-            self.assertEqual(doc['autocompact'], 7)
+            self.assertEqual(doc['compact_seq'], 0)
 
         # Make sure the compaction was actually triggered
         for name in names[:2]:
@@ -610,21 +610,21 @@ class TestUserCouch(TestCase):
             self.assertLess(s.get(name)['disk_size'], sizes[name])
 
         ####
-        # Make sure autocompact will jump up to the next exponent correctly
+        # Make sure autocompact will jump up to the next threshold correctly
         db = names[2]
-        self.assertEqual(s.get(db)['update_seq'], 255)
+        self.assertEqual(s.get(db)['update_seq'], 500)
         doc = s.get(db, ADMIN_ID)
-        self.assertEqual(doc['autocompact'], 7)
+        self.assertEqual(doc['compact_seq'], 0)
 
         # Add docs:
-        for i in range(2**10 - 255):
+        for i in range(1001):
             s.post({'_id': microfiber.random_id()}, db)
         size = s.get(db)['disk_size']
 
         self.assertEqual(uc.autocompact(), [db])
-        self.assertEqual(s.get(db)['update_seq'], 1024)
+        self.assertEqual(s.get(db)['update_seq'], 1501)
         doc = s.get(db, ADMIN_ID)
-        self.assertEqual(doc['autocompact'], 10)
+        self.assertEqual(doc['compact_seq'], 1501)
 
         # Check that compact was called on this single DB:
         while s.get(db)['compact_running']:
