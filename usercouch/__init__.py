@@ -35,7 +35,7 @@ from hashlib import sha1, md5
 from microfiber import Server, NotFound, random_id
 
 
-__version__ = '12.04.0'
+__version__ = '12.05.0'
 
 # local doc ID for the usercouch admin doc, used for UserCouch.autocompact():
 ADMIN_ID = '_local/usercouch'
