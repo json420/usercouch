@@ -42,7 +42,7 @@ ADMIN_ID = '_local/usercouch'
 
 OPEN = """
 [httpd]
-bind_address = 127.0.0.1
+bind_address = {address}
 port = {port}
 socket_options = [{{recbuf, 262144}}, {{sndbuf, 262144}}, {{nodelay, true}}]
 
@@ -98,9 +98,9 @@ def get_template(auth):
     raise ValueError('invalid auth: {!r}'.format(auth))
 
 
-def random_port():
+def random_port(address='127.0.0.1'):
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.bind(('127.0.0.1', 0))
+    sock.bind((address, 0))
     port = sock.getsockname()[1]
     return (sock, port)
 
@@ -204,16 +204,17 @@ class UserCouch:
     def __del__(self):
         self.kill()
 
-    def bootstrap(self, auth='basic', loglevel='notice'):
+    def bootstrap(self, auth='basic', loglevel='notice', address='127.0.0.1'):
         if self.__bootstraped:
             raise Exception(
                 '{}.bootstrap() already called'.format(self.__class__.__name__)
             )
         self.__bootstraped = True
-        (sock, port) = random_port()
+        (sock, port) = random_port(address)
         env = random_env(port, auth)
         self.server = Server(env)
         kw = {
+            'address': address,
             'port': port,
             'databases': self.paths.databases,
             'views': self.paths.views,
