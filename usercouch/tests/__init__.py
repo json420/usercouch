@@ -31,6 +31,7 @@ import tempfile
 import shutil
 import subprocess
 import time
+from copy import deepcopy
 
 import microfiber
 
@@ -174,6 +175,24 @@ class TestFunctions(TestCase):
             self.assertIsInstance(value, str)
             self.assertEqual(len(value), 24)
             self.assertTrue(set(value).issubset(B32ALPHABET))
+
+        # auth='oauth' with supplied static tokens
+        tokens = usercouch.random_oauth()
+        env = usercouch.random_env(1718, 'oauth', deepcopy(tokens))
+        self.assertIsInstance(env, dict)
+        self.assertEqual(set(env), set(['port', 'url', 'basic', 'oauth']))
+        self.assertEqual(env['port'], 1718)
+        self.assertEqual(env['url'], 'http://localhost:1718/')
+        self.assertIsInstance(env['basic'], dict)
+        self.assertEqual(
+            set(env['basic']),
+            set(['username', 'password'])
+        )
+        for value in env['basic'].values():
+            self.assertIsInstance(value, str)
+            self.assertEqual(len(value), 24)
+            self.assertTrue(set(value).issubset(B32ALPHABET))
+        self.assertEqual(env['oauth'], tokens)
 
     def test_random_salt(self):
         salt = usercouch.random_salt()
@@ -448,6 +467,50 @@ class TestUserCouch(TestCase):
             self.assertIsInstance(value, str)
             self.assertEqual(len(value), 24)
             self.assertTrue(set(value).issubset(B32ALPHABET))
+
+        # check UserCouch.server
+        self.assertIsInstance(uc.server, microfiber.Server)
+        self.assertEqual(uc.server.env, env)
+        self.assertIsNot(uc.server.env, env)  # Make sure deepcopy() is used
+
+        # check UserCouch.couchdb, make sure UserCouch.start() was called
+        self.assertIsInstance(uc.couchdb, subprocess.Popen)
+        self.assertIsNone(uc.couchdb.returncode)
+
+        # check that Exception is raised if you call bootstrap() more than once
+        with self.assertRaises(Exception) as cm:
+            uc.bootstrap()
+        self.assertEqual(
+            str(cm.exception),
+            'UserCouch.bootstrap() already called'
+        )
+
+        #####################################################
+        # Test with auth='oauth' and static oauth credentials
+        tokens = usercouch.random_oauth()
+        tmp = TempDir()
+        uc = usercouch.UserCouch(tmp.dir)
+        self.assertFalse(path.exists(uc.paths.ini))
+        env = uc.bootstrap(auth='oauth', tokens=deepcopy(tokens))
+        self.assertTrue(path.isfile(uc.paths.ini))
+
+        # check env
+        self.assertIsInstance(env, dict)
+        self.assertEqual(set(env), set(['port', 'url', 'basic', 'oauth']))
+        port = env['port']
+        self.assertIsInstance(port, int)
+        self.assertGreater(port, 1024)
+        self.assertEqual(env['url'], 'http://localhost:{}/'.format(port))
+        self.assertIsInstance(env['basic'], dict)
+        self.assertEqual(
+            set(env['basic']),
+            set(['username', 'password'])
+        )
+        for value in env['basic'].values():
+            self.assertIsInstance(value, str)
+            self.assertEqual(len(value), 24)
+            self.assertTrue(set(value).issubset(B32ALPHABET))
+        self.assertEqual(env['oauth'], tokens)
 
         # check UserCouch.server
         self.assertIsInstance(uc.server, microfiber.Server)

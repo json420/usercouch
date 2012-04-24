@@ -119,7 +119,7 @@ def random_basic():
     )
 
 
-def random_env(port, auth):
+def random_env(port, auth, tokens=None):
     if auth not in ('open', 'basic', 'oauth'):
         raise ValueError('invalid auth: {!r}'.format(auth))
     env = {
@@ -130,7 +130,7 @@ def random_env(port, auth):
         env['basic'] = random_basic()
     elif auth == 'oauth':
         env['basic'] = random_basic()
-        env['oauth'] = random_oauth()
+        env['oauth'] = (random_oauth() if tokens is None else tokens)
     return env
 
 
@@ -204,14 +204,14 @@ class UserCouch:
     def __del__(self):
         self.kill()
 
-    def bootstrap(self, auth='basic', loglevel='notice', address='127.0.0.1'):
+    def bootstrap(self, auth='basic', address='127.0.0.1', tokens=None, loglevel='notice'):
         if self.__bootstraped:
             raise Exception(
                 '{}.bootstrap() already called'.format(self.__class__.__name__)
             )
         self.__bootstraped = True
         (sock, port) = random_port(address)
-        env = random_env(port, auth)
+        env = random_env(port, auth, tokens)
         self.server = Server(env)
         kw = {
             'address': address,
@@ -231,6 +231,11 @@ class UserCouch:
         sock.close()
         self.start()
         return deepcopy(env)
+
+    def bootstrap2(self, tokens):
+        env = self.bootstrap(auth='oauth', address='0.0.0.0', tokens=tokens)
+        del env['oauth']
+        return env
 
     def start(self):
         if not self.__bootstraped:
