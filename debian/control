@@ -3,7 +3,7 @@ Section: python
 Priority: optional
 Maintainer: Jason Gerard DeRose <jderose@novacut.com>
 Build-Depends: debhelper (>= 8.9), python3 (>= 3.2),
-    python3-microfiber (>= 12.05),
+    python3-microfiber (>= 12.06),
     couchdb-bin (>= 1.1.0),
 Standards-Version: 3.9.2
 X-Python-Version: 3.2
@@ -13,7 +13,7 @@ Homepage: https://launchpad.net/usercouch
 Package: python3-usercouch
 Architecture: all
 Depends: ${misc:Depends}, python3 (>= 3.2),
-    python3-microfiber (>= 11.09),
+    python3-microfiber (>= 12.06),
     couchdb-bin (>= 1.1.0),
 Description: Start per-user CouchDB instances for fun and unit testing.
  FIXME.
