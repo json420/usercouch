@@ -246,9 +246,9 @@ class UserCouch:
         if self.couchdb is not None:
             return False
         self.couchdb = Popen(self.cmd)
-        # We give CouchDB ~10.9 seconds to start:
+        # We give CouchDB ~67 seconds to start:
         t = 0.1
-        for i in range(20):
+        for i in range(23):
             time.sleep(t)
             t *= 1.25
             if self.isalive():
