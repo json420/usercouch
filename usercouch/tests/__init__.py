@@ -32,6 +32,7 @@ import shutil
 import subprocess
 import time
 from copy import deepcopy
+from base64 import b32decode
 
 import microfiber
 
@@ -83,6 +84,14 @@ class TempDir(object):
 
 
 class TestFunctions(TestCase):
+    def test_random_id(self):
+        _id = usercouch.random_id()
+        self.assertIsInstance(_id, str)
+        self.assertEqual(len(_id), 24)
+        b = b32decode(_id.encode('ascii'))
+        self.assertIsInstance(b, bytes)
+        self.assertEqual(len(b) * 8, 120)
+
     def test_get_template(self):
         self.assertIs(usercouch.get_template('open'), usercouch.OPEN)
         self.assertIs(usercouch.get_template('basic'), usercouch.BASIC)

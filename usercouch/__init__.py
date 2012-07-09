@@ -31,8 +31,9 @@ import time
 from subprocess import Popen
 from copy import deepcopy
 from hashlib import sha1, md5
+from base64 import b32encode
 
-from microfiber import Server, NotFound, random_id
+from microfiber import Server, NotFound
 
 
 __version__ = '12.07.0'
@@ -86,6 +87,21 @@ OAUTH = BASIC + """
 [oauth_consumer_secrets]
 {consumer_key} = {consumer_secret}
 """
+
+
+def random_id(numbytes=15):
+    """
+    Returns a 120-bit base32-encoded random ID.
+
+    The ID will be 24-characters long, URL and filesystem safe.  For example:
+
+    >>> random_id()  #doctest: +SKIP
+    'OVRHK3TUOUQCWIDMNFXGC4TP'
+
+    This is how dmedia/Novacut random IDs are created, so this is "Jason
+    approved", for what that's worth.
+    """
+    return b32encode(os.urandom(numbytes)).decode('utf-8')
 
 
 def get_template(auth):
