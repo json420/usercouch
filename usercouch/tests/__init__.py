@@ -419,6 +419,7 @@ class TestUserCouch(TestCase):
         self.assertFalse(path.exists(uc.paths.ini))
         env = uc.bootstrap('open')
         self.assertTrue(path.isfile(uc.paths.ini))
+        self.assertEqual(uc._headers, {'Accept': 'application/json'})
 
         # check env
         self.assertIsInstance(env, dict)
@@ -452,6 +453,8 @@ class TestUserCouch(TestCase):
         self.assertFalse(path.exists(uc.paths.ini))
         env = uc.bootstrap()
         self.assertTrue(path.isfile(uc.paths.ini))
+        self.assertEqual(uc._headers, usercouch.get_headers(env))
+        self.assertEqual(set(uc._headers), set(['Accept', 'Authorization']))
 
         # check env
         self.assertIsInstance(env, dict)
@@ -494,6 +497,8 @@ class TestUserCouch(TestCase):
         self.assertFalse(path.exists(uc.paths.ini))
         env = uc.bootstrap(auth='oauth')
         self.assertTrue(path.isfile(uc.paths.ini))
+        self.assertEqual(uc._headers, usercouch.get_headers(env))
+        self.assertEqual(set(uc._headers), set(['Accept', 'Authorization']))
 
         # check env
         self.assertIsInstance(env, dict)
@@ -546,6 +551,8 @@ class TestUserCouch(TestCase):
         self.assertFalse(path.exists(uc.paths.ini))
         env = uc.bootstrap(auth='oauth', tokens=deepcopy(tokens))
         self.assertTrue(path.isfile(uc.paths.ini))
+        self.assertEqual(uc._headers, usercouch.get_headers(env))
+        self.assertEqual(set(uc._headers), set(['Accept', 'Authorization']))
 
         # check env
         self.assertIsInstance(env, dict)
