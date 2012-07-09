@@ -226,6 +226,16 @@ class Paths:
         self.logfile = logfile(self.log, 'couchdb')
 
 
+class HTTPError(Exception):
+    def __init__(self, response, method, path):
+        self.response = response
+        self.method = method
+        self.path = path
+        super().__init__(
+            '{} {}: {} {}'.format(response.status, response.reason, method, path)
+        )
+
+
 class UserCouch:
     def __init__(self, basedir):
         self.couchdb = None
@@ -266,6 +276,8 @@ class UserCouch:
             kw.update(env['oauth'])
         config = get_template(auth).format(**kw)
         open(self.paths.ini, 'w').write(config)
+        self._conn = get_conn(env)
+        self._headers = get_headers(env)
         sock.close()
         self.start()
         return deepcopy(env)
@@ -301,6 +313,25 @@ class UserCouch:
         self.couchdb = None
         return True
 
+    def _request(self, method, path):
+        for retry in range(2):
+            try:
+                self._conn.request(method, path, None, self._headers)
+                response = self._conn.getresponse()
+                data = response.read()
+                break
+            except BadStatusLine as e:
+                self._conn.close()
+                if retry == 1:
+                    raise e
+            except Exception as e:
+                self._conn.close()
+                raise e
+        if response.status >= 400:
+            self._conn.close()
+            raise HTTPError(response, method, path)
+        return (response, data)
+
     def isalive(self):
         if not self.__bootstraped:
             raise Exception(
@@ -308,7 +339,7 @@ class UserCouch:
                         self.__class__.__name__)
             )
         try:
-            self.server.get()
+            self._request('GET', '/')
             return True
         except socket.error:
             return False
