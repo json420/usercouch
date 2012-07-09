@@ -35,8 +35,6 @@ from copy import deepcopy
 from base64 import b32decode
 from http.client import HTTPConnection
 
-import microfiber
-
 import usercouch
 
 
@@ -409,7 +407,6 @@ class TestUserCouch(TestCase):
         self.assertIsInstance(uc.paths, usercouch.Paths)
         self.assertEqual(uc.paths.ini, tmp.join('good', 'session.ini'))
         self.assertEqual(uc.cmd, usercouch.get_cmd(uc.paths.ini))
-        self.assertIsNone(uc.server)
 
     def test_bootstrap(self):
         #######################
@@ -428,11 +425,6 @@ class TestUserCouch(TestCase):
         self.assertIsInstance(port, int)
         self.assertGreater(port, 1024)
         self.assertEqual(env['url'], 'http://localhost:{}/'.format(port))
-
-        # check UserCouch.server
-        self.assertIsInstance(uc.server, microfiber.Server)
-        self.assertEqual(uc.server.env, env)
-        self.assertIsNot(uc.server.env, env)  # Make sure deepcopy() is used
 
         # check UserCouch.couchdb, make sure UserCouch.start() was called
         self.assertIsInstance(uc.couchdb, subprocess.Popen)
@@ -472,11 +464,6 @@ class TestUserCouch(TestCase):
             self.assertIsInstance(value, str)
             self.assertEqual(len(value), 24)
             self.assertTrue(set(value).issubset(B32ALPHABET))
-
-        # check UserCouch.server
-        self.assertIsInstance(uc.server, microfiber.Server)
-        self.assertEqual(uc.server.env, env)
-        self.assertIsNot(uc.server.env, env)  # Make sure deepcopy() is used
 
         # check UserCouch.couchdb, make sure UserCouch.start() was called
         self.assertIsInstance(uc.couchdb, subprocess.Popen)
@@ -526,11 +513,6 @@ class TestUserCouch(TestCase):
             self.assertEqual(len(value), 24)
             self.assertTrue(set(value).issubset(B32ALPHABET))
 
-        # check UserCouch.server
-        self.assertIsInstance(uc.server, microfiber.Server)
-        self.assertEqual(uc.server.env, env)
-        self.assertIsNot(uc.server.env, env)  # Make sure deepcopy() is used
-
         # check UserCouch.couchdb, make sure UserCouch.start() was called
         self.assertIsInstance(uc.couchdb, subprocess.Popen)
         self.assertIsNone(uc.couchdb.returncode)
@@ -571,11 +553,6 @@ class TestUserCouch(TestCase):
             self.assertEqual(len(value), 24)
             self.assertTrue(set(value).issubset(B32ALPHABET))
         self.assertEqual(env['oauth'], tokens)
-
-        # check UserCouch.server
-        self.assertIsInstance(uc.server, microfiber.Server)
-        self.assertEqual(uc.server.env, env)
-        self.assertIsNot(uc.server.env, env)  # Make sure deepcopy() is used
 
         # check UserCouch.couchdb, make sure UserCouch.start() was called
         self.assertIsInstance(uc.couchdb, subprocess.Popen)

@@ -35,8 +35,6 @@ from base64 import b32encode, b64encode
 from http.client import HTTPConnection, BadStatusLine
 from urllib.parse import urlparse
 
-from microfiber import Server, NotFound
-
 
 __version__ = '12.07.0'
 
@@ -244,7 +242,6 @@ class UserCouch:
         self.basedir = basedir
         self.paths = Paths(basedir)
         self.cmd = get_cmd(self.paths.ini)
-        self.server = None
         self.__bootstraped = False
 
     def __del__(self):
@@ -258,7 +255,6 @@ class UserCouch:
         self.__bootstraped = True
         (sock, port) = random_port(address)
         env = random_env(port, auth, tokens)
-        self.server = Server(env)
         kw = {
             'address': address,
             'port': port,
