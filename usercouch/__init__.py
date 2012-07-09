@@ -31,7 +31,7 @@ import time
 from subprocess import Popen
 from copy import deepcopy
 from hashlib import sha1, md5
-from base64 import b32encode
+from base64 import b32encode, b64encode
 
 from microfiber import Server, NotFound
 
@@ -102,6 +102,12 @@ def random_id(numbytes=15):
     approved", for what that's worth.
     """
     return b32encode(os.urandom(numbytes)).decode('utf-8')
+
+
+def basic_auth_header(basic):
+    b = '{username}:{password}'.format(**basic).encode('utf-8')
+    b64 = b64encode(b).decode('utf-8')
+    return {'Authorization': 'Basic ' + b64}
 
 
 def get_template(auth):

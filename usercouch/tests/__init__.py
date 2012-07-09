@@ -92,6 +92,13 @@ class TestFunctions(TestCase):
         self.assertIsInstance(b, bytes)
         self.assertEqual(len(b) * 8, 120)
 
+    def test_basic_auth_header(self):
+        basic = {'username': 'Aladdin', 'password': 'open sesame'}
+        self.assertEqual(
+            usercouch.basic_auth_header(basic),
+            {'Authorization': 'Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ=='}
+        )
+
     def test_get_template(self):
         self.assertIs(usercouch.get_template('open'), usercouch.OPEN)
         self.assertIs(usercouch.get_template('basic'), usercouch.BASIC)
