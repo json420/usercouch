@@ -32,6 +32,8 @@ from subprocess import Popen
 from copy import deepcopy
 from hashlib import sha1, md5
 from base64 import b32encode, b64encode
+from http.client import HTTPConnection, BadStatusLine
+from urllib.parse import urlparse
 
 from microfiber import Server, NotFound
 
@@ -108,6 +110,20 @@ def basic_auth_header(basic):
     b = '{username}:{password}'.format(**basic).encode('utf-8')
     b64 = b64encode(b).decode('utf-8')
     return {'Authorization': 'Basic ' + b64}
+
+
+def get_conn(env):
+    t = urlparse(env['url'])
+    assert t.scheme == 'http'
+    assert t.netloc
+    return HTTPConnection(t.netloc)
+
+
+def get_headers(env):
+    headers = {'Accept': 'application/json'}
+    if 'basic' in env:
+        headers.update(basic_auth_header(env['basic']))
+    return headers
 
 
 def get_template(auth):

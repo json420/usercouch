@@ -33,6 +33,7 @@ import subprocess
 import time
 from copy import deepcopy
 from base64 import b32decode
+from http.client import HTTPConnection
 
 import microfiber
 
@@ -97,6 +98,27 @@ class TestFunctions(TestCase):
         self.assertEqual(
             usercouch.basic_auth_header(basic),
             {'Authorization': 'Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ=='}
+        )
+
+    def test_get_conn(self):
+        tmp = TempDir()
+        url = 'http://localhost:5634/'
+        env = {'url': url}
+        conn = usercouch.get_conn(env)
+        self.assertIsInstance(conn, HTTPConnection)
+
+    def test_get_headers(self):
+        env = {}
+        self.assertEqual(usercouch.get_headers(env),
+            {'Accept': 'application/json'}
+        )
+
+        env = {'basic': {'username': 'Aladdin', 'password': 'open sesame'}}
+        self.assertEqual(usercouch.get_headers(env),
+            {
+                'Accept': 'application/json',
+                'Authorization': 'Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ==',
+            }
         )
 
     def test_get_template(self):
