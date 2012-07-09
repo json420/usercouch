@@ -40,8 +40,6 @@ from microfiber import Server, NotFound
 
 __version__ = '12.07.0'
 
-# local doc ID for the usercouch admin doc, used for UserCouch.autocompact():
-ADMIN_ID = '_local/usercouch'
 
 OPEN = """
 [httpd]
@@ -360,34 +358,3 @@ class UserCouch:
             return False
         self.couchdb.terminate()
         return True
-
-    def autocompact(self):
-        if not self.__bootstraped:
-            raise Exception(
-                'Must call {0}.bootstrap() before {0}.autocompact()'.format(
-                        self.__class__.__name__)
-            )
-        s = Server(self.server.env)
-        compacted = []
-        for name in s.get('_all_dbs'):
-            if name.startswith('_'):
-                continue
-            db = s.database(name)
-            try:
-                doc = db.get(ADMIN_ID)
-            except NotFound:
-                doc = {
-                    '_id': ADMIN_ID,
-                    'compact_seq': 0,
-                }
-                db.save(doc)
-            update_seq = db.get()['update_seq']
-            compact_seq = doc.get('compact_seq', 0)
-            if update_seq > compact_seq + 500:
-                compacted.append(name)
-                doc['compact_seq'] = update_seq
-                doc['compact_time'] = time.time()
-                db.save(doc)
-                db.post(None, '_compact')
-        return compacted
-
