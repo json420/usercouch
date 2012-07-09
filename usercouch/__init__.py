@@ -29,7 +29,6 @@ from os import path
 import stat
 import time
 from subprocess import Popen
-from copy import deepcopy
 from hashlib import sha1, md5
 from base64 import b32encode, b64encode
 from http.client import HTTPConnection, BadStatusLine
@@ -274,7 +273,7 @@ class UserCouch:
         self._headers = get_headers(env)
         sock.close()
         self.start()
-        return deepcopy(env)
+        return env
 
     def bootstrap2(self, tokens):
         env = self.bootstrap(auth='oauth', address='0.0.0.0', tokens=tokens)
