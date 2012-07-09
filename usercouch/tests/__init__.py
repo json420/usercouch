@@ -364,6 +364,21 @@ class TestPaths(TestCase):
         self.assertTrue(path.isfile(tmp.join('log', 'couchdb.log.previous')))
 
 
+class TestHTTPError(TestCase):
+    def test_init(self):
+        class response:
+            status = 747
+            reason = 'Really Big'
+
+        e = usercouch.HTTPError(response, 'FLY', '/somewhere/awesome')
+        self.assertIs(e.response, response)
+        self.assertEqual(e.method, 'FLY')
+        self.assertEqual(e.path, '/somewhere/awesome')
+        self.assertEqual(str(e),
+            '747 Really Big: FLY /somewhere/awesome'
+        )
+
+
 class TestUserCouch(TestCase):
     def test_init(self):
         tmp = TempDir()
