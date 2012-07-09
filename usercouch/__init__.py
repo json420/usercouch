@@ -36,34 +36,24 @@ from urllib.parse import urlparse
 
 
 __version__ = '12.07.0'
+usercouch_ini = path.join(
+    path.dirname(path.abspath(__file__)), 'data', 'usercouch.ini'
+)
+assert path.isfile(usercouch_ini)
 
 
 OPEN = """
 [httpd]
 bind_address = {address}
 port = {port}
-socket_options = [{{recbuf, 262144}}, {{sndbuf, 262144}}, {{nodelay, true}}]
 
 [couchdb]
 database_dir = {databases}
 view_index_dir = {views}
-uri_file =
 
 [log]
 file = {logfile}
 level = {loglevel}
-
-[httpd_global_handlers]
-_apps = {{couch_httpd_misc_handlers, handle_utils_dir_req, "/usr/share/couchdb/apps"}}
-_stats =
-
-[daemons]
-stats_collector =
-stats_aggregator =
-
-[stats]
-rate =
-samples =
 """
 
 BASIC = OPEN + """
@@ -178,12 +168,13 @@ def couch_hashed(password, salt):
     return '-hashed-{},{}'.format(hexdigest, salt)
 
 
-def get_cmd(ini):
+def get_cmd(session_ini):
     return [
         '/usr/bin/couchdb',
         '-n',  # reset configuration file chain (including system default)
         '-a', '/etc/couchdb/default.ini',
-        '-a', ini,
+        '-a', usercouch_ini,
+        '-a', session_ini,
     ]
 
 

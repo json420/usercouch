@@ -76,6 +76,7 @@ setup(
     author_email='jderose@novacut.com',
     license='LGPLv3+',
     packages=['usercouch'],
+    package_data={'usercouch': ['data/usercouch.ini']},
     cmdclass={
         'test': Test,
         #'build': build_with_docs,
