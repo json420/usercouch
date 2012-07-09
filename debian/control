@@ -2,18 +2,30 @@ Source: usercouch
 Section: python
 Priority: optional
 Maintainer: Jason Gerard DeRose <jderose@novacut.com>
-Build-Depends: debhelper (>= 8.9), python3 (>= 3.2),
-    python3-microfiber (>= 12.06),
-    couchdb-bin (>= 1.2.0),
-Standards-Version: 3.9.2
+Build-Depends: debhelper (>= 8.9),
+    python3 (>= 3.2),
+    couchdb-bin (>= 1.2.0)
+Standards-Version: 3.9.3
 X-Python-Version: 3.2
 X-Python3-Version: 3.2
 Homepage: https://launchpad.net/usercouch
 
 Package: python3-usercouch
 Architecture: all
-Depends: ${misc:Depends}, python3 (>= 3.2),
-    python3-microfiber (>= 12.06),
-    couchdb-bin (>= 1.2.0),
-Description: Start per-user CouchDB instances for fun and unit testing.
- FIXME.
+Depends: ${misc:Depends},
+    python3 (>= 3.2),
+    couchdb-bin (>= 1.2.0)
+Suggests: python3-microfiber
+Description: starts per-user CouchDB instances for fun, profit, unit testing
+ UserCouch is a Python3 library for starting per-user CouchDB instances,
+ including throw-away instances for unit testing. It's easy:
+ .
+ from usercouch.misc import TempCouch
+ from microfiber import Database
+ tmp = TempCouch()
+ env = tmp.bootstrap()
+ db = Database('example', env)
+ db.put(None) # Create the database
+ db.post({'_id': 'foo'}) # Create a document
+ .
+ Also see Microfiber: https://launchpad.net/microfiber

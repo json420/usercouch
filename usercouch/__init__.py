@@ -29,16 +29,14 @@ from os import path
 import stat
 import time
 from subprocess import Popen
-from copy import deepcopy
 from hashlib import sha1, md5
-
-from microfiber import Server, NotFound, random_id
+from base64 import b32encode, b64encode
+from http.client import HTTPConnection, BadStatusLine
+from urllib.parse import urlparse
 
 
 __version__ = '12.07.0'
 
-# local doc ID for the usercouch admin doc, used for UserCouch.autocompact():
-ADMIN_ID = '_local/usercouch'
 
 OPEN = """
 [httpd]
@@ -86,6 +84,41 @@ OAUTH = BASIC + """
 [oauth_consumer_secrets]
 {consumer_key} = {consumer_secret}
 """
+
+
+def random_id(numbytes=15):
+    """
+    Returns a 120-bit base32-encoded random ID.
+
+    The ID will be 24-characters long, URL and filesystem safe.  For example:
+
+    >>> random_id()  #doctest: +SKIP
+    'OVRHK3TUOUQCWIDMNFXGC4TP'
+
+    This is how dmedia/Novacut random IDs are created, so this is "Jason
+    approved", for what that's worth.
+    """
+    return b32encode(os.urandom(numbytes)).decode('utf-8')
+
+
+def basic_auth_header(basic):
+    b = '{username}:{password}'.format(**basic).encode('utf-8')
+    b64 = b64encode(b).decode('utf-8')
+    return {'Authorization': 'Basic ' + b64}
+
+
+def get_conn(env):
+    t = urlparse(env['url'])
+    assert t.scheme == 'http'
+    assert t.netloc
+    return HTTPConnection(t.netloc)
+
+
+def get_headers(env):
+    headers = {'Accept': 'application/json'}
+    if 'basic' in env:
+        headers.update(basic_auth_header(env['basic']))
+    return headers
 
 
 def get_template(auth):
@@ -188,6 +221,16 @@ class Paths:
         self.logfile = logfile(self.log, 'couchdb')
 
 
+class HTTPError(Exception):
+    def __init__(self, response, method, path):
+        self.response = response
+        self.method = method
+        self.path = path
+        super().__init__(
+            '{} {}: {} {}'.format(response.status, response.reason, method, path)
+        )
+
+
 class UserCouch:
     def __init__(self, basedir):
         self.couchdb = None
@@ -198,7 +241,6 @@ class UserCouch:
         self.basedir = basedir
         self.paths = Paths(basedir)
         self.cmd = get_cmd(self.paths.ini)
-        self.server = None
         self.__bootstraped = False
 
     def __del__(self):
@@ -212,7 +254,6 @@ class UserCouch:
         self.__bootstraped = True
         (sock, port) = random_port(address)
         env = random_env(port, auth, tokens)
-        self.server = Server(env)
         kw = {
             'address': address,
             'port': port,
@@ -228,9 +269,11 @@ class UserCouch:
             kw.update(env['oauth'])
         config = get_template(auth).format(**kw)
         open(self.paths.ini, 'w').write(config)
+        self._conn = get_conn(env)
+        self._headers = get_headers(env)
         sock.close()
         self.start()
-        return deepcopy(env)
+        return env
 
     def bootstrap2(self, tokens):
         env = self.bootstrap(auth='oauth', address='0.0.0.0', tokens=tokens)
@@ -263,6 +306,25 @@ class UserCouch:
         self.couchdb = None
         return True
 
+    def _request(self, method, path):
+        for retry in range(2):
+            try:
+                self._conn.request(method, path, None, self._headers)
+                response = self._conn.getresponse()
+                data = response.read()
+                break
+            except BadStatusLine as e:
+                self._conn.close()
+                if retry == 1:
+                    raise e
+            except Exception as e:
+                self._conn.close()
+                raise e
+        if response.status >= 400:
+            self._conn.close()
+            raise HTTPError(response, method, path)
+        return (response, data)
+
     def isalive(self):
         if not self.__bootstraped:
             raise Exception(
@@ -270,7 +332,7 @@ class UserCouch:
                         self.__class__.__name__)
             )
         try:
-            self.server.get()
+            self._request('GET', '/')
             return True
         except socket.error:
             return False
@@ -291,34 +353,3 @@ class UserCouch:
             return False
         self.couchdb.terminate()
         return True
-
-    def autocompact(self):
-        if not self.__bootstraped:
-            raise Exception(
-                'Must call {0}.bootstrap() before {0}.autocompact()'.format(
-                        self.__class__.__name__)
-            )
-        s = Server(self.server.env)
-        compacted = []
-        for name in s.get('_all_dbs'):
-            if name.startswith('_'):
-                continue
-            db = s.database(name)
-            try:
-                doc = db.get(ADMIN_ID)
-            except NotFound:
-                doc = {
-                    '_id': ADMIN_ID,
-                    'compact_seq': 0,
-                }
-                db.save(doc)
-            update_seq = db.get()['update_seq']
-            compact_seq = doc.get('compact_seq', 0)
-            if update_seq > compact_seq + 500:
-                compacted.append(name)
-                doc['compact_seq'] = update_seq
-                doc['compact_time'] = time.time()
-                db.save(doc)
-                db.post(None, '_compact')
-        return compacted
-

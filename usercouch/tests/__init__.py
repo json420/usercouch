@@ -32,8 +32,8 @@ import shutil
 import subprocess
 import time
 from copy import deepcopy
-
-import microfiber
+from base64 import b32decode
+from http.client import HTTPConnection
 
 import usercouch
 
@@ -83,6 +83,42 @@ class TempDir(object):
 
 
 class TestFunctions(TestCase):
+    def test_random_id(self):
+        _id = usercouch.random_id()
+        self.assertIsInstance(_id, str)
+        self.assertEqual(len(_id), 24)
+        b = b32decode(_id.encode('ascii'))
+        self.assertIsInstance(b, bytes)
+        self.assertEqual(len(b) * 8, 120)
+
+    def test_basic_auth_header(self):
+        basic = {'username': 'Aladdin', 'password': 'open sesame'}
+        self.assertEqual(
+            usercouch.basic_auth_header(basic),
+            {'Authorization': 'Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ=='}
+        )
+
+    def test_get_conn(self):
+        tmp = TempDir()
+        url = 'http://localhost:5634/'
+        env = {'url': url}
+        conn = usercouch.get_conn(env)
+        self.assertIsInstance(conn, HTTPConnection)
+
+    def test_get_headers(self):
+        env = {}
+        self.assertEqual(usercouch.get_headers(env),
+            {'Accept': 'application/json'}
+        )
+
+        env = {'basic': {'username': 'Aladdin', 'password': 'open sesame'}}
+        self.assertEqual(usercouch.get_headers(env),
+            {
+                'Accept': 'application/json',
+                'Authorization': 'Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ==',
+            }
+        )
+
     def test_get_template(self):
         self.assertIs(usercouch.get_template('open'), usercouch.OPEN)
         self.assertIs(usercouch.get_template('basic'), usercouch.BASIC)
@@ -326,6 +362,21 @@ class TestPaths(TestCase):
         self.assertTrue(path.isfile(tmp.join('log', 'couchdb.log.previous')))
 
 
+class TestHTTPError(TestCase):
+    def test_init(self):
+        class response:
+            status = 747
+            reason = 'Really Big'
+
+        e = usercouch.HTTPError(response, 'FLY', '/somewhere/awesome')
+        self.assertIs(e.response, response)
+        self.assertEqual(e.method, 'FLY')
+        self.assertEqual(e.path, '/somewhere/awesome')
+        self.assertEqual(str(e),
+            '747 Really Big: FLY /somewhere/awesome'
+        )
+
+
 class TestUserCouch(TestCase):
     def test_init(self):
         tmp = TempDir()
@@ -356,7 +407,6 @@ class TestUserCouch(TestCase):
         self.assertIsInstance(uc.paths, usercouch.Paths)
         self.assertEqual(uc.paths.ini, tmp.join('good', 'session.ini'))
         self.assertEqual(uc.cmd, usercouch.get_cmd(uc.paths.ini))
-        self.assertIsNone(uc.server)
 
     def test_bootstrap(self):
         #######################
@@ -366,6 +416,7 @@ class TestUserCouch(TestCase):
         self.assertFalse(path.exists(uc.paths.ini))
         env = uc.bootstrap('open')
         self.assertTrue(path.isfile(uc.paths.ini))
+        self.assertEqual(uc._headers, {'Accept': 'application/json'})
 
         # check env
         self.assertIsInstance(env, dict)
@@ -374,11 +425,6 @@ class TestUserCouch(TestCase):
         self.assertIsInstance(port, int)
         self.assertGreater(port, 1024)
         self.assertEqual(env['url'], 'http://localhost:{}/'.format(port))
-
-        # check UserCouch.server
-        self.assertIsInstance(uc.server, microfiber.Server)
-        self.assertEqual(uc.server.env, env)
-        self.assertIsNot(uc.server.env, env)  # Make sure deepcopy() is used
 
         # check UserCouch.couchdb, make sure UserCouch.start() was called
         self.assertIsInstance(uc.couchdb, subprocess.Popen)
@@ -399,6 +445,8 @@ class TestUserCouch(TestCase):
         self.assertFalse(path.exists(uc.paths.ini))
         env = uc.bootstrap()
         self.assertTrue(path.isfile(uc.paths.ini))
+        self.assertEqual(uc._headers, usercouch.get_headers(env))
+        self.assertEqual(set(uc._headers), set(['Accept', 'Authorization']))
 
         # check env
         self.assertIsInstance(env, dict)
@@ -416,11 +464,6 @@ class TestUserCouch(TestCase):
             self.assertIsInstance(value, str)
             self.assertEqual(len(value), 24)
             self.assertTrue(set(value).issubset(B32ALPHABET))
-
-        # check UserCouch.server
-        self.assertIsInstance(uc.server, microfiber.Server)
-        self.assertEqual(uc.server.env, env)
-        self.assertIsNot(uc.server.env, env)  # Make sure deepcopy() is used
 
         # check UserCouch.couchdb, make sure UserCouch.start() was called
         self.assertIsInstance(uc.couchdb, subprocess.Popen)
@@ -441,6 +484,8 @@ class TestUserCouch(TestCase):
         self.assertFalse(path.exists(uc.paths.ini))
         env = uc.bootstrap(auth='oauth')
         self.assertTrue(path.isfile(uc.paths.ini))
+        self.assertEqual(uc._headers, usercouch.get_headers(env))
+        self.assertEqual(set(uc._headers), set(['Accept', 'Authorization']))
 
         # check env
         self.assertIsInstance(env, dict)
@@ -468,11 +513,6 @@ class TestUserCouch(TestCase):
             self.assertEqual(len(value), 24)
             self.assertTrue(set(value).issubset(B32ALPHABET))
 
-        # check UserCouch.server
-        self.assertIsInstance(uc.server, microfiber.Server)
-        self.assertEqual(uc.server.env, env)
-        self.assertIsNot(uc.server.env, env)  # Make sure deepcopy() is used
-
         # check UserCouch.couchdb, make sure UserCouch.start() was called
         self.assertIsInstance(uc.couchdb, subprocess.Popen)
         self.assertIsNone(uc.couchdb.returncode)
@@ -493,6 +533,8 @@ class TestUserCouch(TestCase):
         self.assertFalse(path.exists(uc.paths.ini))
         env = uc.bootstrap(auth='oauth', tokens=deepcopy(tokens))
         self.assertTrue(path.isfile(uc.paths.ini))
+        self.assertEqual(uc._headers, usercouch.get_headers(env))
+        self.assertEqual(set(uc._headers), set(['Accept', 'Authorization']))
 
         # check env
         self.assertIsInstance(env, dict)
@@ -511,11 +553,6 @@ class TestUserCouch(TestCase):
             self.assertEqual(len(value), 24)
             self.assertTrue(set(value).issubset(B32ALPHABET))
         self.assertEqual(env['oauth'], tokens)
-
-        # check UserCouch.server
-        self.assertIsInstance(uc.server, microfiber.Server)
-        self.assertEqual(uc.server.env, env)
-        self.assertIsNot(uc.server.env, env)  # Make sure deepcopy() is used
 
         # check UserCouch.couchdb, make sure UserCouch.start() was called
         self.assertIsInstance(uc.couchdb, subprocess.Popen)
@@ -599,99 +636,3 @@ class TestUserCouch(TestCase):
         uc.couchdb.wait()
         uc.couchdb = None
         self.assertFalse(uc.crash())
-
-    def test_autocompact(self):
-        tmp = TempDir()
-        uc = usercouch.UserCouch(tmp.dir)
-
-        with self.assertRaises(Exception) as cm:
-            uc.autocompact()
-        self.assertEqual(
-            str(cm.exception),
-            'Must call UserCouch.bootstrap() before UserCouch.autocompact()'
-        )
-
-        env = uc.bootstrap()
-        s = microfiber.Server(env)
-
-        # Create 5 randomly named DBs
-        names = tuple('db-' + microfiber.random_id().lower() for i in range(5))
-        for name in names:
-            s.put(None, name)
-
-        ADMIN_ID = '_local/usercouch'
-        for name in names:
-            self.assertEqual(s.get(name)['update_seq'], 0)
-            with self.assertRaises(microfiber.NotFound) as cm:
-                s.get(name, ADMIN_ID)
-
-        # Call autocompact when all DBs are empty
-        self.assertEqual(uc.autocompact(), [])
-        for name in names:
-            self.assertEqual(s.get(name)['update_seq'], 0)
-            doc = s.get(name, ADMIN_ID)
-            self.assertEqual(doc['compact_seq'], 0)
-
-        # Get update_seq to 500 for all DBs:
-        docs = [
-            {'_id': microfiber.random_id()}
-            for i in range(500)
-        ]
-        for name in names:
-            for doc in docs:
-                s.post(doc, name)
-
-        # Call autocompact again, make sure it still doesn't compact anything
-        self.assertEqual(uc.autocompact(), [])
-        for name in names:
-            self.assertEqual(s.get(name)['update_seq'], 500)
-            doc = s.get(name, ADMIN_ID)
-            self.assertEqual(doc['compact_seq'], 0)
-
-        # Push 2 DBs over the threshhold for auto-compact
-        doc = {'_id': microfiber.random_id()}
-        sizes = {}
-        for name in names[:2]:
-            s.post(doc, name)
-            self.assertEqual(s.get(name)['update_seq'], 501)
-            sizes[name] = s.get(name)['disk_size']
-
-        self.assertEqual(uc.autocompact(), sorted(names[:2]))
-        for name in names[:2]:
-            self.assertEqual(s.get(name)['update_seq'], 501)
-            doc = s.get(name, ADMIN_ID)
-            self.assertEqual(doc['compact_seq'], 501)
-        for name in names[2:]:
-            self.assertEqual(s.get(name)['update_seq'], 500)
-            doc = s.get(name, ADMIN_ID)
-            self.assertEqual(doc['compact_seq'], 0)
-
-        # Make sure the compaction was actually triggered
-        for name in names[:2]:
-            while s.get(name)['compact_running']:
-                time.sleep(0.1)
-            self.assertLess(s.get(name)['disk_size'], sizes[name])
-
-        ####
-        # Make sure autocompact will jump up to the next threshold correctly
-        db = names[2]
-        self.assertEqual(s.get(db)['update_seq'], 500)
-        doc = s.get(db, ADMIN_ID)
-        self.assertEqual(doc['compact_seq'], 0)
-
-        # Add docs:
-        for i in range(1001):
-            s.post({'_id': microfiber.random_id()}, db)
-        size = s.get(db)['disk_size']
-
-        self.assertEqual(uc.autocompact(), [db])
-        self.assertEqual(s.get(db)['update_seq'], 1501)
-        doc = s.get(db, ADMIN_ID)
-        self.assertEqual(doc['compact_seq'], 1501)
-
-        # Check that compact was called on this single DB:
-        while s.get(db)['compact_running']:
-            time.sleep(0.1)
-        self.assertLess(s.get(db)['disk_size'], size)
-  
-        
