@@ -182,26 +182,6 @@ def build_session_ini(auth, kw):
     return template.format(**kw)
 
 
-def basic_auth_header(basic):
-    b = '{username}:{password}'.format(**basic).encode('utf-8')
-    b64 = b64encode(b).decode('utf-8')
-    return {'Authorization': 'Basic ' + b64}
-
-
-def get_conn(env):
-    t = urlparse(env['url'])
-    assert t.scheme == 'http'
-    assert t.netloc
-    return HTTPConnection(t.netloc)
-
-
-def get_headers(env):
-    headers = {'Accept': 'application/json'}
-    if 'basic' in env:
-        headers.update(basic_auth_header(env['basic']))
-    return headers
-
-
 def bind_random_port(address='127.0.0.1'):
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.bind((address, 0))
@@ -253,6 +233,9 @@ class Paths:
         self.logfile = logfile(self.log, 'couchdb')
 
 
+###############
+# HTTP helpers:
+
 class HTTPError(Exception):
     def __init__(self, response, method, path):
         self.response = response
@@ -262,6 +245,30 @@ class HTTPError(Exception):
             '{} {}: {} {}'.format(response.status, response.reason, method, path)
         )
 
+
+def basic_auth_header(basic):
+    b = '{username}:{password}'.format(**basic).encode('utf-8')
+    b64 = b64encode(b).decode('utf-8')
+    return {'Authorization': 'Basic ' + b64}
+
+
+def get_conn(env):
+    t = urlparse(env['url'])
+    assert t.scheme == 'http'
+    assert t.netloc
+    return HTTPConnection(t.netloc)
+
+
+def get_headers(env):
+    headers = {'Accept': 'application/json'}
+    if 'basic' in env:
+        headers.update(basic_auth_header(env['basic']))
+    return headers
+
+
+
+########################
+# The `UserCouch` class:
 
 class UserCouch:
     def __init__(self, basedir):
