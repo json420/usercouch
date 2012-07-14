@@ -206,7 +206,7 @@ def get_template(auth):
     raise ValueError('invalid auth: {!r}'.format(auth))
 
 
-def random_port(address='127.0.0.1'):
+def bind_random_port(address='127.0.0.1'):
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.bind((address, 0))
     port = sock.getsockname()[1]
@@ -303,7 +303,7 @@ class UserCouch:
                 '{}.bootstrap() already called'.format(self.__class__.__name__)
             )
         self.__bootstraped = True
-        (sock, port) = random_port(address)
+        (sock, port) = bind_random_port(address)
         env = random_env(port, auth, tokens)
         kw = {
             'address': address,

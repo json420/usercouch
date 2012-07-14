@@ -133,12 +133,12 @@ class TestFunctions(TestCase):
             t = usercouch.get_template('nope')
         self.assertEqual(str(cm.exception), "invalid auth: 'nope'")
 
-    def test_random_port(self):
-        (sock, port) = usercouch.random_port()
+    def test_bind_random_port(self):
+        (sock, port) = usercouch.bind_random_port()
         self.assertIsInstance(sock, socket.socket)
         self.assertIsInstance(port, int)
         self.assertEqual(sock.getsockname(), ('127.0.0.1', port))
-        self.assertNotEqual(usercouch.random_port()[1], port)
+        self.assertNotEqual(usercouch.bind_random_port()[1], port)
 
     def test_random_oauth(self):
         kw = usercouch.random_oauth()
