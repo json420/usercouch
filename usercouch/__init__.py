@@ -301,17 +301,19 @@ class LockError(Exception):
 class UserCouch:
     def __init__(self, basedir):
         self.couchdb = None
+        self.lockfile = None
         basedir = path.abspath(basedir)
         if not path.isdir(basedir):
             raise ValueError('{}.basedir not a directory: {!r}'.format(
                 self.__class__.__name__, basedir)
             )
         self.basedir = basedir
-        self.lockfile = open(path.join(basedir, 'lockfile'), 'wb')
+        lockfile = open(path.join(basedir, 'lockfile'), 'wb')
         try:
-            fcntl.flock(self.lockfile.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+            fcntl.flock(lockfile.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+            self.lockfile = lockfile
         except IOError:
-            raise LockError(self.lockfile.name)
+            raise LockError(lockfile.name)
         self.paths = Paths(basedir)
         self.cmd = get_cmd(self.paths.ini)
         self.__bootstraped = False
@@ -321,9 +323,12 @@ class UserCouch:
 
     def __del__(self):
         self.kill()
-        if not self.lockfile.closed:
-            fcntl.flock(self.lockfile.fileno(), fcntl.LOCK_UN)
-            self.lockfile.close()
+        if self.lockfile is not None:
+            lockfile = self.lockfile
+            self.lockfile = None
+            fcntl.flock(lockfile.fileno(), fcntl.LOCK_UN)
+            lockfile.close()
+            os.remove(lockfile.name)
 
     def bootstrap(self, auth='basic', overrides=None):
         if self.__bootstraped:
