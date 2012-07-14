@@ -740,46 +740,91 @@ class TestUserCouch(TestCase):
             'UserCouch.bootstrap() already called'
         )
 
-        #####################################################
-        # Test with auth='oauth' and static oauth credentials
-        tokens = usercouch.random_oauth()
-        config = {'oauth': tokens}
+    def test_bootstrap_override_basic(self):
+        overrides = {
+            'loglevel': 'debug',
+            'address': '0.0.0.0',
+            'username': usercouch.random_id(),
+            'password': usercouch.random_id(),
+            'salt': usercouch.random_salt(),
+        }
         tmp = TempDir()
         uc = usercouch.UserCouch(tmp.dir)
-        self.assertFalse(path.exists(uc.paths.ini))
-        env = uc.bootstrap(auth='oauth', overrides=deepcopy(config))
-        self.assertTrue(path.isfile(uc.paths.ini))
-        self.assertEqual(uc._headers, usercouch.get_headers(env))
-        self.assertEqual(set(uc._headers), set(['Accept', 'Authorization']))
-
-        # check env
+        env = uc.bootstrap('basic', deepcopy(overrides))
         self.assertIsInstance(env, dict)
-        self.assertEqual(set(env), set(['port', 'url', 'basic', 'oauth']))
-        port = env['port']
-        self.assertIsInstance(port, int)
-        self.assertGreater(port, 1024)
-        self.assertEqual(env['url'], 'http://localhost:{}/'.format(port))
-        self.assertIsInstance(env['basic'], dict)
-        self.assertEqual(
-            set(env['basic']),
-            set(['username', 'password'])
+        self.assertEqual(set(env),
+            set(['port', 'url', 'basic'])
         )
-        for value in env['basic'].values():
-            self.assertIsInstance(value, str)
-            self.assertEqual(len(value), 24)
-            self.assertTrue(set(value).issubset(B32ALPHABET))
-        self.assertEqual(env['oauth'], tokens)
+        self.assertIsInstance(env['port'], int)
+        self.assertEqual(env['url'],
+            'http://localhost:{}/'.format(env['port'])
+        )
+        self.assertEqual(env['basic'],
+            dict((k, overrides[k]) for k in ('username', 'password'))
+        )
+        kw = {
+            'address': overrides['address'],
+            'port': env['port'],
+            'databases': uc.paths.databases,
+            'views': uc.paths.views,
+            'logfile': uc.paths.logfile,
+            'loglevel': overrides['loglevel'],
 
-        # check UserCouch.couchdb, make sure UserCouch.start() was called
-        self.assertIsInstance(uc.couchdb, subprocess.Popen)
-        self.assertIsNone(uc.couchdb.returncode)
-
-        # check that Exception is raised if you call bootstrap() more than once
-        with self.assertRaises(Exception) as cm:
-            uc.bootstrap()
+            'username': overrides['username'],
+            'hashed': usercouch.couch_hashed(
+                overrides['password'], overrides['salt']
+            ),
+        }
         self.assertEqual(
-            str(cm.exception),
-            'UserCouch.bootstrap() already called'
+            open(uc.paths.ini, 'r').read(),
+            usercouch.BASIC.format(**kw)
+        )
+
+    def test_bootstrap_override_oauth(self):
+        overrides = {
+            'loglevel': 'debug',
+            'address': '0.0.0.0',
+            'username': usercouch.random_id(),
+            'password': usercouch.random_id(),
+            'salt': usercouch.random_salt(),
+            'oauth': usercouch.random_oauth(),
+        }
+        tmp = TempDir()
+        uc = usercouch.UserCouch(tmp.dir)
+        env = uc.bootstrap('oauth', deepcopy(overrides))
+        self.assertIsInstance(env, dict)
+        self.assertEqual(set(env),
+            set(['port', 'url', 'basic', 'oauth'])
+        )
+        self.assertIsInstance(env['port'], int)
+        self.assertEqual(env['url'],
+            'http://localhost:{}/'.format(env['port'])
+        )
+        self.assertEqual(env['basic'],
+            dict((k, overrides[k]) for k in ('username', 'password'))
+        )
+        self.assertEqual(env['oauth'], overrides['oauth'])
+        kw = {
+            'address': overrides['address'],
+            'port': env['port'],
+            'databases': uc.paths.databases,
+            'views': uc.paths.views,
+            'logfile': uc.paths.logfile,
+            'loglevel': overrides['loglevel'],
+
+            'username': overrides['username'],
+            'hashed': usercouch.couch_hashed(
+                overrides['password'], overrides['salt']
+            ),
+
+            'token': overrides['oauth']['token'],
+            'token_secret': overrides['oauth']['token_secret'],
+            'consumer_key': overrides['oauth']['consumer_key'],
+            'consumer_secret': overrides['oauth']['consumer_secret'],
+        }
+        self.assertEqual(
+            open(uc.paths.ini, 'r').read(),
+            usercouch.OAUTH.format(**kw)
         )
 
     def test_start(self):
