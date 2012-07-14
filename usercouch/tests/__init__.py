@@ -765,10 +765,11 @@ class TestUserCouch(TestCase):
         #####################################################
         # Test with auth='oauth' and static oauth credentials
         tokens = usercouch.random_oauth()
+        config = {'oauth': tokens}
         tmp = TempDir()
         uc = usercouch.UserCouch(tmp.dir)
         self.assertFalse(path.exists(uc.paths.ini))
-        env = uc.bootstrap(auth='oauth', tokens=deepcopy(tokens))
+        env = uc.bootstrap(auth='oauth', config=deepcopy(config))
         self.assertTrue(path.isfile(uc.paths.ini))
         self.assertEqual(uc._headers, usercouch.get_headers(env))
         self.assertEqual(set(uc._headers), set(['Accept', 'Authorization']))

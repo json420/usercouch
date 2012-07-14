@@ -80,6 +80,13 @@ OAUTH = BASIC + """
 {consumer_key} = {consumer_secret}
 """
 
+TEMPLATES = {
+    'open': OPEN,
+    'basic': BASIC,
+    'oauth': OAUTH,
+}
+
+
 
 def random_id(numbytes=15):
     """
@@ -174,6 +181,13 @@ def build_template_kw(auth, config, port, paths):
     if auth == 'oauth':
         kw.update(config['oauth'])
     return kw
+
+
+def build_session_ini(auth, kw):
+    if auth not in TEMPLATES:
+        raise ValueError('invalid auth: {!r}'.format(auth))
+    template = TEMPLATES[auth]
+    return template.format(**kw)
 
 
 def basic_auth_header(basic):
@@ -297,29 +311,18 @@ class UserCouch:
     def __del__(self):
         self.kill()
 
-    def bootstrap(self, auth='basic', address='127.0.0.1', tokens=None, loglevel='notice'):
+    def bootstrap(self, auth='basic', config=None):
         if self.__bootstraped:
             raise Exception(
                 '{}.bootstrap() already called'.format(self.__class__.__name__)
             )
         self.__bootstraped = True
-        (sock, port) = bind_random_port(address)
-        env = random_env(port, auth, tokens)
-        kw = {
-            'address': address,
-            'port': port,
-            'databases': self.paths.databases,
-            'views': self.paths.views,
-            'logfile': self.paths.logfile,
-            'loglevel': loglevel,
-        }
-        if auth in ('basic', 'oauth'):
-            kw['username'] = env['basic']['username']
-            kw['hashed'] = couch_hashed(env['basic']['password'], random_salt())
-        if auth == 'oauth':
-            kw.update(env['oauth'])
-        config = get_template(auth).format(**kw)
-        open(self.paths.ini, 'w').write(config)
+        config = build_config(auth, config)
+        (sock, port) = bind_random_port(config['address'])
+        env = build_env(auth, config, port)
+        kw = build_template_kw(auth, config, port, self.paths)
+        session = build_session_ini(auth, kw)
+        open(self.paths.ini, 'w').write(session)
         self._conn = get_conn(env)
         self._headers = get_headers(env)
         sock.close()
