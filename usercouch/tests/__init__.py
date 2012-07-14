@@ -111,6 +111,11 @@ class TestFunctions(TestCase):
             self.assertEqual(len(value), 24)
             self.assertTrue(set(value).issubset(B32ALPHABET))
 
+        new = usercouch.random_oauth()
+        self.assertNotEqual(new, kw)
+        for key in ['consumer_key', 'consumer_secret', 'token', 'token_secret']:
+            self.assertNotEqual(new[key], kw[key])
+
     def test_random_salt(self):
         salt = usercouch.random_salt()
         self.assertIsInstance(salt, str)
