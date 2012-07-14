@@ -327,7 +327,6 @@ class UserCouch:
             self.lockfile = None
             fcntl.flock(lockfile.fileno(), fcntl.LOCK_UN)
             lockfile.close()
-            os.remove(lockfile.name)
 
     def bootstrap(self, auth='basic', overrides=None):
         if self.__bootstraped:

@@ -682,7 +682,6 @@ class TestUserCouch(TestCase):
         self.assertTrue(path.isfile(lockfile))
         a.__del__()
         self.assertIsNone(a.lockfile)
-        self.assertFalse(path.exists(lockfile))
         b = usercouch.UserCouch(tmp.dir)
 
         # Make sure `b` has the lock:
@@ -694,7 +693,6 @@ class TestUserCouch(TestCase):
         self.assertFalse(b.lockfile.closed)
         self.assertTrue(path.isfile(lockfile))
         b = None
-        self.assertFalse(path.exists(lockfile))
         c = usercouch.UserCouch(tmp.dir)
 
         # Make sure `c` has the lock:
