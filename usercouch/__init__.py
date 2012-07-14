@@ -302,19 +302,18 @@ class UserCouch:
     def __init__(self, basedir):
         self.couchdb = None
         self.lockfile = None
-        basedir = path.abspath(basedir)
-        if not path.isdir(basedir):
+        self.basedir = path.abspath(basedir)
+        if not path.isdir(self.basedir):
             raise ValueError('{}.basedir not a directory: {!r}'.format(
-                self.__class__.__name__, basedir)
+                self.__class__.__name__, self.basedir)
             )
-        self.basedir = basedir
-        lockfile = open(path.join(basedir, 'lockfile'), 'wb')
+        lockfile = open(path.join(self.basedir, 'lockfile'), 'wb')
         try:
             fcntl.flock(lockfile.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
             self.lockfile = lockfile
         except IOError:
             raise LockError(lockfile.name)
-        self.paths = Paths(basedir)
+        self.paths = Paths(self.basedir)
         self.cmd = get_cmd(self.paths.ini)
         self.__bootstraped = False
 
