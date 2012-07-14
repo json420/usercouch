@@ -430,11 +430,21 @@ class TestFunctions(TestCase):
             self.assertEqual(str(cm.exception), repr(key))
 
     def test_bind_random_port(self):
-        (sock, port) = usercouch.bind_random_port()
+        (sock, port) = usercouch.bind_random_port('127.0.0.1')
         self.assertIsInstance(sock, socket.socket)
         self.assertIsInstance(port, int)
         self.assertEqual(sock.getsockname(), ('127.0.0.1', port))
-        self.assertNotEqual(usercouch.bind_random_port()[1], port)
+        self.assertNotEqual(port,
+            usercouch.bind_random_port('127.0.0.1')[1]
+        )
+
+        (sock, port) = usercouch.bind_random_port('0.0.0.0')
+        self.assertIsInstance(sock, socket.socket)
+        self.assertIsInstance(port, int)
+        self.assertEqual(sock.getsockname(), ('0.0.0.0', port))
+        self.assertNotEqual(port,
+            usercouch.bind_random_port('0.0.0.0')[1]
+        )
 
     def test_get_cmd(self):
         tmp = TempDir()

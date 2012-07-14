@@ -195,7 +195,7 @@ def build_session_ini(auth, kw):
     return template.format(**kw)
 
 
-def bind_random_port(address='127.0.0.1'):
+def bind_random_port(address):
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.bind((address, 0))
     port = sock.getsockname()[1]
