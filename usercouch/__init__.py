@@ -129,7 +129,7 @@ def couch_hashed(password, salt):
 
 
 def build_config(auth, overrides=None):
-    if auth not in ('open', 'basic', 'oauth'):
+    if auth not in TEMPLATES:
         raise ValueError('invalid auth: {!r}'.format(auth))
     config = dict(DEFAULT_CONFIG)
     if overrides:
@@ -148,7 +148,7 @@ def build_config(auth, overrides=None):
 
 
 def build_env(auth, config, port):
-    if auth not in ('open', 'basic', 'oauth'):
+    if auth not in TEMPLATES:
         raise ValueError('invalid auth: {!r}'.format(auth))
     env = {
         'port': port,
@@ -165,7 +165,7 @@ def build_env(auth, config, port):
 
 
 def build_template_kw(auth, config, port, paths):
-    if auth not in ('open', 'basic', 'oauth'):
+    if auth not in TEMPLATES:
         raise ValueError('invalid auth: {!r}'.format(auth))
     kw = {
         'address': config['address'],
@@ -311,13 +311,13 @@ class UserCouch:
     def __del__(self):
         self.kill()
 
-    def bootstrap(self, auth='basic', config=None):
+    def bootstrap(self, auth='basic', overrides=None):
         if self.__bootstraped:
             raise Exception(
                 '{}.bootstrap() already called'.format(self.__class__.__name__)
             )
         self.__bootstraped = True
-        config = build_config(auth, config)
+        config = build_config(auth, overrides)
         (sock, port) = bind_random_port(config['address'])
         env = build_env(auth, config, port)
         kw = build_template_kw(auth, config, port, self.paths)

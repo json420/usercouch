@@ -769,7 +769,7 @@ class TestUserCouch(TestCase):
         tmp = TempDir()
         uc = usercouch.UserCouch(tmp.dir)
         self.assertFalse(path.exists(uc.paths.ini))
-        env = uc.bootstrap(auth='oauth', config=deepcopy(config))
+        env = uc.bootstrap(auth='oauth', overrides=deepcopy(config))
         self.assertTrue(path.isfile(uc.paths.ini))
         self.assertEqual(uc._headers, usercouch.get_headers(env))
         self.assertEqual(set(uc._headers), set(['Accept', 'Authorization']))
