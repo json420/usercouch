@@ -623,9 +623,7 @@ class TestUserCouch(TestCase):
         self.assertEqual(uc.paths.ini, tmp.join('good', 'session.ini'))
         self.assertEqual(uc.cmd, usercouch.get_cmd(uc.paths.ini))
 
-    def test_bootstrap(self):
-        #######################
-        # Test with auth='open'
+    def test_bootstrap_open(self):
         tmp = TempDir()
         uc = usercouch.UserCouch(tmp.dir)
         self.assertFalse(path.exists(uc.paths.ini))
@@ -652,9 +650,8 @@ class TestUserCouch(TestCase):
             str(cm.exception),
             'UserCouch.bootstrap() already called'
         )
-    
-        #######################
-        # Test with auth='basic'
+
+    def test_bootstrap_basic(self):
         tmp = TempDir()
         uc = usercouch.UserCouch(tmp.dir)
         self.assertFalse(path.exists(uc.paths.ini))
@@ -692,8 +689,7 @@ class TestUserCouch(TestCase):
             'UserCouch.bootstrap() already called'
         )
 
-        #######################
-        # Test with auth='oauth'
+    def test_bootstrap_oauth(self):
         tmp = TempDir()
         uc = usercouch.UserCouch(tmp.dir)
         self.assertFalse(path.exists(uc.paths.ini))
