@@ -96,41 +96,11 @@ def random_id(numbytes=15):
     return b32encode(os.urandom(numbytes)).decode('utf-8')
 
 
-def basic_auth_header(basic):
-    b = '{username}:{password}'.format(**basic).encode('utf-8')
-    b64 = b64encode(b).decode('utf-8')
-    return {'Authorization': 'Basic ' + b64}
-
-
-def get_conn(env):
-    t = urlparse(env['url'])
-    assert t.scheme == 'http'
-    assert t.netloc
-    return HTTPConnection(t.netloc)
-
-
-def get_headers(env):
-    headers = {'Accept': 'application/json'}
-    if 'basic' in env:
-        headers.update(basic_auth_header(env['basic']))
-    return headers
-
-
-def get_template(auth):
-    if auth == 'open':
-        return OPEN
-    if auth == 'basic':
-        return BASIC
-    if auth == 'oauth':
-        return OAUTH
-    raise ValueError('invalid auth: {!r}'.format(auth))
-
-
-def random_port(address='127.0.0.1'):
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.bind((address, 0))
-    port = sock.getsockname()[1]
-    return (sock, port)
+def random_basic():
+    return dict(
+        (k, random_id())
+        for k in ('username', 'password')
+    )
 
 
 def random_oauth():
@@ -140,11 +110,15 @@ def random_oauth():
     )
 
 
-def random_basic():
-    return dict(
-        (k, random_id())
-        for k in ('username', 'password')
-    )
+def random_salt():
+    return md5(os.urandom(16)).hexdigest()
+
+
+def couch_hashed(password, salt):
+    assert len(salt) == 32
+    data = (password + salt).encode('utf-8')
+    hexdigest = sha1(data).hexdigest()
+    return '-hashed-{},{}'.format(hexdigest, salt)
 
 
 def build_config(auth, overrides=None):
@@ -202,6 +176,43 @@ def build_template_kw(auth, config, port, paths):
     return kw
 
 
+def basic_auth_header(basic):
+    b = '{username}:{password}'.format(**basic).encode('utf-8')
+    b64 = b64encode(b).decode('utf-8')
+    return {'Authorization': 'Basic ' + b64}
+
+
+def get_conn(env):
+    t = urlparse(env['url'])
+    assert t.scheme == 'http'
+    assert t.netloc
+    return HTTPConnection(t.netloc)
+
+
+def get_headers(env):
+    headers = {'Accept': 'application/json'}
+    if 'basic' in env:
+        headers.update(basic_auth_header(env['basic']))
+    return headers
+
+
+def get_template(auth):
+    if auth == 'open':
+        return OPEN
+    if auth == 'basic':
+        return BASIC
+    if auth == 'oauth':
+        return OAUTH
+    raise ValueError('invalid auth: {!r}'.format(auth))
+
+
+def random_port(address='127.0.0.1'):
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.bind((address, 0))
+    port = sock.getsockname()[1]
+    return (sock, port)
+
+
 def random_env(port, auth, tokens=None):
     if auth not in ('open', 'basic', 'oauth'):
         raise ValueError('invalid auth: {!r}'.format(auth))
@@ -215,17 +226,6 @@ def random_env(port, auth, tokens=None):
         env['basic'] = random_basic()
         env['oauth'] = (random_oauth() if tokens is None else tokens)
     return env
-
-
-def random_salt():
-    return md5(os.urandom(16)).hexdigest()
-
-
-def couch_hashed(password, salt):
-    assert len(salt) == 32
-    data = (password + salt).encode('utf-8')
-    hexdigest = sha1(data).hexdigest()
-    return '-hashed-{},{}'.format(hexdigest, salt)
 
 
 def get_cmd(session_ini):
