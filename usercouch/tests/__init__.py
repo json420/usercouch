@@ -27,6 +27,7 @@ from unittest import TestCase
 import socket
 import os
 from os import path
+import io
 import tempfile
 import shutil
 import subprocess
@@ -607,6 +608,25 @@ class TestHTTPFunctions(TestCase):
         )
 
 
+class TestLockError(TestCase):
+    def test_init(self):
+        lock = usercouch.LockError('/tmp/foo/lockfile')
+        self.assertEqual(lock.lockfile, '/tmp/foo/lockfile')
+        self.assertEqual(
+            str(lock),
+            "cannot acquire exclusive lock on '/tmp/foo/lockfile'"
+        )
+
+        tmp = TempDir()
+        lockfile = tmp.join('lockfile')
+        lock = usercouch.LockError(lockfile)
+        self.assertEqual(lock.lockfile, lockfile)
+        self.assertEqual(
+            str(lock),
+            'cannot acquire exclusive lock on {!r}'.format(lockfile)
+        )
+
+
 class TestUserCouch(TestCase):
     def test_init(self):
         tmp = TempDir()
@@ -634,9 +654,48 @@ class TestUserCouch(TestCase):
         uc = usercouch.UserCouch(good)
         self.assertIsNone(uc.couchdb)
         self.assertEqual(uc.basedir, good)
+        self.assertIsInstance(uc.lockfile, io.BufferedWriter)
+        self.assertEqual(uc.lockfile.name, path.join(good, 'lockfile'))
+        self.assertFalse(uc.lockfile.closed)
         self.assertIsInstance(uc.paths, usercouch.Paths)
         self.assertEqual(uc.paths.ini, tmp.join('good', 'session.ini'))
         self.assertEqual(uc.cmd, usercouch.get_cmd(uc.paths.ini))
+
+    def test_lockfile(self):
+        tmp = TempDir()
+        lockfile = tmp.join('lockfile')
+
+        # Create first instance
+        a = usercouch.UserCouch(tmp.dir)
+        self.assertIsInstance(a.lockfile, io.BufferedWriter)
+        self.assertEqual(a.lockfile.name, lockfile)
+        self.assertFalse(a.lockfile.closed)
+
+        # Make sure `a` has the lock
+        with self.assertRaises(usercouch.LockError) as cm:
+            b = usercouch.UserCouch(tmp.dir)
+        self.assertEqual(cm.exception.lockfile, lockfile)
+
+        # Test releasing by directly calling UserCouch.__del__()
+        self.assertFalse(a.lockfile.closed)
+        a.__del__()
+        self.assertTrue(a.lockfile.closed)
+        b = usercouch.UserCouch(tmp.dir)
+
+        # Make sure `b` has the lock:
+        with self.assertRaises(usercouch.LockError) as cm:
+            c = usercouch.UserCouch(tmp.dir)
+        self.assertEqual(cm.exception.lockfile, lockfile)
+
+        # Test releasing by dereferencing:
+        self.assertFalse(b.lockfile.closed)
+        b = None
+        c = usercouch.UserCouch(tmp.dir)
+
+        # Make sure `c` has the lock:
+        with self.assertRaises(usercouch.LockError) as cm:
+            d = usercouch.UserCouch(tmp.dir)
+        self.assertEqual(cm.exception.lockfile, lockfile)
 
     def test_repr(self):
         tmp = TempDir()
