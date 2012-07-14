@@ -366,7 +366,63 @@ class TestFunctions(TestCase):
             usercouch.build_session_ini('magic', {})
         self.assertEqual(str(cm.exception), "invalid auth: 'magic'")
 
-        # FIXME: finish tests
+        # Test with auth='open'
+        keys = ('address', 'port', 'databases', 'views', 'logfile', 'loglevel')
+        kw = dict(
+            (key, usercouch.random_id())
+            for key in keys
+        )
+        self.assertEqual(
+            usercouch.build_session_ini('open', deepcopy(kw)),
+            usercouch.OPEN.format(**kw)
+        )
+        for key in keys:
+            bad = deepcopy(kw)
+            del bad[key]
+            with self.assertRaises(KeyError) as cm:
+                usercouch.build_session_ini('open', bad)
+            self.assertEqual(str(cm.exception), repr(key))
+
+        # Test with auth='basic'
+        keys = (
+            'address', 'port', 'databases', 'views', 'logfile', 'loglevel',
+            'username', 'hashed',
+        )
+        kw = dict(
+            (key, usercouch.random_id())
+            for key in keys
+        )
+        self.assertEqual(
+            usercouch.build_session_ini('basic', deepcopy(kw)),
+            usercouch.BASIC.format(**kw)
+        )
+        for key in keys:
+            bad = deepcopy(kw)
+            del bad[key]
+            with self.assertRaises(KeyError) as cm:
+                usercouch.build_session_ini('basic', bad)
+            self.assertEqual(str(cm.exception), repr(key))
+
+        # Test with auth='oauth'
+        keys = (
+            'address', 'port', 'databases', 'views', 'logfile', 'loglevel',
+            'username', 'hashed',
+            'token', 'token_secret', 'consumer_key', 'consumer_secret',
+        )
+        kw = dict(
+            (key, usercouch.random_id())
+            for key in keys
+        )
+        self.assertEqual(
+            usercouch.build_session_ini('oauth', deepcopy(kw)),
+            usercouch.OAUTH.format(**kw)
+        )
+        for key in keys:
+            bad = deepcopy(kw)
+            del bad[key]
+            with self.assertRaises(KeyError) as cm:
+                usercouch.build_session_ini('oauth', bad)
+            self.assertEqual(str(cm.exception), repr(key))
 
     def test_bind_random_port(self):
         (sock, port) = usercouch.bind_random_port()
