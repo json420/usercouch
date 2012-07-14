@@ -37,11 +37,11 @@ from urllib.parse import urlparse
 
 
 __version__ = '12.07.0'
+
 usercouch_ini = path.join(
     path.dirname(path.abspath(__file__)), 'data', 'usercouch.ini'
 )
 assert path.isfile(usercouch_ini)
-
 
 DEFAULT_CONFIG = (
     ('address', '127.0.0.1'),
@@ -87,22 +87,22 @@ TEMPLATES = {
 }
 
 
+########################################################################
+# Functions for building CouchDB session.ini file, Microfiber-style env:
+
 def random_id(numbytes=15):
     """
-    Returns a 120-bit base32-encoded random ID.
+    Return a 120-bit base32-encoded random ID.
 
-    The ID will be 24-characters long, URL and filesystem safe.  For example:
-
-    >>> random_id()  #doctest: +SKIP
-    'OVRHK3TUOUQCWIDMNFXGC4TP'
-
-    This is how dmedia/Novacut random IDs are created, so this is "Jason
-    approved", for what that's worth.
+    The ID will be 24-characters long, URL and filesystem safe.
     """
     return b32encode(os.urandom(numbytes)).decode('utf-8')
 
 
 def random_oauth():
+    """
+    Return a `dict` containing random OAuth 1a tokens.
+    """
     return dict(
         (k, random_id())
         for k in ('consumer_key', 'consumer_secret', 'token', 'token_secret')
@@ -110,10 +110,23 @@ def random_oauth():
 
 
 def random_salt():
+    """
+    Return a 128-bit hex-encoded random salt for use  by `couch_hashed()`.
+    """
     return md5(os.urandom(16)).hexdigest()
 
 
 def couch_hashed(password, salt):
+    """
+    Hash *password* using *salt*.
+
+    This returns a CouchDB-style hashed password to be use in the session.ini
+    file.
+
+    Typically `UserCouch` is used with a per-session random password, so this
+    function means that the clear-text of the password is only stored in memory,
+    is never written to disk.
+    """
     assert len(salt) == 32
     data = (password + salt).encode('utf-8')
     hexdigest = sha1(data).hexdigest()
@@ -199,6 +212,10 @@ def get_cmd(session_ini):
     ]
 
 
+
+#######################
+# Path related helpers:
+
 def mkdir(basedir, name):
     dirname = path.join(basedir, name)
     try:
@@ -233,8 +250,9 @@ class Paths:
         self.logfile = logfile(self.log, 'couchdb')
 
 
-###############
-# HTTP helpers:
+
+#######################
+# HTTP related helpers:
 
 class HTTPError(Exception):
     def __init__(self, response, method, path):

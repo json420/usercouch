@@ -93,16 +93,11 @@ class TestFunctions(TestCase):
         _id = usercouch.random_id()
         self.assertIsInstance(_id, str)
         self.assertEqual(len(_id), 24)
+        self.assertTrue(set(_id).issubset(B32ALPHABET))
         b = b32decode(_id.encode('ascii'))
         self.assertIsInstance(b, bytes)
         self.assertEqual(len(b) * 8, 120)
-
-    def test_bind_random_port(self):
-        (sock, port) = usercouch.bind_random_port()
-        self.assertIsInstance(sock, socket.socket)
-        self.assertIsInstance(port, int)
-        self.assertEqual(sock.getsockname(), ('127.0.0.1', port))
-        self.assertNotEqual(usercouch.bind_random_port()[1], port)
+        self.assertNotEqual(usercouch.random_id(), _id)
 
     def test_random_oauth(self):
         kw = usercouch.random_oauth()
@@ -115,6 +110,25 @@ class TestFunctions(TestCase):
             self.assertIsInstance(value, str)
             self.assertEqual(len(value), 24)
             self.assertTrue(set(value).issubset(B32ALPHABET))
+
+    def test_random_salt(self):
+        salt = usercouch.random_salt()
+        self.assertIsInstance(salt, str)
+        self.assertEqual(len(salt), 32)
+        self.assertEqual(len(bytes.fromhex(salt)), 16)
+        self.assertNotEqual(usercouch.random_salt(), salt)
+
+    def test_couch_hashed(self):
+        salt = 'a' * 32
+        self.assertEqual(
+            usercouch.couch_hashed('very secret', salt),
+            '-hashed-f3051dd7e647cdb7fd1d56c52fcd73724895417b,' + salt
+        )
+        salt = '9' * 32
+        self.assertEqual(
+            usercouch.couch_hashed('very secret', salt),
+            '-hashed-791a7d0f893bfbf6311d36081f797fe166cee072,' + salt
+        )
 
     def test_build_config(self):
         overrides = {
@@ -346,24 +360,20 @@ class TestFunctions(TestCase):
             }
         )
 
-    def test_random_salt(self):
-        salt = usercouch.random_salt()
-        self.assertIsInstance(salt, str)
-        self.assertEqual(len(salt), 32)
-        self.assertEqual(len(bytes.fromhex(salt)), 16)
-        self.assertNotEqual(usercouch.random_salt(), salt)
+    def test_build_session_ini(self):
+        # Test with bad auth
+        with self.assertRaises(ValueError) as cm:
+            usercouch.build_session_ini('magic', {})
+        self.assertEqual(str(cm.exception), "invalid auth: 'magic'")
 
-    def test_couch_hashed(self):
-        salt = 'a' * 32
-        self.assertEqual(
-            usercouch.couch_hashed('very secret', salt),
-            '-hashed-f3051dd7e647cdb7fd1d56c52fcd73724895417b,' + salt
-        )
-        salt = '9' * 32
-        self.assertEqual(
-            usercouch.couch_hashed('very secret', salt),
-            '-hashed-791a7d0f893bfbf6311d36081f797fe166cee072,' + salt
-        )
+        # FIXME: finish tests
+
+    def test_bind_random_port(self):
+        (sock, port) = usercouch.bind_random_port()
+        self.assertIsInstance(sock, socket.socket)
+        self.assertIsInstance(port, int)
+        self.assertEqual(sock.getsockname(), ('127.0.0.1', port))
+        self.assertNotEqual(usercouch.bind_random_port()[1], port)
 
     def test_get_cmd(self):
         tmp = TempDir()
@@ -379,6 +389,8 @@ class TestFunctions(TestCase):
             ]
         )
 
+
+class TestPathFunctions(TestCase):
     def test_mkdir(self):
         tmp = TempDir()
 
