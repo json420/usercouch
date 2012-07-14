@@ -321,11 +321,6 @@ class UserCouch:
         self.start()
         return env
 
-    def bootstrap2(self, tokens):
-        env = self.bootstrap(auth='oauth', address='0.0.0.0', tokens=tokens)
-        del env['oauth']
-        return env
-
     def start(self):
         if not self.__bootstraped:
             raise Exception(
