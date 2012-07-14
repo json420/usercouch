@@ -37,14 +37,18 @@ from urllib.parse import urlparse
 
 
 __version__ = '12.07.0'
-usercouch_ini = path.join(
+
+USERCOUCH_INI = path.join(
     path.dirname(path.abspath(__file__)), 'data', 'usercouch.ini'
 )
-assert path.isfile(usercouch_ini)
+assert path.isfile(USERCOUCH_INI)
 
+DEFAULT_CONFIG = (
+    ('address', '127.0.0.1'),
+    ('loglevel', 'notice'),
+)
 
-OPEN = """
-[httpd]
+OPEN = """[httpd]
 bind_address = {address}
 port = {port}
 
@@ -76,97 +80,126 @@ OAUTH = BASIC + """
 {consumer_key} = {consumer_secret}
 """
 
+TEMPLATES = {
+    'open': OPEN,
+    'basic': BASIC,
+    'oauth': OAUTH,
+}
 
-def random_id(numbytes=15):
+
+########################################################################
+# Functions for building CouchDB session.ini file, Microfiber-style env:
+
+def random_b32(numbytes=15):
     """
-    Returns a 120-bit base32-encoded random ID.
+    Return a 120-bit base32-encoded random string.
 
-    The ID will be 24-characters long, URL and filesystem safe.  For example:
-
-    >>> random_id()  #doctest: +SKIP
-    'OVRHK3TUOUQCWIDMNFXGC4TP'
-
-    This is how dmedia/Novacut random IDs are created, so this is "Jason
-    approved", for what that's worth.
+    The `str` will be 24-characters long, URL and filesystem safe.
     """
     return b32encode(os.urandom(numbytes)).decode('utf-8')
 
 
-def basic_auth_header(basic):
-    b = '{username}:{password}'.format(**basic).encode('utf-8')
-    b64 = b64encode(b).decode('utf-8')
-    return {'Authorization': 'Basic ' + b64}
-
-
-def get_conn(env):
-    t = urlparse(env['url'])
-    assert t.scheme == 'http'
-    assert t.netloc
-    return HTTPConnection(t.netloc)
-
-
-def get_headers(env):
-    headers = {'Accept': 'application/json'}
-    if 'basic' in env:
-        headers.update(basic_auth_header(env['basic']))
-    return headers
-
-
-def get_template(auth):
-    if auth == 'open':
-        return OPEN
-    if auth == 'basic':
-        return BASIC
-    if auth == 'oauth':
-        return OAUTH
-    raise ValueError('invalid auth: {!r}'.format(auth))
-
-
-def random_port(address='127.0.0.1'):
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.bind((address, 0))
-    port = sock.getsockname()[1]
-    return (sock, port)
-
-
 def random_oauth():
+    """
+    Return a `dict` containing random OAuth 1a tokens.
+    """
     return dict(
-        (k, random_id())
+        (k, random_b32())
         for k in ('consumer_key', 'consumer_secret', 'token', 'token_secret')
     )
 
 
-def random_basic():
-    return dict(
-        (k, random_id())
-        for k in ('username', 'password')
-    )
+def random_salt():
+    """
+    Return a 128-bit hex-encoded random salt for use  by `couch_hashed()`.
+    """
+    return md5(os.urandom(16)).hexdigest()
 
 
-def random_env(port, auth, tokens=None):
-    if auth not in ('open', 'basic', 'oauth'):
+def couch_hashed(password, salt):
+    """
+    Hash *password* using *salt*.
+
+    This returns a CouchDB-style hashed password to be use in the session.ini
+    file.
+
+    Typically `UserCouch` is used with a per-session random password, so this
+    function means that the clear-text of the password is only stored in memory,
+    is never written to disk.
+    """
+    assert len(salt) == 32
+    data = (password + salt).encode('utf-8')
+    hexdigest = sha1(data).hexdigest()
+    return '-hashed-{},{}'.format(hexdigest, salt)
+
+
+def build_config(auth, overrides=None):
+    if auth not in TEMPLATES:
+        raise ValueError('invalid auth: {!r}'.format(auth))
+    config = dict(DEFAULT_CONFIG)
+    if overrides:
+        config.update(overrides)
+    if auth in ('basic', 'oauth'):
+        if 'username' not in config:
+            config['username'] = random_b32()
+        if 'password' not in config:
+            config['password'] = random_b32()
+        if 'salt' not in config:
+            config['salt'] = random_salt()
+    if auth == 'oauth':
+        if 'oauth' not in config:
+            config['oauth'] = random_oauth()
+    return config
+
+
+def build_env(auth, config, port):
+    if auth not in TEMPLATES:
         raise ValueError('invalid auth: {!r}'.format(auth))
     env = {
         'port': port,
         'url': 'http://localhost:{}/'.format(port),
     }
-    if auth == 'basic':
-        env['basic'] = random_basic()
-    elif auth == 'oauth':
-        env['basic'] = random_basic()
-        env['oauth'] = (random_oauth() if tokens is None else tokens)
+    if auth in ('basic', 'oauth'):
+        env['basic'] = {
+            'username': config['username'],
+            'password': config['password'],
+        }
+    if auth == 'oauth':
+        env['oauth'] = config['oauth']
     return env
 
 
-def random_salt():
-    return md5(os.urandom(16)).hexdigest()
+def build_template_kw(auth, config, port, paths):
+    if auth not in TEMPLATES:
+        raise ValueError('invalid auth: {!r}'.format(auth))
+    kw = {
+        'address': config['address'],
+        'loglevel': config['loglevel'],
+        'port': port,
+        'databases': paths.databases,
+        'views': paths.views,
+        'logfile': paths.logfile,
+    }
+    if auth in ('basic', 'oauth'):
+        kw['username'] = config['username']
+        kw['hashed'] = couch_hashed(config['password'], config['salt'])
+    if auth == 'oauth':
+        kw.update(config['oauth'])
+    return kw
 
 
-def couch_hashed(password, salt):
-    assert len(salt) == 32
-    data = (password + salt).encode('utf-8')
-    hexdigest = sha1(data).hexdigest()
-    return '-hashed-{},{}'.format(hexdigest, salt)
+def build_session_ini(auth, kw):
+    if auth not in TEMPLATES:
+        raise ValueError('invalid auth: {!r}'.format(auth))
+    template = TEMPLATES[auth]
+    return template.format(**kw)
+
+
+def bind_random_port(address):
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.bind((address, 0))
+    port = sock.getsockname()[1]
+    return (sock, port)
 
 
 def get_cmd(session_ini):
@@ -174,10 +207,14 @@ def get_cmd(session_ini):
         '/usr/bin/couchdb',
         '-n',  # reset configuration file chain (including system default)
         '-a', '/etc/couchdb/default.ini',
-        '-a', usercouch_ini,
+        '-a', USERCOUCH_INI,
         '-a', session_ini,
     ]
 
+
+
+#######################
+# Path related helpers:
 
 def mkdir(basedir, name):
     dirname = path.join(basedir, name)
@@ -213,6 +250,10 @@ class Paths:
         self.logfile = logfile(self.log, 'couchdb')
 
 
+
+#######################
+# HTTP related helpers:
+
 class HTTPError(Exception):
     def __init__(self, response, method, path):
         self.response = response
@@ -223,9 +264,34 @@ class HTTPError(Exception):
         )
 
 
+def basic_auth_header(basic):
+    b = '{username}:{password}'.format(**basic).encode('utf-8')
+    b64 = b64encode(b).decode('utf-8')
+    return {'Authorization': 'Basic ' + b64}
+
+
+def get_conn(env):
+    t = urlparse(env['url'])
+    assert t.scheme == 'http'
+    assert t.netloc
+    return HTTPConnection(t.netloc)
+
+
+def get_headers(env):
+    headers = {'Accept': 'application/json'}
+    if 'basic' in env:
+        headers.update(basic_auth_header(env['basic']))
+    return headers
+
+
+
+########################
+# The `UserCouch` class:
+
 class UserCouch:
     def __init__(self, basedir):
         self.couchdb = None
+        basedir = path.abspath(basedir)
         if not path.isdir(basedir):
             raise ValueError('{}.basedir not a directory: {!r}'.format(
                 self.__class__.__name__, basedir)
@@ -235,41 +301,28 @@ class UserCouch:
         self.cmd = get_cmd(self.paths.ini)
         self.__bootstraped = False
 
+    def __repr__(self):
+        return '{}({!r})'.format(self.__class__.__name__, self.basedir)
+
     def __del__(self):
         self.kill()
 
-    def bootstrap(self, auth='basic', address='127.0.0.1', tokens=None, loglevel='notice'):
+    def bootstrap(self, auth='basic', overrides=None):
         if self.__bootstraped:
             raise Exception(
                 '{}.bootstrap() already called'.format(self.__class__.__name__)
             )
         self.__bootstraped = True
-        (sock, port) = random_port(address)
-        env = random_env(port, auth, tokens)
-        kw = {
-            'address': address,
-            'port': port,
-            'databases': self.paths.databases,
-            'views': self.paths.views,
-            'logfile': self.paths.logfile,
-            'loglevel': loglevel,
-        }
-        if auth in ('basic', 'oauth'):
-            kw['username'] = env['basic']['username']
-            kw['hashed'] = couch_hashed(env['basic']['password'], random_salt())
-        if auth == 'oauth':
-            kw.update(env['oauth'])
-        config = get_template(auth).format(**kw)
-        open(self.paths.ini, 'w').write(config)
+        config = build_config(auth, overrides)
+        (sock, port) = bind_random_port(config['address'])
+        env = build_env(auth, config, port)
+        kw = build_template_kw(auth, config, port, self.paths)
+        session = build_session_ini(auth, kw)
+        open(self.paths.ini, 'w').write(session)
         self._conn = get_conn(env)
         self._headers = get_headers(env)
         sock.close()
         self.start()
-        return env
-
-    def bootstrap2(self, tokens):
-        env = self.bootstrap(auth='oauth', address='0.0.0.0', tokens=tokens)
-        del env['oauth']
         return env
 
     def start(self):

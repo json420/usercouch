@@ -43,6 +43,13 @@ class TestTempCouch(TestCase):
         self.assertIsNone(tc.couchdb)
         self.assertFalse(path.exists(tc.basedir))
 
+    def test_repr(self):
+        tc = TempCouch()
+        self.assertEqual(
+            repr(tc),
+            'TempCouch({!r})'.format(tc.basedir)
+        )
+
 
 class SelfTest1(CouchTestCase):
     auth = 'open'
