@@ -38,10 +38,10 @@ from urllib.parse import urlparse
 
 __version__ = '12.07.0'
 
-usercouch_ini = path.join(
+USERCOUCH_INI = path.join(
     path.dirname(path.abspath(__file__)), 'data', 'usercouch.ini'
 )
-assert path.isfile(usercouch_ini)
+assert path.isfile(USERCOUCH_INI)
 
 DEFAULT_CONFIG = (
     ('address', '127.0.0.1'),
@@ -207,7 +207,7 @@ def get_cmd(session_ini):
         '/usr/bin/couchdb',
         '-n',  # reset configuration file chain (including system default)
         '-a', '/etc/couchdb/default.ini',
-        '-a', usercouch_ini,
+        '-a', USERCOUCH_INI,
         '-a', session_ini,
     ]
 
@@ -299,7 +299,7 @@ class UserCouch:
         self.paths = Paths(basedir)
         self.cmd = get_cmd(self.paths.ini)
         self.__bootstraped = False
-        
+
     def __repr__(self):
         return '{}({!r})'.format(self.__class__.__name__, self.basedir)
 
