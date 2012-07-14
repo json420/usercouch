@@ -670,7 +670,6 @@ class TestUserCouch(TestCase):
         self.assertIsInstance(a.lockfile, io.BufferedWriter)
         self.assertEqual(a.lockfile.name, lockfile)
         self.assertFalse(a.lockfile.closed)
-        self.assertTrue(path.isfile(lockfile))
 
         # Make sure `a` has the lock
         with self.assertRaises(usercouch.LockError) as cm:
@@ -679,9 +678,8 @@ class TestUserCouch(TestCase):
 
         # Test releasing by directly calling UserCouch.__del__()
         self.assertFalse(a.lockfile.closed)
-        self.assertTrue(path.isfile(lockfile))
         a.__del__()
-        self.assertIsNone(a.lockfile)
+        self.assertTrue(a.lockfile.closed)
         b = usercouch.UserCouch(tmp.dir)
 
         # Make sure `b` has the lock:
@@ -691,7 +689,6 @@ class TestUserCouch(TestCase):
 
         # Test releasing by dereferencing:
         self.assertFalse(b.lockfile.closed)
-        self.assertTrue(path.isfile(lockfile))
         b = None
         c = usercouch.UserCouch(tmp.dir)
 
