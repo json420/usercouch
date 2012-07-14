@@ -43,6 +43,11 @@ usercouch_ini = path.join(
 assert path.isfile(usercouch_ini)
 
 
+DEFAULT_CONFIG = (
+    ('address', '127.0.0.1'),
+    ('loglevel', 'notice'),
+)
+
 OPEN = """[httpd]
 bind_address = {address}
 port = {port}
@@ -142,13 +147,12 @@ def random_basic():
     )
 
 
-def fill_config(auth, config):
+def build_config(auth, overrides=None):
     if auth not in ('open', 'basic', 'oauth'):
         raise ValueError('invalid auth: {!r}'.format(auth))
-    if 'address' not in config:
-        config['address'] = '127.0.0.1'
-    if 'loglevel' not in config:
-        config['loglevel'] = 'notice'
+    config = dict(DEFAULT_CONFIG)
+    if overrides:
+        config.update(overrides)
     if auth in ('basic', 'oauth'):
         if 'username' not in config:
             config['username'] = random_id()
@@ -159,6 +163,7 @@ def fill_config(auth, config):
     if auth == 'oauth':
         if 'oauth' not in config:
             config['oauth'] = random_oauth()
+    return config
 
 
 def build_env(auth, config, port):

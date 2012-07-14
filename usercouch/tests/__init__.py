@@ -164,31 +164,98 @@ class TestFunctions(TestCase):
             self.assertEqual(len(value), 24)
             self.assertTrue(set(value).issubset(B32ALPHABET))
 
-    def test_fill_config(self):
+    def test_build_config(self):
+        overrides = {
+            'address': usercouch.random_id(),
+            'loglevel': usercouch.random_id(),
+        }
+
         # Test with bad auth
         with self.assertRaises(ValueError) as cm:
-            usercouch.fill_config('magic', {})
+            usercouch.build_config('magic')
+        self.assertEqual(str(cm.exception), "invalid auth: 'magic'")
+        with self.assertRaises(ValueError) as cm:
+            usercouch.build_config('magic', deepcopy(overrides))
         self.assertEqual(str(cm.exception), "invalid auth: 'magic'")
 
         # auth='open'
-        config = {}
-        env = usercouch.fill_config('open', config)
+        config = usercouch.build_config('open')
+        self.assertIsInstance(config, dict)
         self.assertEqual(set(config),
             set(['address', 'loglevel'])
         )
+        self.assertEqual(config['address'], '127.0.0.1')
+        self.assertEqual(config['loglevel'], 'notice')
+
+        # auth='open' with overrides
+        self.assertEqual(
+            usercouch.build_config('open', deepcopy(overrides)),
+            {
+                'address': overrides['address'],
+                'loglevel': overrides['loglevel'],
+            }
+        )
 
         # auth='basic'
-        config = {}
-        env = usercouch.fill_config('basic', config)
+        config = usercouch.build_config('basic')
+        self.assertIsInstance(config, dict)
         self.assertEqual(set(config),
             set(['address', 'loglevel', 'username', 'password', 'salt'])
         )
+        self.assertEqual(config['address'], '127.0.0.1')
+        self.assertEqual(config['loglevel'], 'notice')
+
+        # auth='basic' with overrides
+        o2 = {
+            'address': usercouch.random_id(),
+            'loglevel': usercouch.random_id(),
+            'username': usercouch.random_id(),
+            'password': usercouch.random_id(),
+            'salt': usercouch.random_salt(),
+        }
+        self.assertEqual(
+            usercouch.build_config('basic', deepcopy(o2)),
+            {
+                'address': o2['address'],
+                'loglevel': o2['loglevel'],
+                'username': o2['username'],
+                'password': o2['password'],
+                'salt': o2['salt'],
+            }
+        )
 
         # auth='oauth'
-        config = {}
-        env = usercouch.fill_config('oauth', config)
+        config = usercouch.build_config('oauth')
+        self.assertIsInstance(config, dict)
         self.assertEqual(set(config),
             set(['address', 'loglevel', 'username', 'password', 'salt', 'oauth'])
+        )
+        self.assertEqual(config['address'], '127.0.0.1')
+        self.assertEqual(config['loglevel'], 'notice')
+        self.assertIsInstance(config['oauth'], dict)
+        self.assertEqual(set(config['oauth']),
+            set(['token', 'token_secret', 'consumer_key', 'consumer_secret'])
+        )
+
+        # auth='oauth' with overrides
+        o3 = {
+            'address': usercouch.random_id(),
+            'loglevel': usercouch.random_id(),
+            'username': usercouch.random_id(),
+            'password': usercouch.random_id(),
+            'salt': usercouch.random_salt(),
+            'oauth': usercouch.random_oauth(),
+        }
+        self.assertEqual(
+            usercouch.build_config('basic', deepcopy(o3)),
+            {
+                'address': o3['address'],
+                'loglevel': o3['loglevel'],
+                'username': o3['username'],
+                'password': o3['password'],
+                'salt': o3['salt'],
+                'oauth': o3['oauth'],
+            }
         )
 
     def test_build_env(self):
