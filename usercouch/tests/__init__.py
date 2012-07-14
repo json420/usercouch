@@ -623,6 +623,14 @@ class TestUserCouch(TestCase):
         self.assertEqual(uc.paths.ini, tmp.join('good', 'session.ini'))
         self.assertEqual(uc.cmd, usercouch.get_cmd(uc.paths.ini))
 
+    def test_repr(self):
+        tmp = TempDir()
+        uc = usercouch.UserCouch(tmp.dir)
+        self.assertEqual(
+            repr(uc),
+            'UserCouch({!r})'.format(tmp.dir)
+        )
+
     def test_bootstrap_open(self):
         tmp = TempDir()
         uc = usercouch.UserCouch(tmp.dir)

@@ -299,6 +299,9 @@ class UserCouch:
         self.paths = Paths(basedir)
         self.cmd = get_cmd(self.paths.ini)
         self.__bootstraped = False
+        
+    def __repr__(self):
+        return '{}({!r})'.format(self.__class__.__name__, self.basedir)
 
     def __del__(self):
         self.kill()
