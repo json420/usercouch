@@ -206,6 +206,13 @@ class TestFunctions(TestCase):
         self.assertEqual(config['loglevel'], 'notice')
 
         # auth='basic' with overrides
+        config = usercouch.build_config('basic', deepcopy(overrides))
+        self.assertIsInstance(config, dict)
+        self.assertEqual(set(config),
+            set(['address', 'loglevel', 'username', 'password', 'salt'])
+        )
+        self.assertEqual(config['address'], overrides['address'])
+        self.assertEqual(config['loglevel'], overrides['loglevel'])
         o2 = {
             'address': usercouch.random_id(),
             'loglevel': usercouch.random_id(),
@@ -238,6 +245,17 @@ class TestFunctions(TestCase):
         )
 
         # auth='oauth' with overrides
+        config = usercouch.build_config('oauth', deepcopy(overrides))
+        self.assertIsInstance(config, dict)
+        self.assertEqual(set(config),
+            set(['address', 'loglevel', 'username', 'password', 'salt', 'oauth'])
+        )
+        self.assertEqual(config['address'], overrides['address'])
+        self.assertEqual(config['loglevel'], overrides['loglevel'])
+        self.assertIsInstance(config['oauth'], dict)
+        self.assertEqual(set(config['oauth']),
+            set(['token', 'token_secret', 'consumer_key', 'consumer_secret'])
+        )
         o3 = {
             'address': usercouch.random_id(),
             'loglevel': usercouch.random_id(),
