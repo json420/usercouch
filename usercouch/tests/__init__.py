@@ -125,14 +125,6 @@ class TestFunctions(TestCase):
             }
         )
 
-    def test_get_template(self):
-        self.assertIs(usercouch.get_template('open'), usercouch.OPEN)
-        self.assertIs(usercouch.get_template('basic'), usercouch.BASIC)
-        self.assertIs(usercouch.get_template('oauth'), usercouch.OAUTH)
-        with self.assertRaises(ValueError) as cm:
-            t = usercouch.get_template('nope')
-        self.assertEqual(str(cm.exception), "invalid auth: 'nope'")
-
     def test_bind_random_port(self):
         (sock, port) = usercouch.bind_random_port()
         self.assertIsInstance(sock, socket.socket)
@@ -146,18 +138,6 @@ class TestFunctions(TestCase):
         self.assertEqual(
             set(kw),
             set(['consumer_key', 'consumer_secret', 'token', 'token_secret'])
-        )
-        for value in kw.values():
-            self.assertIsInstance(value, str)
-            self.assertEqual(len(value), 24)
-            self.assertTrue(set(value).issubset(B32ALPHABET))
-
-    def test_random_basic(self):
-        kw = usercouch.random_basic()
-        self.assertIsInstance(kw, dict)
-        self.assertEqual(
-            set(kw),
-            set(['username', 'password'])
         )
         for value in kw.values():
             self.assertIsInstance(value, str)
@@ -393,78 +373,6 @@ class TestFunctions(TestCase):
                 'consumer_secret': config['oauth']['consumer_secret'],
             }
         )
-
-    def test_random_env(self):
-        # Test with bad auth
-        with self.assertRaises(ValueError) as cm:
-            env = usercouch.random_env(5634, 'magic')
-        self.assertEqual(str(cm.exception), "invalid auth: 'magic'")
-
-        # auth='open'
-        env = usercouch.random_env(5634, 'open')
-        self.assertIsInstance(env, dict)
-        self.assertEqual(set(env), set(['port', 'url']))
-        self.assertEqual(env['port'], 5634)
-        self.assertEqual(env['url'], 'http://localhost:5634/')
-
-        # auth='basic'
-        env = usercouch.random_env(5634, 'basic')
-        self.assertIsInstance(env, dict)
-        self.assertEqual(set(env), set(['port', 'url', 'basic']))
-        self.assertEqual(env['port'], 5634)
-        self.assertEqual(env['url'], 'http://localhost:5634/')
-        self.assertIsInstance(env['basic'], dict)
-        self.assertEqual(
-            set(env['basic']),
-            set(['username', 'password'])
-        )
-        for value in env['basic'].values():
-            self.assertIsInstance(value, str)
-            self.assertEqual(len(value), 24)
-            self.assertTrue(set(value).issubset(B32ALPHABET))
-
-        # auth='oauth'
-        env = usercouch.random_env(1718, 'oauth')
-        self.assertIsInstance(env, dict)
-        self.assertEqual(set(env), set(['port', 'url', 'basic', 'oauth']))
-        self.assertEqual(env['port'], 1718)
-        self.assertEqual(env['url'], 'http://localhost:1718/')
-        self.assertIsInstance(env['basic'], dict)
-        self.assertEqual(
-            set(env['basic']),
-            set(['username', 'password'])
-        )
-        for value in env['basic'].values():
-            self.assertIsInstance(value, str)
-            self.assertEqual(len(value), 24)
-            self.assertTrue(set(value).issubset(B32ALPHABET))
-        self.assertIsInstance(env['oauth'], dict)
-        self.assertEqual(
-            set(env['oauth']),
-            set(['consumer_key', 'consumer_secret', 'token', 'token_secret'])
-        )
-        for value in env['oauth'].values():
-            self.assertIsInstance(value, str)
-            self.assertEqual(len(value), 24)
-            self.assertTrue(set(value).issubset(B32ALPHABET))
-
-        # auth='oauth' with supplied static tokens
-        tokens = usercouch.random_oauth()
-        env = usercouch.random_env(1718, 'oauth', deepcopy(tokens))
-        self.assertIsInstance(env, dict)
-        self.assertEqual(set(env), set(['port', 'url', 'basic', 'oauth']))
-        self.assertEqual(env['port'], 1718)
-        self.assertEqual(env['url'], 'http://localhost:1718/')
-        self.assertIsInstance(env['basic'], dict)
-        self.assertEqual(
-            set(env['basic']),
-            set(['username', 'password'])
-        )
-        for value in env['basic'].values():
-            self.assertIsInstance(value, str)
-            self.assertEqual(len(value), 24)
-            self.assertTrue(set(value).issubset(B32ALPHABET))
-        self.assertEqual(env['oauth'], tokens)
 
     def test_random_salt(self):
         salt = usercouch.random_salt()

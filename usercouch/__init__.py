@@ -87,7 +87,6 @@ TEMPLATES = {
 }
 
 
-
 def random_id(numbytes=15):
     """
     Returns a 120-bit base32-encoded random ID.
@@ -101,13 +100,6 @@ def random_id(numbytes=15):
     approved", for what that's worth.
     """
     return b32encode(os.urandom(numbytes)).decode('utf-8')
-
-
-def random_basic():
-    return dict(
-        (k, random_id())
-        for k in ('username', 'password')
-    )
 
 
 def random_oauth():
@@ -210,36 +202,11 @@ def get_headers(env):
     return headers
 
 
-def get_template(auth):
-    if auth == 'open':
-        return OPEN
-    if auth == 'basic':
-        return BASIC
-    if auth == 'oauth':
-        return OAUTH
-    raise ValueError('invalid auth: {!r}'.format(auth))
-
-
 def bind_random_port(address='127.0.0.1'):
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.bind((address, 0))
     port = sock.getsockname()[1]
     return (sock, port)
-
-
-def random_env(port, auth, tokens=None):
-    if auth not in ('open', 'basic', 'oauth'):
-        raise ValueError('invalid auth: {!r}'.format(auth))
-    env = {
-        'port': port,
-        'url': 'http://localhost:{}/'.format(port),
-    }
-    if auth == 'basic':
-        env['basic'] = random_basic()
-    elif auth == 'oauth':
-        env['basic'] = random_basic()
-        env['oauth'] = (random_oauth() if tokens is None else tokens)
-    return env
 
 
 def get_cmd(session_ini):
