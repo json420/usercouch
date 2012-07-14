@@ -34,11 +34,17 @@ import time
 from copy import deepcopy
 from base64 import b32decode
 from http.client import HTTPConnection
+from random import SystemRandom
 
 import usercouch
 
 
+random = SystemRandom()
 B32ALPHABET = frozenset('234567ABCDEFGHIJKLMNOPQRSTUVWXYZ')
+
+
+def test_port():
+    return random.randint(1001, 50000)
 
 
 class TempDir(object):
@@ -145,7 +151,7 @@ class TestFunctions(TestCase):
             self.assertIsInstance(value, str)
             self.assertEqual(len(value), 24)
             self.assertTrue(set(value).issubset(B32ALPHABET))
-  
+
     def test_random_basic(self):
         kw = usercouch.random_basic()
         self.assertIsInstance(kw, dict)
@@ -157,6 +163,151 @@ class TestFunctions(TestCase):
             self.assertIsInstance(value, str)
             self.assertEqual(len(value), 24)
             self.assertTrue(set(value).issubset(B32ALPHABET))
+
+    def test_fill_config(self):
+        # Test with bad auth
+        with self.assertRaises(ValueError) as cm:
+            usercouch.fill_config('magic', {})
+        self.assertEqual(str(cm.exception), "invalid auth: 'magic'")
+
+        # auth='open'
+        config = {}
+        env = usercouch.fill_config('open', config)
+        self.assertEqual(set(config),
+            set(['address', 'loglevel'])
+        )
+
+        # auth='basic'
+        config = {}
+        env = usercouch.fill_config('basic', config)
+        self.assertEqual(set(config),
+            set(['address', 'loglevel', 'username', 'password', 'salt'])
+        )
+
+        # auth='oauth'
+        config = {}
+        env = usercouch.fill_config('oauth', config)
+        self.assertEqual(set(config),
+            set(['address', 'loglevel', 'username', 'password', 'salt', 'oauth'])
+        )
+
+    def test_build_env(self):
+        config = {
+            'username': usercouch.random_id(),
+            'password': usercouch.random_id(),
+            'oauth': usercouch.random_oauth(),
+        }
+        port = test_port()
+
+        # Test with bad auth
+        with self.assertRaises(ValueError) as cm:
+            usercouch.build_env('magic', deepcopy(config), port)
+        self.assertEqual(str(cm.exception), "invalid auth: 'magic'")
+
+        # auth='open'
+        self.assertEqual(
+            usercouch.build_env('open', deepcopy(config), port),
+            {
+                'port': port,
+                'url': 'http://localhost:{}/'.format(port),
+            }
+        )
+
+        # auth='basic'
+        self.assertEqual(
+            usercouch.build_env('basic', deepcopy(config), port),
+            {
+                'port': port,
+                'url': 'http://localhost:{}/'.format(port),
+                'basic': {
+                    'username': config['username'],
+                    'password': config['password'],
+                },
+            }
+        )
+
+        # auth='oauth'
+        self.assertEqual(
+            usercouch.build_env('oauth', deepcopy(config), port),
+            {
+                'port': port,
+                'url': 'http://localhost:{}/'.format(port),
+                'basic': {
+                    'username': config['username'],
+                    'password': config['password'],
+                },
+                'oauth': config['oauth'],
+            }
+        )
+
+    def test_build_template_kw(self):
+        config = {
+            'address': usercouch.random_id(),
+            'loglevel': usercouch.random_id(),
+            'username': usercouch.random_id(),
+            'password': usercouch.random_id(),
+            'salt': usercouch.random_salt(),
+            'oauth': usercouch.random_oauth(),
+        }
+        port = test_port()
+        tmp = TempDir()
+        paths = usercouch.Paths(tmp.dir)
+
+        # Test with bad auth
+        with self.assertRaises(ValueError) as cm:
+            usercouch.build_template_kw('magic', deepcopy(config), port, paths)
+        self.assertEqual(str(cm.exception), "invalid auth: 'magic'")
+
+        # auth='open'
+        self.assertEqual(
+            usercouch.build_template_kw('open', deepcopy(config), port, paths),
+            {
+                'address': config['address'],
+                'loglevel': config['loglevel'],
+                'port': port,
+                'databases': paths.databases,
+                'views': paths.views,
+                'logfile': paths.logfile,
+            }
+        )
+
+        # auth='basic'
+        self.assertEqual(
+            usercouch.build_template_kw('basic', deepcopy(config), port, paths),
+            {
+                'address': config['address'],
+                'loglevel': config['loglevel'],
+                'port': port,
+                'databases': paths.databases,
+                'views': paths.views,
+                'logfile': paths.logfile,
+                'username': config['username'],
+                'hashed': usercouch.couch_hashed(
+                    config['password'], config['salt']
+                ),
+            }
+        )
+
+        # auth='oauth'
+        self.assertEqual(
+            usercouch.build_template_kw('oauth', deepcopy(config), port, paths),
+            {
+                'address': config['address'],
+                'loglevel': config['loglevel'],
+                'port': port,
+                'databases': paths.databases,
+                'views': paths.views,
+                'logfile': paths.logfile,
+                'username': config['username'],
+                'hashed': usercouch.couch_hashed(
+                    config['password'], config['salt']
+                ),
+                'token': config['oauth']['token'],
+                'token_secret': config['oauth']['token_secret'],
+                'consumer_key': config['oauth']['consumer_key'],
+                'consumer_secret': config['oauth']['consumer_secret'],
+            }
+        )
 
     def test_random_env(self):
         # Test with bad auth

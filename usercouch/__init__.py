@@ -43,8 +43,7 @@ usercouch_ini = path.join(
 assert path.isfile(usercouch_ini)
 
 
-OPEN = """
-[httpd]
+OPEN = """[httpd]
 bind_address = {address}
 port = {port}
 
@@ -141,6 +140,61 @@ def random_basic():
         (k, random_id())
         for k in ('username', 'password')
     )
+
+
+def fill_config(auth, config):
+    if auth not in ('open', 'basic', 'oauth'):
+        raise ValueError('invalid auth: {!r}'.format(auth))
+    if 'address' not in config:
+        config['address'] = '127.0.0.1'
+    if 'loglevel' not in config:
+        config['loglevel'] = 'notice'
+    if auth in ('basic', 'oauth'):
+        if 'username' not in config:
+            config['username'] = random_id()
+        if 'password' not in config:
+            config['password'] = random_id()
+        if 'salt' not in config:
+            config['salt'] = random_salt()
+    if auth == 'oauth':
+        if 'oauth' not in config:
+            config['oauth'] = random_oauth()
+
+
+def build_env(auth, config, port):
+    if auth not in ('open', 'basic', 'oauth'):
+        raise ValueError('invalid auth: {!r}'.format(auth))
+    env = {
+        'port': port,
+        'url': 'http://localhost:{}/'.format(port),
+    }
+    if auth in ('basic', 'oauth'):
+        env['basic'] = {
+            'username': config['username'],
+            'password': config['password'],
+        }
+    if auth == 'oauth':
+        env['oauth'] = config['oauth']
+    return env
+
+
+def build_template_kw(auth, config, port, paths):
+    if auth not in ('open', 'basic', 'oauth'):
+        raise ValueError('invalid auth: {!r}'.format(auth))
+    kw = {
+        'address': config['address'],
+        'loglevel': config['loglevel'],
+        'port': port,
+        'databases': paths.databases,
+        'views': paths.views,
+        'logfile': paths.logfile,
+    }
+    if auth in ('basic', 'oauth'):
+        kw['username'] = config['username']
+        kw['hashed'] = couch_hashed(config['password'], config['salt'])
+    if auth == 'oauth':
+        kw.update(config['oauth'])
+    return kw
 
 
 def random_env(port, auth, tokens=None):
