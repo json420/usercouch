@@ -27,6 +27,7 @@ import socket
 import os
 from os import path
 import stat
+import fcntl
 import time
 from subprocess import Popen
 from hashlib import sha1, md5
@@ -288,6 +289,15 @@ def get_headers(env):
 ########################
 # The `UserCouch` class:
 
+
+class LockError(Exception):
+    def __init__(self, lockfile):
+        self.lockfile = lockfile
+        super().__init__(
+            'cannot acquire exclusive lock on {!r}'.format(lockfile)
+        )
+
+
 class UserCouch:
     def __init__(self, basedir):
         self.couchdb = None
@@ -297,6 +307,11 @@ class UserCouch:
                 self.__class__.__name__, basedir)
             )
         self.basedir = basedir
+        self.lockfile = open(path.join(basedir, 'lockfile'), 'wb')
+        try:
+            fcntl.flock(self.lockfile.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except IOError:
+            raise LockError(self.lockfile.name)
         self.paths = Paths(basedir)
         self.cmd = get_cmd(self.paths.ini)
         self.__bootstraped = False

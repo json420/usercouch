@@ -27,6 +27,7 @@ from unittest import TestCase
 import socket
 import os
 from os import path
+import io
 import tempfile
 import shutil
 import subprocess
@@ -607,6 +608,25 @@ class TestHTTPFunctions(TestCase):
         )
 
 
+class TestLockError(TestCase):
+    def test_init(self):
+        lock = usercouch.LockError('/tmp/foo/lockfile')
+        self.assertEqual(lock.lockfile, '/tmp/foo/lockfile')
+        self.assertEqual(
+            str(lock),
+            "cannot acquire exclusive lock on '/tmp/foo/lockfile'"
+        )
+
+        tmp = TempDir()
+        lockfile = tmp.join('lockfile')
+        lock = usercouch.LockError(lockfile)
+        self.assertEqual(lock.lockfile, lockfile)
+        self.assertEqual(
+            str(lock),
+            'cannot acquire exclusive lock on {!r}'.format(lockfile)
+        )
+
+
 class TestUserCouch(TestCase):
     def test_init(self):
         tmp = TempDir()
@@ -634,9 +654,24 @@ class TestUserCouch(TestCase):
         uc = usercouch.UserCouch(good)
         self.assertIsNone(uc.couchdb)
         self.assertEqual(uc.basedir, good)
+        self.assertIsInstance(uc.lockfile, io.BufferedWriter)
+        self.assertEqual(uc.lockfile.name, path.join(good, 'lockfile'))
         self.assertIsInstance(uc.paths, usercouch.Paths)
         self.assertEqual(uc.paths.ini, tmp.join('good', 'session.ini'))
         self.assertEqual(uc.cmd, usercouch.get_cmd(uc.paths.ini))
+
+    def test_lockfile(self):
+        tmp = TempDir()
+        uc1 = usercouch.UserCouch(tmp.dir)
+
+        # Make sure lockfile is working:
+        with self.assertRaises(usercouch.LockError) as cm:
+            uc2 = usercouch.UserCouch(tmp.dir)
+        self.assertEqual(cm.exception.lockfile, tmp.join('lockfile'))
+
+        # Dereferenc uc1, make sure lock gets released
+        uc1 = None
+        uc2 = usercouch.UserCouch(tmp.dir)
 
     def test_repr(self):
         tmp = TempDir()
