@@ -291,6 +291,7 @@ def get_headers(env):
 class UserCouch:
     def __init__(self, basedir):
         self.couchdb = None
+        basedir = path.abspath(basedir)
         if not path.isdir(basedir):
             raise ValueError('{}.basedir not a directory: {!r}'.format(
                 self.__class__.__name__, basedir)
