@@ -656,22 +656,34 @@ class TestUserCouch(TestCase):
         self.assertEqual(uc.basedir, good)
         self.assertIsInstance(uc.lockfile, io.BufferedWriter)
         self.assertEqual(uc.lockfile.name, path.join(good, 'lockfile'))
+        self.assertFalse(uc.lockfile.closed)
         self.assertIsInstance(uc.paths, usercouch.Paths)
         self.assertEqual(uc.paths.ini, tmp.join('good', 'session.ini'))
         self.assertEqual(uc.cmd, usercouch.get_cmd(uc.paths.ini))
 
     def test_lockfile(self):
         tmp = TempDir()
-        uc1 = usercouch.UserCouch(tmp.dir)
+        a = usercouch.UserCouch(tmp.dir)
 
         # Make sure lockfile is working:
         with self.assertRaises(usercouch.LockError) as cm:
-            uc2 = usercouch.UserCouch(tmp.dir)
+            b = usercouch.UserCouch(tmp.dir)
         self.assertEqual(cm.exception.lockfile, tmp.join('lockfile'))
 
-        # Dereferenc uc1, make sure lock gets released
-        uc1 = None
-        uc2 = usercouch.UserCouch(tmp.dir)
+        # Test releasing by directly calling UserCouch.__del__()
+        self.assertFalse(a.lockfile.closed)
+        a.__del__()
+        self.assertTrue(a.lockfile.closed)
+        b = usercouch.UserCouch(tmp.dir)
+
+        # Test releasing by dereferencing:
+        b = None
+        c = usercouch.UserCouch(tmp.dir)
+
+        # Again make sure lockfile is working:
+        with self.assertRaises(usercouch.LockError) as cm:
+            d = usercouch.UserCouch(tmp.dir)
+        self.assertEqual(cm.exception.lockfile, tmp.join('lockfile'))
 
     def test_repr(self):
         tmp = TempDir()

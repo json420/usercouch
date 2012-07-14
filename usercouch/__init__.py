@@ -321,6 +321,9 @@ class UserCouch:
 
     def __del__(self):
         self.kill()
+        if not self.lockfile.closed:
+            fcntl.flock(self.lockfile.fileno(), fcntl.LOCK_UN)
+            self.lockfile.close()
 
     def bootstrap(self, auth='basic', overrides=None):
         if self.__bootstraped:
