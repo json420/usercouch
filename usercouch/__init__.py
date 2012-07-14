@@ -31,6 +31,7 @@ import time
 from subprocess import Popen
 from hashlib import sha1, md5
 from base64 import b32encode, b64encode
+import json
 from http.client import HTTPConnection, BadStatusLine
 from urllib.parse import urlparse
 
@@ -323,7 +324,8 @@ class UserCouch:
                         self.__class__.__name__)
             )
         try:
-            self._request('GET', '/')
+            (response, data) = self._request('GET', '/')
+            self._welcome = json.loads(data.decode('utf-8'))
             return True
         except socket.error:
             return False

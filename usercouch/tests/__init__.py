@@ -570,7 +570,7 @@ class TestUserCouch(TestCase):
     def test_start(self):
         tmp = TempDir()
         uc = usercouch.UserCouch(tmp.dir)
-        
+
         with self.assertRaises(Exception) as cm:
             uc.start()
         self.assertEqual(
@@ -579,6 +579,9 @@ class TestUserCouch(TestCase):
         )
 
         uc.bootstrap()
+        self.assertEqual(uc._welcome,
+            {'couchdb': 'Welcome', 'version': '1.2.0'}
+        )
         self.assertFalse(uc.start())
         self.assertTrue(uc.kill())
         self.assertIsNone(uc.couchdb)
