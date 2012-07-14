@@ -89,15 +89,15 @@ class TempDir(object):
 
 
 class TestFunctions(TestCase):
-    def test_random_id(self):
-        _id = usercouch.random_id()
+    def test_random_b32(self):
+        _id = usercouch.random_b32()
         self.assertIsInstance(_id, str)
         self.assertEqual(len(_id), 24)
         self.assertTrue(set(_id).issubset(B32ALPHABET))
         b = b32decode(_id.encode('ascii'))
         self.assertIsInstance(b, bytes)
         self.assertEqual(len(b) * 8, 120)
-        self.assertNotEqual(usercouch.random_id(), _id)
+        self.assertNotEqual(usercouch.random_b32(), _id)
 
     def test_random_oauth(self):
         kw = usercouch.random_oauth()
@@ -137,8 +137,8 @@ class TestFunctions(TestCase):
 
     def test_build_config(self):
         overrides = {
-            'address': usercouch.random_id(),
-            'loglevel': usercouch.random_id(),
+            'address': usercouch.random_b32(),
+            'loglevel': usercouch.random_b32(),
         }
 
         # Test with bad auth
@@ -185,10 +185,10 @@ class TestFunctions(TestCase):
         self.assertEqual(config['address'], overrides['address'])
         self.assertEqual(config['loglevel'], overrides['loglevel'])
         o2 = {
-            'address': usercouch.random_id(),
-            'loglevel': usercouch.random_id(),
-            'username': usercouch.random_id(),
-            'password': usercouch.random_id(),
+            'address': usercouch.random_b32(),
+            'loglevel': usercouch.random_b32(),
+            'username': usercouch.random_b32(),
+            'password': usercouch.random_b32(),
             'salt': usercouch.random_salt(),
         }
         self.assertEqual(
@@ -228,10 +228,10 @@ class TestFunctions(TestCase):
             set(['token', 'token_secret', 'consumer_key', 'consumer_secret'])
         )
         o3 = {
-            'address': usercouch.random_id(),
-            'loglevel': usercouch.random_id(),
-            'username': usercouch.random_id(),
-            'password': usercouch.random_id(),
+            'address': usercouch.random_b32(),
+            'loglevel': usercouch.random_b32(),
+            'username': usercouch.random_b32(),
+            'password': usercouch.random_b32(),
             'salt': usercouch.random_salt(),
             'oauth': usercouch.random_oauth(),
         }
@@ -249,8 +249,8 @@ class TestFunctions(TestCase):
 
     def test_build_env(self):
         config = {
-            'username': usercouch.random_id(),
-            'password': usercouch.random_id(),
+            'username': usercouch.random_b32(),
+            'password': usercouch.random_b32(),
             'oauth': usercouch.random_oauth(),
         }
         port = test_port()
@@ -298,10 +298,10 @@ class TestFunctions(TestCase):
 
     def test_build_template_kw(self):
         config = {
-            'address': usercouch.random_id(),
-            'loglevel': usercouch.random_id(),
-            'username': usercouch.random_id(),
-            'password': usercouch.random_id(),
+            'address': usercouch.random_b32(),
+            'loglevel': usercouch.random_b32(),
+            'username': usercouch.random_b32(),
+            'password': usercouch.random_b32(),
             'salt': usercouch.random_salt(),
             'oauth': usercouch.random_oauth(),
         }
@@ -374,7 +374,7 @@ class TestFunctions(TestCase):
         # Test with auth='open'
         keys = ('address', 'port', 'databases', 'views', 'logfile', 'loglevel')
         kw = dict(
-            (key, usercouch.random_id())
+            (key, usercouch.random_b32())
             for key in keys
         )
         self.assertEqual(
@@ -394,7 +394,7 @@ class TestFunctions(TestCase):
             'username', 'hashed',
         )
         kw = dict(
-            (key, usercouch.random_id())
+            (key, usercouch.random_b32())
             for key in keys
         )
         self.assertEqual(
@@ -415,7 +415,7 @@ class TestFunctions(TestCase):
             'token', 'token_secret', 'consumer_key', 'consumer_secret',
         )
         kw = dict(
-            (key, usercouch.random_id())
+            (key, usercouch.random_b32())
             for key in keys
         )
         self.assertEqual(
@@ -763,8 +763,8 @@ class TestUserCouch(TestCase):
         overrides = {
             'loglevel': 'debug',
             'address': '0.0.0.0',
-            'username': usercouch.random_id(),
-            'password': usercouch.random_id(),
+            'username': usercouch.random_b32(),
+            'password': usercouch.random_b32(),
             'salt': usercouch.random_salt(),
         }
         tmp = TempDir()
@@ -803,8 +803,8 @@ class TestUserCouch(TestCase):
         overrides = {
             'loglevel': 'debug',
             'address': '0.0.0.0',
-            'username': usercouch.random_id(),
-            'password': usercouch.random_id(),
+            'username': usercouch.random_b32(),
+            'password': usercouch.random_b32(),
             'salt': usercouch.random_salt(),
             'oauth': usercouch.random_oauth(),
         }
