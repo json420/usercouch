@@ -11,9 +11,7 @@ Homepage: https://launchpad.net/usercouch
 
 Package: python3-usercouch
 Architecture: all
-Depends: ${misc:Depends},
-    python3 (>= 3.2),
-    couchdb-bin (>= 1.2.0)
+Depends: ${python3:Depends}, ${misc:Depends}, couchdb-bin (>= 1.2.0)    
 Suggests: python3-microfiber
 Description: starts per-user CouchDB instances for fun, profit, unit testing
  UserCouch is a Python3 library for starting per-user CouchDB instances,
