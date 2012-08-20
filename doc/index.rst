@@ -3,7 +3,17 @@ UserCouch
 
 `UserCouch`_ is a Python3 library for starting per-user `CouchDB`_ instances,
 including throw-away instances for unit testing.  It's especially easy to use
-with `Microfiber`_:
+with `Microfiber`_, for example:
+
+>>> from usercouch.misc import TempCouch
+>>> from microfiber import Database
+>>> tmpcouch = TempCouch()
+>>> env = tmpcouch.bootstrap()
+>>> db = Database('mydb', env)
+>>> db.put(None)  # Create the database
+{'ok': True}
+>>> db.post({'_id': 'mydoc'})  # Create a document
+{'rev': '1-967a00dff5e02add41819138abb3284d', 'ok': True, 'id': 'mydoc'}
 
 UserCouch is being developed as part of the `Novacut`_ project.  UserCouch
 packages are available for Ubuntu in the `Novacut Stable Releases PPA`_ and the
@@ -19,7 +29,12 @@ UserCouch is licensed `LGPLv3+`_.
 Contents:
 
 .. toctree::
-   :maxdepth: 2
+    :maxdepth: 2
+
+    tutorial
+    usercouch
+    usercouch_misc
+    
 
 
 
