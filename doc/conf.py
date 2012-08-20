@@ -7,12 +7,14 @@ sys.path.insert(0, tree)
 import usercouch
 
 
+# Project info
 project = 'UserCouch'
 copyright = '2012, Novacut Inc'
 version = usercouch.__version__[:5]
 release = usercouch.__version__
 
 
+# General config
 needs_sphinx = '1.1'
 extensions = [
     'sphinx.ext.autodoc',
@@ -26,6 +28,7 @@ exclude_patterns = ['_build']
 pygments_style = 'sphinx'
 
 
+# HTML config
 html_theme = 'default'
 html_static_path = ['_static']
 htmlhelp_basename = 'UserCouchdoc'
