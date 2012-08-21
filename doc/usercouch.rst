@@ -18,8 +18,8 @@ Exceptions
 
 
 
-The :class:`UserCouch` class
-----------------------------
+:class:`UserCouch` class
+------------------------
 
 .. class:: UserCouch(basedir)
 
@@ -36,7 +36,12 @@ The :class:`UserCouch` class
 
     .. method:: bootstrap(auth='basic', overrides=None)
 
-        Create the one-time use config and start CouchDB.
+        Create the one-time configuration and start CouchDB.
+        
+        *auth* must be ``'open'``, ``'basic'``, or ``'oauth'``.
+
+        The return value is an *env* dictionary that follows the
+        `Microfiber`_ conventions.
 
     .. method:: start()
 
@@ -116,3 +121,7 @@ Helper functions
     Typically :class:`UserCouch` is used with a per-session random password,
     so this function means that the clear-text of the password is only stored
     in memory, is never written to disk.
+
+
+
+.. _`Microfiber`: https://launchpad.net/microfiber
