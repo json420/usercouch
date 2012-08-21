@@ -5,9 +5,21 @@
     :synopsis: Start per-user CouchDB instances for fun, profit, unit testing
 
 
+Exceptions
+----------
+
+.. exception:: LockError(lockfile)
+
+    Raised when lock cannot be acquired when creating a :class:`UserCouch`.
+
+    .. attribute:: lockfile
+
+        The path of the lockfile
+
+
+
 The :class:`UserCouch` class
 ----------------------------
-
 
 .. class:: UserCouch(basedir)
 
@@ -50,17 +62,6 @@ The :class:`UserCouch` class
 
         Terminate the CouchDB process to simulate a CouchDB crash.
 
-
-Exceptions
-----------
-
-.. exception:: LockError(lockfile)
-
-    Raised when lock cannot be acquired when creating a :class:`UserCouch`.
-
-    .. attribute:: lockfile
-
-        The path of the lockfile
 
 
 Helper functions
@@ -106,7 +107,7 @@ Helper functions
 
     Hash *password* using *salt*.
 
-    This returns a CouchDB-style hashed password to be use in the session.ini
+    This returns a CouchDB-style hashed password to be used in the session.ini
     file.  For example:
 
     >>> couch_hashed('secret', 'da52c844db4b8bd88ebb96d72542457a')
