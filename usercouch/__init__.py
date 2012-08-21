@@ -265,12 +265,14 @@ class Paths:
     Just a namespace for the various files and directories in *basedir*.
     """
 
-    __slots__ = ('ini', 'databases', 'views', 'bzr', 'log', 'logfile')
+    __slots__ = ('ini', 'databases', 'views', 'dump', 'bzr', 'log', 'logfile')
 
     def __init__(self, basedir):
+        # FIXME: We should remove the `bzr` dir and use `dump` instead
         self.ini = path.join(basedir, 'session.ini')
         self.databases = mkdir(basedir, 'databases')
         self.views = mkdir(basedir, 'views')
+        self.dump = mkdir(basedir, 'dump')
         self.bzr = mkdir(basedir, 'bzr')
         self.log = mkdir(basedir, 'log')
         self.logfile = logfile(self.log, 'couchdb')

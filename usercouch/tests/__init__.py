@@ -609,16 +609,18 @@ class TestPaths(TestCase):
         self.assertEqual(paths.ini, tmp.join('session.ini'))
         self.assertEqual(paths.databases, tmp.join('databases'))
         self.assertEqual(paths.views, tmp.join('views'))
+        self.assertEqual(paths.dump, tmp.join('dump'))
         self.assertEqual(paths.bzr, tmp.join('bzr'))
         self.assertEqual(paths.log, tmp.join('log'))
         self.assertEqual(paths.logfile, tmp.join('log', 'couchdb.log'))
         self.assertTrue(path.isdir(paths.databases))
         self.assertTrue(path.isdir(paths.views))
+        self.assertTrue(path.isdir(paths.dump))
         self.assertTrue(path.isdir(paths.bzr))
         self.assertTrue(path.isdir(paths.log))
         self.assertEqual(
             sorted(os.listdir(tmp.dir)),
-            ['bzr', 'databases', 'log', 'views']
+            ['bzr', 'databases', 'dump', 'log', 'views']
         )
         self.assertEqual(os.listdir(tmp.join('log')), [])
 
@@ -627,16 +629,18 @@ class TestPaths(TestCase):
         self.assertEqual(paths.ini, tmp.join('session.ini'))
         self.assertEqual(paths.databases, tmp.join('databases'))
         self.assertEqual(paths.views, tmp.join('views'))
+        self.assertEqual(paths.dump, tmp.join('dump'))
         self.assertEqual(paths.bzr, tmp.join('bzr'))
         self.assertEqual(paths.log, tmp.join('log'))
         self.assertEqual(paths.logfile, tmp.join('log', 'couchdb.log'))
         self.assertTrue(path.isdir(paths.databases))
         self.assertTrue(path.isdir(paths.views))
+        self.assertTrue(path.isdir(paths.dump))
         self.assertTrue(path.isdir(paths.bzr))
         self.assertTrue(path.isdir(paths.log))
         self.assertEqual(
             sorted(os.listdir(tmp.dir)),
-            ['bzr', 'databases', 'log', 'views']
+            ['bzr', 'databases', 'dump', 'log', 'views']
         )
         self.assertEqual(
             os.listdir(tmp.join('log')),
