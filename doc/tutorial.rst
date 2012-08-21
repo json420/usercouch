@@ -129,7 +129,7 @@ The second is the :class:`CouchTestCase` class.  It's a ``unittest.TestCase``
 subclass with ``setUp()`` and ``tearDown()`` methods that create and destroy
 a :class:`TempCouch` instance for each test.
 
-Typical :class:`CouchTestCase` usage looks like this:
+The typical :class:`CouchTestCase` pattern looks like this:
 
 >>> from usercouch.misc import CouchTestCase
 >>> from microfiber import Database

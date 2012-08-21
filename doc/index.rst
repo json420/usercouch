@@ -25,7 +25,6 @@ by the `#novacut`_ IRC channel on freenode.
 UserCouch is licensed `LGPLv3+`_.
 
 
-
 Contents:
 
 .. toctree::
@@ -34,17 +33,8 @@ Contents:
     tutorial
     usercouch
     usercouch_misc
-    
 
 
-
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
 
 .. _`UserCouch`: https://launchpad.net/usercouch
 .. _`CouchDB`: http://couchdb.apache.org/
