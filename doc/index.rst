@@ -46,7 +46,7 @@ Indices and tables
 * :ref:`modindex`
 * :ref:`search`
 
-.. _`UserCouch`: https://launchpad.net/filestore
+.. _`UserCouch`: https://launchpad.net/usercouch
 .. _`CouchDB`: http://couchdb.apache.org/
 .. _`Microfiber`: https://launchpad.net/microfiber
 .. _`LGPLv3+`: http://www.gnu.org/licenses/lgpl-3.0.html
