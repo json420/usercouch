@@ -140,6 +140,7 @@ class TestFunctions(TestCase):
         overrides = {
             'address': usercouch.random_b32(),
             'loglevel': usercouch.random_b32(),
+            'file_compression': 'deflate_9',
         }
 
         # Test with bad auth
@@ -150,14 +151,32 @@ class TestFunctions(TestCase):
             usercouch.build_config('magic', deepcopy(overrides))
         self.assertEqual(str(cm.exception), "invalid auth: 'magic'")
 
+        # Test with all valid "file_compression" values
+        good = ['none', 'snappy']
+        good.extend('deflate_{}'.format(i) for i in range(1, 10))
+        for value in good:
+            config = usercouch.build_config('open',
+                {'file_compression': value}
+            )
+            self.assertEqual(config['file_compression'], value)
+
+        # Test with a bad "file_compression" value
+        with self.assertRaises(ValueError) as cm:
+            usercouch.build_config('open', {'file_compression': 'deflate_10'})
+        self.assertEqual(
+            str(cm.exception),
+            "invalid 'file_compression': 'deflate_10'"
+        )
+
         # auth='open'
         config = usercouch.build_config('open')
         self.assertIsInstance(config, dict)
         self.assertEqual(set(config),
-            set(['address', 'loglevel'])
+            set(['address', 'loglevel', 'file_compression'])
         )
         self.assertEqual(config['address'], '127.0.0.1')
         self.assertEqual(config['loglevel'], 'notice')
+        self.assertEqual(config['file_compression'], 'snappy')
 
         # auth='open' with overrides
         self.assertEqual(
@@ -165,6 +184,7 @@ class TestFunctions(TestCase):
             {
                 'address': overrides['address'],
                 'loglevel': overrides['loglevel'],
+                'file_compression': 'deflate_9',
             }
         )
 
@@ -172,22 +192,39 @@ class TestFunctions(TestCase):
         config = usercouch.build_config('basic')
         self.assertIsInstance(config, dict)
         self.assertEqual(set(config),
-            set(['address', 'loglevel', 'username', 'password', 'salt'])
+            set([
+                'address',
+                'loglevel',
+                'file_compression',
+                'username',
+                'password',
+                'salt',
+            ])
         )
         self.assertEqual(config['address'], '127.0.0.1')
         self.assertEqual(config['loglevel'], 'notice')
+        self.assertEqual(config['file_compression'], 'snappy')
 
         # auth='basic' with overrides
         config = usercouch.build_config('basic', deepcopy(overrides))
         self.assertIsInstance(config, dict)
         self.assertEqual(set(config),
-            set(['address', 'loglevel', 'username', 'password', 'salt'])
+            set([
+                'address',
+                'loglevel',
+                'file_compression',
+                'username',
+                'password',
+                'salt',
+            ])
         )
         self.assertEqual(config['address'], overrides['address'])
         self.assertEqual(config['loglevel'], overrides['loglevel'])
+        self.assertEqual(config['file_compression'], 'deflate_9')
         o2 = {
             'address': usercouch.random_b32(),
             'loglevel': usercouch.random_b32(),
+            'file_compression': 'none',
             'username': usercouch.random_b32(),
             'password': usercouch.random_b32(),
             'salt': usercouch.random_salt(),
@@ -197,6 +234,7 @@ class TestFunctions(TestCase):
             {
                 'address': o2['address'],
                 'loglevel': o2['loglevel'],
+                'file_compression': 'none',
                 'username': o2['username'],
                 'password': o2['password'],
                 'salt': o2['salt'],
@@ -207,10 +245,19 @@ class TestFunctions(TestCase):
         config = usercouch.build_config('oauth')
         self.assertIsInstance(config, dict)
         self.assertEqual(set(config),
-            set(['address', 'loglevel', 'username', 'password', 'salt', 'oauth'])
+            set([
+                'address',
+                'loglevel',
+                'file_compression',
+                'username',
+                'password',
+                'salt',
+                'oauth',
+            ])
         )
         self.assertEqual(config['address'], '127.0.0.1')
         self.assertEqual(config['loglevel'], 'notice')
+        self.assertEqual(config['file_compression'], 'snappy')
         self.assertIsInstance(config['oauth'], dict)
         self.assertEqual(set(config['oauth']),
             set(['token', 'token_secret', 'consumer_key', 'consumer_secret'])
@@ -220,10 +267,19 @@ class TestFunctions(TestCase):
         config = usercouch.build_config('oauth', deepcopy(overrides))
         self.assertIsInstance(config, dict)
         self.assertEqual(set(config),
-            set(['address', 'loglevel', 'username', 'password', 'salt', 'oauth'])
+            set([
+                'address',
+                'loglevel',
+                'file_compression',
+                'username',
+                'password',
+                'salt',
+                'oauth',
+            ])
         )
         self.assertEqual(config['address'], overrides['address'])
         self.assertEqual(config['loglevel'], overrides['loglevel'])
+        self.assertEqual(config['file_compression'], 'deflate_9')
         self.assertIsInstance(config['oauth'], dict)
         self.assertEqual(set(config['oauth']),
             set(['token', 'token_secret', 'consumer_key', 'consumer_secret'])
@@ -231,6 +287,7 @@ class TestFunctions(TestCase):
         o3 = {
             'address': usercouch.random_b32(),
             'loglevel': usercouch.random_b32(),
+            'file_compression': 'none',
             'username': usercouch.random_b32(),
             'password': usercouch.random_b32(),
             'salt': usercouch.random_salt(),
@@ -241,6 +298,7 @@ class TestFunctions(TestCase):
             {
                 'address': o3['address'],
                 'loglevel': o3['loglevel'],
+                'file_compression': 'none',
                 'username': o3['username'],
                 'password': o3['password'],
                 'salt': o3['salt'],
@@ -301,6 +359,7 @@ class TestFunctions(TestCase):
         config = {
             'address': usercouch.random_b32(),
             'loglevel': usercouch.random_b32(),
+            'file_compression': usercouch.random_b32(), 
             'username': usercouch.random_b32(),
             'password': usercouch.random_b32(),
             'salt': usercouch.random_salt(),
@@ -321,6 +380,7 @@ class TestFunctions(TestCase):
             {
                 'address': config['address'],
                 'loglevel': config['loglevel'],
+                'file_compression': config['file_compression'],
                 'port': port,
                 'databases': paths.databases,
                 'views': paths.views,
@@ -334,6 +394,7 @@ class TestFunctions(TestCase):
             {
                 'address': config['address'],
                 'loglevel': config['loglevel'],
+                'file_compression': config['file_compression'],
                 'port': port,
                 'databases': paths.databases,
                 'views': paths.views,
@@ -351,6 +412,7 @@ class TestFunctions(TestCase):
             {
                 'address': config['address'],
                 'loglevel': config['loglevel'],
+                'file_compression': config['file_compression'],
                 'port': port,
                 'databases': paths.databases,
                 'views': paths.views,
@@ -373,7 +435,15 @@ class TestFunctions(TestCase):
         self.assertEqual(str(cm.exception), "invalid auth: 'magic'")
 
         # Test with auth='open'
-        keys = ('address', 'port', 'databases', 'views', 'logfile', 'loglevel')
+        keys = (
+            'address',
+            'port',
+            'databases',
+            'views',
+            'file_compression',
+            'logfile',
+            'loglevel',
+        )
         kw = dict(
             (key, usercouch.random_b32())
             for key in keys
@@ -391,7 +461,13 @@ class TestFunctions(TestCase):
 
         # Test with auth='basic'
         keys = (
-            'address', 'port', 'databases', 'views', 'logfile', 'loglevel',
+            'address',
+            'port',
+            'databases',
+            'views',
+            'file_compression',
+            'logfile',
+            'loglevel',
             'username', 'hashed',
         )
         kw = dict(
@@ -411,7 +487,13 @@ class TestFunctions(TestCase):
 
         # Test with auth='oauth'
         keys = (
-            'address', 'port', 'databases', 'views', 'logfile', 'loglevel',
+            'address',
+            'port',
+            'databases',
+            'views',
+            'file_compression',
+            'logfile',
+            'loglevel',
             'username', 'hashed',
             'token', 'token_secret', 'consumer_key', 'consumer_secret',
         )
@@ -845,6 +927,7 @@ class TestUserCouch(TestCase):
             'port': env['port'],
             'databases': uc.paths.databases,
             'views': uc.paths.views,
+            'file_compression': 'snappy',
             'logfile': uc.paths.logfile,
             'loglevel': overrides['loglevel'],
 
@@ -887,6 +970,7 @@ class TestUserCouch(TestCase):
             'port': env['port'],
             'databases': uc.paths.databases,
             'views': uc.paths.views,
+            'file_compression': 'snappy',
             'logfile': uc.paths.logfile,
             'loglevel': overrides['loglevel'],
 

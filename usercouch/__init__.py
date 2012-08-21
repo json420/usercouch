@@ -44,9 +44,25 @@ USERCOUCH_INI = path.join(
 )
 assert path.isfile(USERCOUCH_INI)
 
+# Allowed values for `file_compression`:
+FILE_COMPRESSION = (
+    'none',
+    'deflate_1',
+    'deflate_2',
+    'deflate_3',
+    'deflate_4',
+    'deflate_5',
+    'deflate_6',
+    'deflate_7',
+    'deflate_8',
+    'deflate_9',
+    'snappy',
+)
+
 DEFAULT_CONFIG = (
     ('address', '127.0.0.1'),
     ('loglevel', 'notice'),
+    ('file_compression', 'snappy'),
 )
 
 OPEN = """[httpd]
@@ -56,6 +72,7 @@ port = {port}
 [couchdb]
 database_dir = {databases}
 view_index_dir = {views}
+file_compression = {file_compression}
 
 [log]
 file = {logfile}
@@ -143,6 +160,10 @@ def build_config(auth, overrides=None):
     config = dict(DEFAULT_CONFIG)
     if overrides:
         config.update(overrides)
+    if config['file_compression'] not in FILE_COMPRESSION:
+        raise ValueError("invalid 'file_compression': {!r}".format(
+                config['file_compression'])
+        )
     if auth in ('basic', 'oauth'):
         if 'username' not in config:
             config['username'] = random_b32()
@@ -179,6 +200,7 @@ def build_template_kw(auth, config, port, paths):
     kw = {
         'address': config['address'],
         'loglevel': config['loglevel'],
+        'file_compression': config['file_compression'],
         'port': port,
         'databases': paths.databases,
         'views': paths.views,
