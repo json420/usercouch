@@ -4,7 +4,7 @@ UserCouch Tutorial
 .. py:currentmodule:: usercouch
 
 To create a :class:`UserCouch` instance, you must supply the *basedir*
-directory in which all the CouchDB data will be stored.  For example:
+directory in which all the `CouchDB`_ data will be stored.  For example:
 
 >>> from usercouch import UserCouch
 >>> mycouch = UserCouch('/home/jderose/.usercouch')
