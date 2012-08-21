@@ -1,0 +1,8 @@
+Document: usercouch
+Title: UserCouch documentation
+Abstract: Documentation for UserCouch.
+Section: Programming
+
+Format: HTML
+Index: /usr/share/doc/python3-usercouch-doc/html/index.html
+Files: /usr/share/doc/python3-usercouch-doc/html/*.html

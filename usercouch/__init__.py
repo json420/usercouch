@@ -122,11 +122,14 @@ def couch_hashed(password, salt):
     Hash *password* using *salt*.
 
     This returns a CouchDB-style hashed password to be use in the session.ini
-    file.
+    file.  For example:
+
+    >>> couch_hashed('secret', 'da52c844db4b8bd88ebb96d72542457a')
+    '-hashed-ddf425840fd7f81cc45d9e9f5aa484d1f60964a9,da52c844db4b8bd88ebb96d72542457a'
 
     Typically `UserCouch` is used with a per-session random password, so this
-    function means that the clear-text of the password is only stored in memory,
-    is never written to disk.
+    function means that the clear-text of the password is only stored in
+    memory, is never written to disk.
     """
     assert len(salt) == 32
     data = (password + salt).encode('utf-8')
