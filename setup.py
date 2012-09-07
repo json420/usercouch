@@ -48,8 +48,10 @@ class Test(Command):
         pynames = [
             'usercouch',
             'usercouch.misc',
+            'usercouch.sslhelpers',
             'usercouch.tests',
             'usercouch.tests.test_misc',
+            'usercouch.tests.test_sslhelpers',
         ]
 
         # Add unit-tests:
