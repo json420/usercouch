@@ -1,0 +1,2 @@
+debian/usercouch-crashdb.conf etc/apport/crashdb.conf.d/
+debian/source_usercouch.py usr/share/apport/package-hooks/
