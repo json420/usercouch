@@ -98,6 +98,16 @@ OAUTH = BASIC + """
 {consumer_key} = {consumer_secret}
 """
 
+SSL = """
+[daemons]
+httpsd = {{couch_httpd, start_link, [https]}}
+
+[ssl]
+cert_file = {cert_file}
+key_file = {key_file}
+port = {ssl_port}
+"""
+
 TEMPLATES = {
     'open': OPEN,
     'basic': BASIC,
