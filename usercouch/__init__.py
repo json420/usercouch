@@ -187,6 +187,25 @@ def build_config(auth, overrides=None):
     return config
 
 
+def build_url(address, port):
+    """
+    Build an appropriate URL from *address* and *port*.
+
+    For example:
+
+    >>> build_url('127.0.0.1', 50000)
+    'http://localhost:50000/'
+    >>> build_url('::1', 50000)
+    'http://[::1]:50000/'
+
+    """
+    if address in ('127.0.0.1', '0.0.0.0'):
+        return 'http://localhost:{}/'.format(port)
+    if address in ('::1', '::'):
+        return 'http://[::1]:{}/'.format(port)
+    raise ValueError('invalid address: {!r}'.format(address))
+
+
 def build_env(auth, config, port):
     if auth not in TEMPLATES:
         raise ValueError('invalid auth: {!r}'.format(auth))
