@@ -958,7 +958,7 @@ class TestUserCouch(TestCase):
     def test_bootstrap_override_basic(self):
         overrides = {
             'loglevel': 'debug',
-            'address': '0.0.0.0',
+            'address': '::1',
             'username': usercouch.random_b32(),
             'password': usercouch.random_b32(),
             'salt': usercouch.random_salt(),
@@ -972,7 +972,7 @@ class TestUserCouch(TestCase):
         )
         self.assertIsInstance(env['port'], int)
         self.assertEqual(env['url'],
-            'http://localhost:{}/'.format(env['port'])
+            'http://[::1]:{}/'.format(env['port'])
         )
         self.assertEqual(env['basic'],
             dict((k, overrides[k]) for k in ('username', 'password'))
@@ -999,7 +999,7 @@ class TestUserCouch(TestCase):
     def test_bootstrap_override_oauth(self):
         overrides = {
             'loglevel': 'debug',
-            'address': '0.0.0.0',
+            'address': '::1',
             'username': usercouch.random_b32(),
             'password': usercouch.random_b32(),
             'salt': usercouch.random_salt(),
@@ -1014,7 +1014,7 @@ class TestUserCouch(TestCase):
         )
         self.assertIsInstance(env['port'], int)
         self.assertEqual(env['url'],
-            'http://localhost:{}/'.format(env['port'])
+            'http://[::1]:{}/'.format(env['port'])
         )
         self.assertEqual(env['basic'],
             dict((k, overrides[k]) for k in ('username', 'password'))
