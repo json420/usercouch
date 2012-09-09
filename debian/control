@@ -5,14 +5,17 @@ Maintainer: Jason Gerard DeRose <jderose@novacut.com>
 Build-Depends: debhelper (>= 9),
     python3-all (>= 3.2),
     python3-sphinx (>= 1.1),
-    couchdb-bin (>= 1.2.0)
+    couchdb-bin (>= 1.2.0),
+    openssl,
 Standards-Version: 3.9.3
 X-Python3-Version: >= 3.2
 Homepage: https://launchpad.net/usercouch
 
 Package: python3-usercouch
 Architecture: all
-Depends: ${python3:Depends}, ${misc:Depends}, couchdb-bin (>= 1.2.0)    
+Depends: ${python3:Depends}, ${misc:Depends},
+    couchdb-bin (>= 1.2.0),
+    openssl,
 Suggests: python3-microfiber, python3-usercouch-doc
 Description: starts per-user CouchDB instances for fun, profit, unit testing
  UserCouch is a Python3 library for starting per-user CouchDB instances,
