@@ -311,6 +311,7 @@ class TestFunctions(TestCase):
             'username': usercouch.random_b32(),
             'password': usercouch.random_b32(),
             'oauth': usercouch.random_oauth(),
+            'address': '127.0.0.1',
         }
         port = test_port()
 

@@ -211,7 +211,7 @@ def build_env(auth, config, port):
         raise ValueError('invalid auth: {!r}'.format(auth))
     env = {
         'port': port,
-        'url': 'http://localhost:{}/'.format(port),
+        'url': build_url(config['address'], port),
     }
     if auth in ('basic', 'oauth'):
         env['basic'] = {
