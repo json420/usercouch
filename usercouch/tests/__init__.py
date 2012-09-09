@@ -306,6 +306,32 @@ class TestFunctions(TestCase):
             }
         )
 
+    def test_build_url(self):
+        self.assertEqual(
+            usercouch.build_url('127.0.0.1', 54321),
+            'http://localhost:54321/'
+        )
+        self.assertEqual(
+            usercouch.build_url('0.0.0.0', 54321),
+            'http://localhost:54321/'
+        )
+        self.assertEqual(
+            usercouch.build_url('::1', 54321),
+            'http://[::1]:54321/'
+        )
+        self.assertEqual(
+            usercouch.build_url('::', 54321),
+            'http://[::1]:54321/'
+        )
+
+        # Test with an invalid address:
+        with self.assertRaises(ValueError) as cm:
+            usercouch.build_url('192.168.0.2', 54321)
+        self.assertEqual(
+            str(cm.exception),
+            "invalid address: '192.168.0.2'"
+        )
+
     def test_build_env(self):
         config = {
             'username': usercouch.random_b32(),
