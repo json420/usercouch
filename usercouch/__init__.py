@@ -232,7 +232,12 @@ def build_session_ini(auth, kw):
 
 
 def bind_random_port(address):
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    if address in ('127.0.0.1', '0.0.0.0'):
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    elif address in ('::1', '::'):
+        sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+    else:
+        raise ValueError('invalid address: {!r}'.format(address))
     sock.bind((address, 0))
     port = sock.getsockname()[1]
     return (sock, port)

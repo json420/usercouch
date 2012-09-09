@@ -529,6 +529,30 @@ class TestFunctions(TestCase):
             usercouch.bind_random_port('0.0.0.0')[1]
         )
 
+        (sock, port) = usercouch.bind_random_port('::1')
+        self.assertIsInstance(sock, socket.socket)
+        self.assertIsInstance(port, int)
+        self.assertEqual(sock.getsockname(), ('::1', port, 0, 0))
+        self.assertNotEqual(port,
+            usercouch.bind_random_port('::1')[1]
+        )
+
+        (sock, port) = usercouch.bind_random_port('::')
+        self.assertIsInstance(sock, socket.socket)
+        self.assertIsInstance(port, int)
+        self.assertEqual(sock.getsockname(), ('::', port, 0, 0))
+        self.assertNotEqual(port,
+            usercouch.bind_random_port('::')[1]
+        )
+
+        # Test with an invalid address:
+        with self.assertRaises(ValueError) as cm:
+            usercouch.bind_random_port('192.168.0.2')
+        self.assertEqual(
+            str(cm.exception),
+            "invalid address: '192.168.0.2'"
+        )
+
     def test_get_cmd(self):
         tmp = TempDir()
         ini = tmp.join('session.ini')
