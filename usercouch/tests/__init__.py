@@ -445,17 +445,18 @@ class TestFunctions(TestCase):
             'oauth': usercouch.random_oauth(),
         }
         port = test_port()
+        ports = {'port': port}
         tmp = TempDir()
         paths = usercouch.Paths(tmp.dir)
 
         # Test with bad auth
         with self.assertRaises(ValueError) as cm:
-            usercouch.build_template_kw('magic', deepcopy(config), port, paths)
+            usercouch.build_template_kw('magic', deepcopy(config), ports, paths)
         self.assertEqual(str(cm.exception), "invalid auth: 'magic'")
 
         # auth='open'
         self.assertEqual(
-            usercouch.build_template_kw('open', deepcopy(config), port, paths),
+            usercouch.build_template_kw('open', deepcopy(config), ports, paths),
             {
                 'address': config['address'],
                 'loglevel': config['loglevel'],
@@ -469,7 +470,7 @@ class TestFunctions(TestCase):
 
         # auth='basic'
         self.assertEqual(
-            usercouch.build_template_kw('basic', deepcopy(config), port, paths),
+            usercouch.build_template_kw('basic', deepcopy(config), ports, paths),
             {
                 'address': config['address'],
                 'loglevel': config['loglevel'],
@@ -487,7 +488,7 @@ class TestFunctions(TestCase):
 
         # auth='oauth'
         self.assertEqual(
-            usercouch.build_template_kw('oauth', deepcopy(config), port, paths),
+            usercouch.build_template_kw('oauth', deepcopy(config), ports, paths),
             {
                 'address': config['address'],
                 'loglevel': config['loglevel'],
@@ -504,6 +505,23 @@ class TestFunctions(TestCase):
                 'token_secret': config['oauth']['token_secret'],
                 'consumer_key': config['oauth']['consumer_key'],
                 'consumer_secret': config['oauth']['consumer_secret'],
+            }
+        )
+
+        # Test with ssl_port also
+        ssl_port = test_port()
+        ports = {'port': port, 'ssl_port': ssl_port}
+        self.assertEqual(
+            usercouch.build_template_kw('open', deepcopy(config), ports, paths),
+            {
+                'address': config['address'],
+                'loglevel': config['loglevel'],
+                'file_compression': config['file_compression'],
+                'port': port,
+                'ssl_port': ssl_port,
+                'databases': paths.databases,
+                'views': paths.views,
+                'logfile': paths.logfile,
             }
         )
 

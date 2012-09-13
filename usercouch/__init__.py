@@ -242,18 +242,18 @@ def build_env(auth, config, port):
     return env
 
 
-def build_template_kw(auth, config, port, paths):
+def build_template_kw(auth, config, ports, paths):
     if auth not in TEMPLATES:
         raise ValueError('invalid auth: {!r}'.format(auth))
     kw = {
         'address': config['address'],
         'loglevel': config['loglevel'],
         'file_compression': config['file_compression'],
-        'port': port,
         'databases': paths.databases,
         'views': paths.views,
         'logfile': paths.logfile,
     }
+    kw.update(ports)
     if auth in ('basic', 'oauth'):
         kw['username'] = config['username']
         kw['hashed'] = couch_hashed(config['password'], config['salt'])
@@ -413,7 +413,7 @@ class UserCouch:
         config = build_config(auth, overrides)
         (sock, port) = bind_random_port(config['address'])
         env = build_env(auth, config, port)
-        kw = build_template_kw(auth, config, port, self.paths)
+        kw = build_template_kw(auth, config, {'port': port}, self.paths)
         session = build_session_ini(auth, kw)
         open(self.paths.ini, 'w').write(session)
         self._conn = get_conn(env)
