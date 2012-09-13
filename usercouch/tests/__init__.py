@@ -136,6 +136,50 @@ class TestFunctions(TestCase):
             '-hashed-791a7d0f893bfbf6311d36081f797fe166cee072,' + salt
         )
 
+    def test_check_ssl_config(self):
+        with self.assertRaises(TypeError) as cm:
+            usercouch.check_ssl_config('hello')
+        self.assertEqual(
+            str(cm.exception),
+            "overrides['ssl'] must be a <class 'dict'>; got a <class 'str'>: 'hello'"
+        )
+        with self.assertRaises(ValueError) as cm:
+            usercouch.check_ssl_config({})
+        self.assertEqual(
+            str(cm.exception),
+            "overrides['ssl'] must have 'key_file', 'cert_file'"
+        )
+
+        # Test when cert_file isn't a file
+        tmp = TempDir()
+        key = tmp.touch('key.pem')
+        cert = tmp.join('cert.pem')
+        with self.assertRaises(ValueError) as cm:
+            usercouch.check_ssl_config({'key_file': key, 'cert_file': cert})
+        self.assertEqual(
+            str(cm.exception),
+            "overrides['ssl']['cert_file'] not a file: {!r}".format(cert)
+        )
+
+        # Test when key_file isn't a file
+        tmp = TempDir()
+        key = tmp.join('key.pem')
+        cert = tmp.touch('cert.pem')
+        with self.assertRaises(ValueError) as cm:
+            usercouch.check_ssl_config({'key_file': key, 'cert_file': cert})
+        self.assertEqual(
+            str(cm.exception),
+            "overrides['ssl']['key_file'] not a file: {!r}".format(key)
+        )
+        
+        # Test when it's all good
+        tmp = TempDir()
+        key = tmp.touch('key.pem')
+        cert = tmp.touch('cert.pem')
+        self.assertIsNone(
+            usercouch.check_ssl_config({'key_file': key, 'cert_file': cert})
+        )
+
     def test_build_config(self):
         overrides = {
             'address': usercouch.random_b32(),

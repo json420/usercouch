@@ -164,6 +164,23 @@ def couch_hashed(password, salt):
     return '-hashed-{},{}'.format(hexdigest, salt)
 
 
+def check_ssl_config(ssl_config):
+    if not isinstance(ssl_config, dict):
+        raise TypeError(
+            "overrides['ssl'] must be a {!r}; got a {!r}: {!r}".format(
+                dict, type(ssl_config), ssl_config)
+        )
+    keys = set(['key_file', 'cert_file'])
+    if set(ssl_config) != keys:
+        raise ValueError("overrides['ssl'] must have 'key_file', 'cert_file'")
+    for key in keys:
+        value = ssl_config[key]
+        if not path.isfile(value):
+            raise ValueError(
+                "overrides['ssl'][{!r}] not a file: {!r}".format(key, value)
+            )
+
+
 def build_config(auth, overrides=None):
     if auth not in TEMPLATES:
         raise ValueError('invalid auth: {!r}'.format(auth))
