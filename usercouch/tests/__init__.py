@@ -171,7 +171,7 @@ class TestFunctions(TestCase):
             str(cm.exception),
             "overrides['ssl']['key_file'] not a file: {!r}".format(key)
         )
-        
+
         # Test when it's all good
         tmp = TempDir()
         key = tmp.touch('key.pem')
@@ -210,6 +210,14 @@ class TestFunctions(TestCase):
         self.assertEqual(
             str(cm.exception),
             "invalid 'file_compression': 'deflate_10'"
+        )
+
+        # Test with bad 'ssl' (makes sure check_ssl_config() is called):
+        with self.assertRaises(ValueError) as cm:
+            usercouch.build_config('open', {'ssl': {}})
+        self.assertEqual(
+            str(cm.exception),
+            "overrides['ssl'] must have 'key_file', 'cert_file'"
         )
 
         # auth='open'

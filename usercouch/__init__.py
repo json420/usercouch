@@ -191,6 +191,8 @@ def build_config(auth, overrides=None):
         raise ValueError("invalid 'file_compression': {!r}".format(
                 config['file_compression'])
         )
+    if 'ssl' in config:
+        check_ssl_config(config['ssl'])
     if auth in ('basic', 'oauth'):
         if 'username' not in config:
             config['username'] = random_b32()
