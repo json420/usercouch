@@ -269,7 +269,7 @@ def build_session_ini(auth, kw):
     return template.format(**kw)
 
 
-def bind_random_port(address):
+def bind_socket(address):
     if address in ('127.0.0.1', '0.0.0.0'):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     elif address in ('::1', '::'):
@@ -277,17 +277,16 @@ def bind_random_port(address):
     else:
         raise ValueError('invalid address: {!r}'.format(address))
     sock.bind((address, 0))
-    port = sock.getsockname()[1]
-    return (sock, port)
+    return sock
 
 
 class Sockets:
     def __init__(self, address):
         self.address = address
-        self.socks = {'port': bind_random_port(address)[0]}
+        self.socks = {'port': bind_socket(address)}
 
     def add_ssl(self):
-        self.socks['ssl_port'] = bind_random_port(self.address)[0]
+        self.socks['ssl_port'] = bind_socket(self.address)
 
     def get_ports(self):
         return dict(

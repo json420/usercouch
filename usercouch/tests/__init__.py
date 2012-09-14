@@ -610,42 +610,38 @@ class TestFunctions(TestCase):
                 usercouch.build_session_ini('oauth', bad)
             self.assertEqual(str(cm.exception), repr(key))
 
-    def test_bind_random_port(self):
-        (sock, port) = usercouch.bind_random_port('127.0.0.1')
+    def test_bind_socket(self):
+        sock = usercouch.bind_socket('127.0.0.1')
         self.assertIsInstance(sock, socket.socket)
-        self.assertIsInstance(port, int)
+        port = sock.getsockname()[1]
         self.assertEqual(sock.getsockname(), ('127.0.0.1', port))
-        self.assertNotEqual(port,
-            usercouch.bind_random_port('127.0.0.1')[1]
-        )
+        sock2 = usercouch.bind_socket('127.0.0.1')
+        self.assertNotEqual(sock2.getsockname()[1], port)
 
-        (sock, port) = usercouch.bind_random_port('0.0.0.0')
+        sock = usercouch.bind_socket('0.0.0.0')
         self.assertIsInstance(sock, socket.socket)
-        self.assertIsInstance(port, int)
+        port = sock.getsockname()[1]
         self.assertEqual(sock.getsockname(), ('0.0.0.0', port))
-        self.assertNotEqual(port,
-            usercouch.bind_random_port('0.0.0.0')[1]
-        )
+        sock2 = usercouch.bind_socket('0.0.0.0')
+        self.assertNotEqual(sock2.getsockname()[1], port)
 
-        (sock, port) = usercouch.bind_random_port('::1')
+        sock = usercouch.bind_socket('::1')
         self.assertIsInstance(sock, socket.socket)
-        self.assertIsInstance(port, int)
+        port = sock.getsockname()[1]
         self.assertEqual(sock.getsockname(), ('::1', port, 0, 0))
-        self.assertNotEqual(port,
-            usercouch.bind_random_port('::1')[1]
-        )
+        sock2 = usercouch.bind_socket('::1')
+        self.assertNotEqual(sock2.getsockname()[1], port)
 
-        (sock, port) = usercouch.bind_random_port('::')
+        sock = usercouch.bind_socket('::')
         self.assertIsInstance(sock, socket.socket)
-        self.assertIsInstance(port, int)
+        port = sock.getsockname()[1]
         self.assertEqual(sock.getsockname(), ('::', port, 0, 0))
-        self.assertNotEqual(port,
-            usercouch.bind_random_port('::')[1]
-        )
+        sock2 = usercouch.bind_socket('::')
+        self.assertNotEqual(sock2.getsockname()[1], port)
 
         # Test with an invalid address:
         with self.assertRaises(ValueError) as cm:
-            usercouch.bind_random_port('192.168.0.2')
+            usercouch.bind_socket('192.168.0.2')
         self.assertEqual(
             str(cm.exception),
             "invalid address: '192.168.0.2'"
