@@ -392,15 +392,16 @@ class TestFunctions(TestCase):
             'address': '127.0.0.1',
         }
         port = test_port()
+        ports = {'port': port}
 
         # Test with bad auth
         with self.assertRaises(ValueError) as cm:
-            usercouch.build_env('magic', deepcopy(config), port)
+            usercouch.build_env('magic', deepcopy(config), ports)
         self.assertEqual(str(cm.exception), "invalid auth: 'magic'")
 
         # auth='open'
         self.assertEqual(
-            usercouch.build_env('open', deepcopy(config), port),
+            usercouch.build_env('open', deepcopy(config), ports),
             {
                 'port': port,
                 'url': 'http://localhost:{}/'.format(port),
@@ -409,7 +410,7 @@ class TestFunctions(TestCase):
 
         # auth='basic'
         self.assertEqual(
-            usercouch.build_env('basic', deepcopy(config), port),
+            usercouch.build_env('basic', deepcopy(config), ports),
             {
                 'port': port,
                 'url': 'http://localhost:{}/'.format(port),
@@ -422,7 +423,7 @@ class TestFunctions(TestCase):
 
         # auth='oauth'
         self.assertEqual(
-            usercouch.build_env('oauth', deepcopy(config), port),
+            usercouch.build_env('oauth', deepcopy(config), ports),
             {
                 'port': port,
                 'url': 'http://localhost:{}/'.format(port),

@@ -225,12 +225,12 @@ def build_url(address, port):
     raise ValueError('invalid address: {!r}'.format(address))
 
 
-def build_env(auth, config, port):
+def build_env(auth, config, ports):
     if auth not in TEMPLATES:
         raise ValueError('invalid auth: {!r}'.format(auth))
     env = {
-        'port': port,
-        'url': build_url(config['address'], port),
+        'port': ports['port'],
+        'url': build_url(config['address'], ports['port']),
     }
     if auth in ('basic', 'oauth'):
         env['basic'] = {
@@ -412,8 +412,9 @@ class UserCouch:
         self.__bootstraped = True
         config = build_config(auth, overrides)
         (sock, port) = bind_random_port(config['address'])
-        env = build_env(auth, config, port)
-        kw = build_template_kw(auth, config, {'port': port}, self.paths)
+        ports = {'port': port}
+        env = build_env(auth, config, ports)
+        kw = build_template_kw(auth, config, ports, self.paths)
         session = build_session_ini(auth, kw)
         open(self.paths.ini, 'w').write(session)
         self._conn = get_conn(env)
