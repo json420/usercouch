@@ -616,6 +616,36 @@ class TestFunctions(TestCase):
                 usercouch.build_session_ini('oauth', bad)
             self.assertEqual(str(cm.exception), repr(key))
 
+        # Test with auth='basic' and SSL
+        keys = (
+            'address',
+            'port',
+            'databases',
+            'views',
+            'file_compression',
+            'logfile',
+            'loglevel',
+            'username', 'hashed',
+            'ssl_port', 'cert_file', 'key_file',
+        )
+        kw = dict(
+            (key, usercouch.random_b32())
+            for key in keys
+        )
+        template = usercouch.BASIC + usercouch.SSL
+        self.assertEqual(
+            usercouch.build_session_ini('basic', deepcopy(kw)),
+            template.format(**kw)
+        )
+        for key in keys:
+            if key == 'ssl_port':
+                continue
+            bad = deepcopy(kw)
+            del bad[key]
+            with self.assertRaises(KeyError) as cm:
+                usercouch.build_session_ini('basic', bad)
+            self.assertEqual(str(cm.exception), repr(key))
+
     def test_bind_socket(self):
         sock = usercouch.bind_socket('127.0.0.1')
         self.assertIsInstance(sock, socket.socket)

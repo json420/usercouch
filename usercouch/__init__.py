@@ -103,9 +103,9 @@ SSL = """
 httpsd = {{couch_httpd, start_link, [https]}}
 
 [ssl]
+port = {ssl_port}
 cert_file = {cert_file}
 key_file = {key_file}
-port = {ssl_port}
 """
 
 TEMPLATES = {
@@ -269,6 +269,8 @@ def build_session_ini(auth, kw):
     if auth not in TEMPLATES:
         raise ValueError('invalid auth: {!r}'.format(auth))
     template = TEMPLATES[auth]
+    if 'ssl_port' in kw:
+        template += SSL
     return template.format(**kw)
 
 
