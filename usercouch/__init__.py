@@ -281,6 +281,36 @@ def bind_random_port(address):
     return (sock, port)
 
 
+def bind_socket(address):
+    if address in ('127.0.0.1', '0.0.0.0'):
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    elif address in ('::1', '::'):
+        sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+    else:
+        raise ValueError('invalid address: {!r}'.format(address))
+    sock.bind((address, 0))
+    return sock
+
+
+class Sockets:
+    def __init__(self, address):
+        self.address = address
+        self.socks = {'port': bind_socket(address)}
+
+    def add_ssl(self):
+        self.socks['ssl_port'] = bind_socket(self.address)
+
+    def get_ports(self):
+        return dict(
+            (key, sock.getsockname()[1])
+            for (key, sock) in self.socks.items()
+        )
+
+    def close(self):
+        for sock in self.socks.values():
+            sock.close()
+
+
 def get_cmd(session_ini):
     return [
         '/usr/bin/couchdb',
@@ -411,15 +441,15 @@ class UserCouch:
             )
         self.__bootstraped = True
         config = build_config(auth, overrides)
-        (sock, port) = bind_random_port(config['address'])
-        ports = {'port': port}
+        socks = Sockets(config['address'])
+        ports = socks.get_ports()
         env = build_env(auth, config, ports)
         kw = build_template_kw(auth, config, ports, self.paths)
         session = build_session_ini(auth, kw)
         open(self.paths.ini, 'w').write(session)
         self._conn = get_conn(env)
         self._headers = get_headers(env)
-        sock.close()
+        socks.close()
         self.start()
         return env
 
