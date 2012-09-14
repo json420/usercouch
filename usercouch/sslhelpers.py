@@ -33,32 +33,32 @@ def gen_key(dst, bits=2048):
     check_call(['openssl', 'genrsa', '-out', dst, str(bits)])
 
 
-def gen_ca(key, subj, dst):
+def gen_ca(key, subject, dst):
     """
     Create a self-signed X509 certificate authority.
 
-    *subj* should be an str in the form ``'/CN=foobar'``.
+    *subject* should be an str in the form ``'/CN=foobar'``.
     """
     check_call(['openssl', 'req',
         '-new',
         '-x509',
         '-days', '3650',
         '-key', key,
-        '-subj', subj,
+        '-subj', subject,
         '-out', dst,
     ])
 
 
-def gen_csr(key, subj, dst):
+def gen_csr(key, subject, dst):
     """
     Create a certificate signing request.
 
-    *subj* should be an str in the form ``'/CN=foobar'``.
+    *subject* should be an str in the form ``'/CN=foobar'``.
     """
     check_call(['openssl', 'req',
         '-new',
         '-key', key,
-        '-subj', subj,
+        '-subj', subject,
         '-out', dst,
     ])
 
