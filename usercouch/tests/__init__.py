@@ -662,6 +662,55 @@ class TestFunctions(TestCase):
         )
 
 
+class TestSockets(TestCase):
+    def test_init(self):
+        socks = usercouch.Sockets('127.0.0.1')
+        self.assertEqual(socks.address, '127.0.0.1')
+        self.assertIsInstance(socks.socks, dict)
+        self.assertEqual(set(socks.socks), set(['port']))
+        self.assertIsInstance(socks.socks['port'], socket.socket)
+
+    def test_add_ssl(self):
+        socks = usercouch.Sockets('127.0.0.1')
+        self.assertIsNone(socks.add_ssl())
+        self.assertIsInstance(socks.socks, dict)
+        self.assertEqual(set(socks.socks), set(['port', 'ssl_port']))
+        self.assertIsInstance(socks.socks['port'], socket.socket)
+        self.assertIsInstance(socks.socks['ssl_port'], socket.socket)
+        self.assertIsNot(socks.socks['port'], socks.socks['ssl_port'])
+
+    def test_get_ports(self):
+        socks = usercouch.Sockets('127.0.0.1')
+        port = socks.socks['port'].getsockname()[1]
+        self.assertEqual(socks.get_ports(),
+            {'port': port}
+        )
+
+        socks = usercouch.Sockets('127.0.0.1')
+        socks.add_ssl()
+        port = socks.socks['port'].getsockname()[1]
+        ssl_port = socks.socks['ssl_port'].getsockname()[1]
+        self.assertEqual(socks.get_ports(),
+            {'port': port, 'ssl_port': ssl_port}
+        )
+
+    def test_close(self):
+        socks = usercouch.Sockets('127.0.0.1')
+        for sock in socks.socks.values():
+            self.assertFalse(sock._closed)
+        self.assertIsNone(socks.close())
+        for sock in socks.socks.values():
+            self.assertTrue(sock._closed)
+
+        socks = usercouch.Sockets('127.0.0.1')
+        socks.add_ssl()
+        for sock in socks.socks.values():
+            self.assertFalse(sock._closed)
+        self.assertIsNone(socks.close())
+        for sock in socks.socks.values():
+            self.assertTrue(sock._closed)
+
+
 class TestPathFunctions(TestCase):
     def test_mkdir(self):
         tmp = TempDir()

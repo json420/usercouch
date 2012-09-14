@@ -281,6 +281,10 @@ def bind_socket(address):
 
 
 class Sockets:
+    """
+    A helper class to make it easy to deal with one or two random ports.
+    """
+
     def __init__(self, address):
         self.address = address
         self.socks = {'port': bind_socket(address)}
