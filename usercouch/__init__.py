@@ -439,6 +439,8 @@ class UserCouch:
         self.__bootstraped = True
         config = build_config(auth, overrides)
         socks = Sockets(config['address'])
+        if 'ssl' in config:
+            socks.add_ssl()
         ports = socks.get_ports()
         env = build_env(auth, config, ports)
         kw = build_template_kw(auth, config, ports, self.paths)

@@ -37,6 +37,7 @@ from base64 import b32decode
 from http.client import HTTPConnection
 from random import SystemRandom
 
+from usercouch import sslhelpers
 import usercouch
 
 
@@ -1194,6 +1195,52 @@ class TestUserCouch(TestCase):
         self.assertEqual(
             open(uc.paths.ini, 'r').read(),
             usercouch.OAUTH.format(**kw)
+        )
+
+    def test_bootstrap_ssl(self):
+        tmp = TempDir()
+
+        # Create SSL key and cert
+        key = tmp.join('key.pem')
+        cert = tmp.join('cert.pem')
+        sslhelpers.gen_key(key)
+        sslhelpers.gen_ca(key, '/CN=foobar', cert)
+        overrides = {'ssl': {'key_file': key, 'cert_file': cert}}
+
+        uc = usercouch.UserCouch(tmp.dir)
+        self.assertFalse(path.exists(uc.paths.ini))
+        env = uc.bootstrap('basic', overrides)
+        self.assertTrue(path.isfile(uc.paths.ini))
+        self.assertEqual(uc._headers, usercouch.get_headers(env))
+        self.assertEqual(set(uc._headers), set(['Accept', 'Authorization']))
+
+        # check env
+        self.assertIsInstance(env, dict)
+        self.assertEqual(set(env), set(['port', 'url', 'basic']))
+        port = env['port']
+        self.assertIsInstance(port, int)
+        self.assertGreater(port, 1024)
+        self.assertEqual(env['url'], 'http://localhost:{}/'.format(port))
+        self.assertIsInstance(env['basic'], dict)
+        self.assertEqual(
+            set(env['basic']),
+            set(['username', 'password'])
+        )
+        for value in env['basic'].values():
+            self.assertIsInstance(value, str)
+            self.assertEqual(len(value), 24)
+            self.assertTrue(set(value).issubset(B32ALPHABET))
+
+        # check UserCouch.couchdb, make sure UserCouch.start() was called
+        self.assertIsInstance(uc.couchdb, subprocess.Popen)
+        self.assertIsNone(uc.couchdb.returncode)
+
+        # check that Exception is raised if you call bootstrap() more than once
+        with self.assertRaises(Exception) as cm:
+            uc.bootstrap()
+        self.assertEqual(
+            str(cm.exception),
+            'UserCouch.bootstrap() already called'
         )
 
     def test_start(self):
