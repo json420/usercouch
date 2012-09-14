@@ -509,11 +509,15 @@ class TestFunctions(TestCase):
             }
         )
 
-        # Test with ssl_port also
+        # Test with ssl_port and ssl:
+        cfg = deepcopy(config)
+        key = tmp.touch('key.pem')
+        cert = tmp.touch('cert.pem')
+        cfg['ssl'] = {'key_file': key, 'cert_file': cert}
         ssl_port = test_port()
         ports = {'port': port, 'ssl_port': ssl_port}
         self.assertEqual(
-            usercouch.build_template_kw('open', deepcopy(config), ports, paths),
+            usercouch.build_template_kw('open', cfg, ports, paths),
             {
                 'address': config['address'],
                 'loglevel': config['loglevel'],
@@ -523,6 +527,8 @@ class TestFunctions(TestCase):
                 'databases': paths.databases,
                 'views': paths.views,
                 'logfile': paths.logfile,
+                'key_file': key,
+                'cert_file': cert,
             }
         )
 

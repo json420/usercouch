@@ -254,6 +254,9 @@ def build_template_kw(auth, config, ports, paths):
         'logfile': paths.logfile,
     }
     kw.update(ports)
+    if 'ssl' in config:
+        assert set(config['ssl']) == set(['key_file', 'cert_file'])
+        kw.update(config['ssl'])
     if auth in ('basic', 'oauth'):
         kw['username'] = config['username']
         kw['hashed'] = couch_hashed(config['password'], config['salt'])
