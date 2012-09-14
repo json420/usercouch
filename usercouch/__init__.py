@@ -281,24 +281,13 @@ def bind_random_port(address):
     return (sock, port)
 
 
-def bind_socket(address):
-    if address in ('127.0.0.1', '0.0.0.0'):
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    elif address in ('::1', '::'):
-        sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
-    else:
-        raise ValueError('invalid address: {!r}'.format(address))
-    sock.bind((address, 0))
-    return sock
-
-
 class Sockets:
     def __init__(self, address):
         self.address = address
-        self.socks = {'port': bind_socket(address)}
+        self.socks = {'port': bind_random_port(address)[0]}
 
     def add_ssl(self):
-        self.socks['ssl_port'] = bind_socket(self.address)
+        self.socks['ssl_port'] = bind_random_port(self.address)[0]
 
     def get_ports(self):
         return dict(
