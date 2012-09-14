@@ -29,6 +29,7 @@ from os import path
 import stat
 import fcntl
 import time
+from copy import deepcopy
 from subprocess import Popen
 from hashlib import sha1, md5
 from base64 import b32encode, b64encode
@@ -239,6 +240,10 @@ def build_env(auth, config, ports):
         }
     if auth == 'oauth':
         env['oauth'] = config['oauth']
+    if 'ssl_port' in ports:
+        env['ssl'] = deepcopy(env)
+        env['ssl']['port'] = ports['ssl_port']
+        env['ssl']['url'] = build_url(config['address'], ports['ssl_port'])
     return env
 
 
