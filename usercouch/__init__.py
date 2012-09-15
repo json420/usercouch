@@ -105,6 +105,8 @@ httpsd = {{couch_httpd, start_link, [https]}}
 
 [ssl]
 port = {ssl_port}
+verify_ssl_certificates = true
+cacert_file = {ca_file}
 cert_file = {cert_file}
 key_file = {key_file}
 """
