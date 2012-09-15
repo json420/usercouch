@@ -93,7 +93,7 @@ class TestHelper(TestCase):
         self.assertEqual(inst.ssldir, tmp.dir)
         self.assertEqual(inst.id, _id)
         self.assertEqual(inst.subject, '/CN=' + _id)
-        self.assertEqual(inst.key_file, tmp.join(_id + '-key.pem'))
+        self.assertEqual(inst.key_file, tmp.join(_id + '.key'))
 
     def test_gen_key(self):
         tmp = TempDir()
@@ -117,8 +117,8 @@ class TestUser(TestCase):
         self.assertEqual(user.ssldir, tmp.dir)
         self.assertEqual(user.id, user_id)
         self.assertEqual(user.subject, '/CN=' + user_id)
-        self.assertEqual(user.key_file, tmp.join(user_id + '-key.pem'))
-        self.assertEqual(user.ca_file, tmp.join(user_id + '-ca.pem'))
+        self.assertEqual(user.key_file, tmp.join(user_id + '.key'))
+        self.assertEqual(user.ca_file, tmp.join(user_id + '.ca'))
 
     def test_gen_ca(self):
         tmp = TempDir()
@@ -178,9 +178,9 @@ class TestMachine(TestCase):
         self.assertEqual(machine.ssldir, tmp.dir)
         self.assertEqual(machine.id, _id)
         self.assertEqual(machine.subject, '/CN=' + _id)
-        self.assertEqual(machine.key_file, tmp.join(_id + '-key.pem'))
-        self.assertEqual(machine.csr_file, tmp.join(_id + '-csr.pem'))
-        self.assertEqual(machine.cert_file, tmp.join(_id + '-cert.pem'))
+        self.assertEqual(machine.key_file, tmp.join(_id + '.key'))
+        self.assertEqual(machine.csr_file, tmp.join(_id + '.csr'))
+        self.assertEqual(machine.cert_file, tmp.join(_id + '.cert'))
 
     def test_gen_csr(self):
         tmp = TempDir()
@@ -230,9 +230,9 @@ class TestMachine(TestCase):
         self.assertEqual(
             machine.get_ssl_env(),
             {
-                'ca_file': tmp.join(user_id + '-ca.pem'),
-                'cert_file': tmp.join(_id + '-cert.pem'),
-                'key_file': tmp.join(_id + '-key.pem'),
+                'ca_file': tmp.join(user_id + '.ca'),
+                'cert_file': tmp.join(_id + '.cert'),
+                'key_file': tmp.join(_id + '.key'),
                 'check_hostname': False,
             }
         )
@@ -240,9 +240,9 @@ class TestMachine(TestCase):
         self.assertEqual(
             machine.get_ssl_env(),
             {
-                'ca_file': tmp.join(user_id + '-ca.pem'),
-                'cert_file': tmp.join(_id + '-cert.pem'),
-                'key_file': tmp.join(_id + '-key.pem'),
+                'ca_file': tmp.join(user_id + '.ca'),
+                'cert_file': tmp.join(_id + '.cert'),
+                'key_file': tmp.join(_id + '.key'),
                 'check_hostname': False,
             }
         )

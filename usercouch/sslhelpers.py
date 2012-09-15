@@ -87,7 +87,7 @@ class Helper:
         self.ssldir = ssldir
         self.id = _id
         self.subject = '/CN={}'.format(_id)
-        self.key_file = path.join(ssldir, _id + '-key.pem')
+        self.key_file = path.join(ssldir, _id + '.key')
 
     def gen_key(self):
         if path.isfile(self.key_file):
@@ -99,7 +99,7 @@ class Helper:
 class User(Helper):
     def __init__(self, ssldir, _id):
         super().__init__(ssldir, _id)
-        self.ca_file = path.join(ssldir, _id + '-ca.pem')
+        self.ca_file = path.join(ssldir, _id + '.ca')
 
     def gen_ca(self):
         if path.isfile(self.ca_file):
@@ -128,8 +128,8 @@ class Machine(Helper):
         self.machine_id = machine_id
         _id = '-'.join([user.id, machine_id])
         super().__init__(user.ssldir, _id)
-        self.csr_file = path.join(user.ssldir, _id + '-csr.pem')
-        self.cert_file = path.join(user.ssldir, _id + '-cert.pem')
+        self.csr_file = path.join(user.ssldir, _id + '.csr')
+        self.cert_file = path.join(user.ssldir, _id + '.cert')
 
     def gen_csr(self):
         if path.isfile(self.csr_file):
