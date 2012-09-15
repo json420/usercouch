@@ -20,10 +20,11 @@
 #   Jason Gerard DeRose <jderose@novacut.com>
 
 """
-Helper functions for non-interactive creation of SSL certs.
+Helpers for non-interactive creation of SSL certs.
 """
 
 from subprocess import check_call
+from os import path
 
 
 def gen_key(dst, bits=2048):
@@ -76,4 +77,49 @@ def sign_csr(csr, ca, ca_key, dst):
         '-CAkey', ca_key,
         '-out', dst
     ])
+
+
+class Helper:
+    def __init__(self, ssldir, _id):
+        self.ssldir = ssldir
+        self.id = _id
+        self.subject = '/CN={}'.format(_id)
+        self.key = path.join(ssldir, _id + '-key.pem')
+
+    def gen_key(self):
+        gen_key(self.key)
+
+
+class User(Helper):
+    def __init__(self, ssldir, _id):
+        super().__init__(ssldir, _id)
+        self.ca = path.join(ssldir, _id + '-ca.pem')
+
+    def gen(self):
+        self.gen_key()
+        gen_ca(self.key, self.subject, self.ca)
+
+    def sign(self, machine):
+        assert isinstance(machine, Machine)
+        sign_csr(machine.csr, self.ca, self.key, machine.cert)
+
+
+class Machine(Helper):
+    def __init__(self, ssldir, _id):
+        super().__init__(ssldir, _id)
+        self.csr = path.join(ssldir, _id + '-csr.pem')
+        self.cert = path.join(ssldir, _id + '-cert.pem')
+
+    def gen(self):
+        self.gen_key()
+        gen_csr(self.key, self.subject, self.csr)
+
+    def get_ssl_env(self, user):
+        assert isinstance(user, User)
+        return {
+            'key_file': self.key,
+            'cert_file': self.cert,
+            'ca_file': user.ca,
+            'check_hostname': False,
+        }
 
