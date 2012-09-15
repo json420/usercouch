@@ -1233,7 +1233,7 @@ class TestUserCouch(TestCase):
 
         # check env
         self.assertIsInstance(env, dict)
-        self.assertEqual(set(env), set(['port', 'url', 'basic', 'ssl']))
+        self.assertEqual(set(env), set(['port', 'url', 'basic', 'env2']))
         port = env['port']
         self.assertIsInstance(port, int)
         self.assertGreater(port, 1024)
@@ -1248,16 +1248,17 @@ class TestUserCouch(TestCase):
             self.assertEqual(len(value), 24)
             self.assertTrue(set(value).issubset(B32ALPHABET))
 
-        # check env['ssl']
-        ssl = env['ssl']
-        self.assertIsInstance(ssl, dict)
-        self.assertEqual(set(ssl), set(['port', 'url', 'basic']))
-        ssl_port = ssl['port']
+        # check env['env2']
+        env2 = env['env2']
+        self.assertIsInstance(env2, dict)
+        self.assertEqual(set(env2), set(['port', 'url', 'basic', 'ssl']))
+        ssl_port = env2['port']
         self.assertIsInstance(ssl_port, int)
         self.assertGreater(ssl_port, 1024)
         self.assertNotEqual(ssl_port, port)
-        self.assertEqual(ssl['url'], 'https://localhost:{}/'.format(ssl_port))
-        self.assertEqual(ssl['basic'], env['basic'])
+        self.assertEqual(env2['url'], 'https://localhost:{}/'.format(ssl_port))
+        self.assertEqual(env2['basic'], env['basic'])
+        self.assertEqual(env2['ssl'], ssl_env)
 
         # check UserCouch.couchdb, make sure UserCouch.start() was called
         self.assertIsInstance(uc.couchdb, subprocess.Popen)

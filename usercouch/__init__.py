@@ -254,11 +254,13 @@ def build_env(auth, config, ports):
     if auth == 'oauth':
         env['oauth'] = config['oauth']
     if 'ssl_port' in ports:
-        env['ssl'] = deepcopy(env)
-        env['ssl']['port'] = ports['ssl_port']
-        env['ssl']['url'] = build_url(
+        env['env2'] = deepcopy(env)
+        env['env2']['port'] = ports['ssl_port']
+        env['env2']['url'] = build_url(
             config['address'], ports['ssl_port'], https=True
-        )  
+        )
+        if 'ssl' in config:
+            env['env2']['ssl'] = deepcopy(config['ssl'])
     return env
 
 
