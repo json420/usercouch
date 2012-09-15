@@ -133,6 +133,7 @@ class TestUser(TestCase):
         os.remove(user.ca_file)
         self.assertTrue(user.gen_ca())
         self.assertGreater(path.getsize(user.ca_file), 0)
+        self.assertFalse(user.gen_ca())
 
     def test_sign(self):
         tmp = TempDir()
@@ -143,9 +144,9 @@ class TestUser(TestCase):
         cert = tmp.join('cert.pem')
         sslhelpers.gen_key(key)
         sslhelpers.gen_csr(key, '/CN=foobar', csr)
-        self.assertTrue(user.gen())
         self.assertFalse(path.exists(cert))
         user.sign(csr, cert)
+        self.assertFalse(user.gen())
         self.assertGreater(path.getsize(cert), 0)
 
     def test_get_machine(self):
@@ -162,6 +163,7 @@ class TestUser(TestCase):
         self.assertEqual(machine.id, _id)
         self.assertFalse(user.gen())
         self.assertFalse(machine.gen())
+
 
 class TestMachine(TestCase):
     def test_init(self):
@@ -225,6 +227,16 @@ class TestMachine(TestCase):
         _id = user_id + '-' + machine_id
         user = sslhelpers.User(tmp.dir, user_id)
         machine = sslhelpers.Machine(user, machine_id)
+        self.assertEqual(
+            machine.get_ssl_env(),
+            {
+                'ca_file': tmp.join(user_id + '-ca.pem'),
+                'cert_file': tmp.join(_id + '-cert.pem'),
+                'key_file': tmp.join(_id + '-key.pem'),
+                'check_hostname': False,
+            }
+        )
+        machine = user.get_machine(machine_id)
         self.assertEqual(
             machine.get_ssl_env(),
             {
