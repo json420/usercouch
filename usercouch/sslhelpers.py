@@ -117,10 +117,14 @@ class User(Helper):
 
 
 class Machine(Helper):
-    def __init__(self, ssldir, _id):
-        super().__init__(ssldir, _id)
-        self.csr = path.join(ssldir, _id + '-csr.pem')
-        self.cert = path.join(ssldir, _id + '-cert.pem')
+    def __init__(self, user, machine_id):
+        assert isinstance(user, User)
+        self.user = user
+        self.machine_id = machine_id
+        _id = '-'.join([user.id, machine_id])
+        super().__init__(user.ssldir, _id)
+        self.csr_file = path.join(user.ssldir, _id + '-csr.pem')
+        self.cert_file = path.join(user.ssldir, _id + '-cert.pem')
 
     def gen(self):
         self.gen_key()
