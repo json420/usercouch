@@ -102,6 +102,12 @@ class User(Helper):
         self.gen_key()
         gen_ca(self.key, self.subject, self.ca)
 
+    def gen_if_needed(self):
+        if path.isfile(self.ca):
+            return False
+        self.gen()
+        return True
+
     def sign(self, machine):
         assert isinstance(machine, Machine)
         sign_csr(machine.csr, self.ca, self.key, machine.cert)

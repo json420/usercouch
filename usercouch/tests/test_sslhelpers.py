@@ -124,6 +124,17 @@ class TestUser(TestCase):
         self.assertGreater(path.getsize(inst.key), 0)
         self.assertGreater(path.getsize(inst.ca), 0)
 
+    def test_gen_if_needed(self):
+        tmp = TempDir()
+        user_id = random_b32()
+        user = sslhelpers.User(tmp.dir, user_id)
+        self.assertFalse(path.isfile(user.key))
+        self.assertFalse(path.isfile(user.ca))
+        self.assertTrue(user.gen_if_needed())
+        self.assertGreater(path.getsize(user.key), 0)
+        self.assertGreater(path.getsize(user.ca), 0)
+        self.assertFalse(user.gen_if_needed())
+
     def test_sign(self):
         tmp = TempDir()
         user_id = random_b32()
