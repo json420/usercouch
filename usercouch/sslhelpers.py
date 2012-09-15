@@ -111,12 +111,14 @@ class User(Helper):
     def gen(self):
         return self.gen_ca()
 
-    def sign(self, machine):
-        assert isinstance(machine, Machine)
-        sign_csr(machine.csr, self.ca_file, self.key_file, machine.cert)
+    def sign(self, csr_file, cert_file):
+        self.gen()
+        sign_csr(csr_file, self.ca_file, self.key_file, cert_file)
 
     def get_machine(self, machine_id):
-        return Machine(self.ssldir, '-'.join([self.id, machine_id]))
+        machine = Machine(self, machine_id)
+        machine.gen()
+        return machine
 
 
 class Machine(Helper):
@@ -136,9 +138,15 @@ class Machine(Helper):
         gen_csr(self.key_file, self.subject, self.csr_file)
         return True
 
+    def gen_cert(self):
+        if path.isfile(self.cert_file):
+            return False
+        self.gen_csr()
+        self.user.sign(self.csr_file, self.cert_file)
+        return True
+
     def gen(self):
-        self.gen_key()
-        gen_csr(self.key_file, self.subject, self.csr)
+        return self.gen_cert()
 
     def get_ssl_env(self):
         return {
