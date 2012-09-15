@@ -171,10 +171,12 @@ def check_ssl_config(ssl_config):
             "overrides['ssl'] must be a {!r}; got a {!r}: {!r}".format(
                 dict, type(ssl_config), ssl_config)
         )
-    keys = set(['key_file', 'cert_file'])
-    if set(ssl_config) != keys:
-        raise ValueError("overrides['ssl'] must have 'key_file', 'cert_file'")
-    for key in keys:
+    required = set(['ca_file', 'cert_file', 'key_file'])
+    if not required.issubset(ssl_config):
+        raise ValueError(
+            "overrides['ssl'] must have {!r}".format(sorted(required))
+        )
+    for key in required:
         value = ssl_config[key]
         if not path.isfile(value):
             raise ValueError(
@@ -271,8 +273,8 @@ def build_template_kw(auth, config, ports, paths):
     }
     kw.update(ports)
     if 'ssl' in config:
-        assert set(config['ssl']) == set(['key_file', 'cert_file'])
-        kw.update(config['ssl'])
+        for key in ['ca_file', 'cert_file', 'key_file']:
+            kw[key] = config['ssl'][key]
     if auth in ('basic', 'oauth'):
         kw['username'] = config['username']
         kw['hashed'] = couch_hashed(config['password'], config['salt'])

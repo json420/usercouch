@@ -138,47 +138,61 @@ class TestFunctions(TestCase):
         )
 
     def test_check_ssl_config(self):
+        tmp = TempDir()
+        ca = tmp.touch('ca.pem')
+        cert = tmp.touch('cert.pem')
+        key = tmp.touch('key.pem')
+        nope = tmp.join('nope.pem')
+        good = {
+            'ca_file': ca,
+            'cert_file': cert,
+            'key_file': key,
+            'check_hostname': False,
+        }
+        required = ('ca_file', 'cert_file', 'key_file')
+
+        # Test when it's all good:
+        self.assertIsNone(usercouch.check_ssl_config(good))
+        also_good = deepcopy(good)
+        del also_good['check_hostname']
+        self.assertIsNone(usercouch.check_ssl_config(also_good))
+
+        # Test when a required key is missing:
+        for key in required:
+            bad = deepcopy(good)
+            del bad[key]
+            with self.assertRaises(ValueError) as cm:
+                usercouch.check_ssl_config(bad)
+            self.assertEqual(
+                str(cm.exception),
+                "overrides['ssl'] must have ['ca_file', 'cert_file', 'key_file']"
+            )
+
+        # Test when a required key isn't a file:
+        for key in required:
+            bad = deepcopy(good)
+            bad[key] = nope
+            with self.assertRaises(ValueError) as cm:
+                usercouch.check_ssl_config(bad)
+            self.assertEqual(
+                str(cm.exception),
+                "overrides['ssl'][{!r}] not a file: {!r}".format(key, nope)
+            )
+
+        # Test when ssl_env is wrong type:
         with self.assertRaises(TypeError) as cm:
             usercouch.check_ssl_config('hello')
         self.assertEqual(
             str(cm.exception),
             "overrides['ssl'] must be a <class 'dict'>; got a <class 'str'>: 'hello'"
         )
+
+        # Test when an empty ssl_env dict:
         with self.assertRaises(ValueError) as cm:
             usercouch.check_ssl_config({})
         self.assertEqual(
             str(cm.exception),
-            "overrides['ssl'] must have 'key_file', 'cert_file'"
-        )
-
-        # Test when cert_file isn't a file
-        tmp = TempDir()
-        key = tmp.touch('key.pem')
-        cert = tmp.join('cert.pem')
-        with self.assertRaises(ValueError) as cm:
-            usercouch.check_ssl_config({'key_file': key, 'cert_file': cert})
-        self.assertEqual(
-            str(cm.exception),
-            "overrides['ssl']['cert_file'] not a file: {!r}".format(cert)
-        )
-
-        # Test when key_file isn't a file
-        tmp = TempDir()
-        key = tmp.join('key.pem')
-        cert = tmp.touch('cert.pem')
-        with self.assertRaises(ValueError) as cm:
-            usercouch.check_ssl_config({'key_file': key, 'cert_file': cert})
-        self.assertEqual(
-            str(cm.exception),
-            "overrides['ssl']['key_file'] not a file: {!r}".format(key)
-        )
-
-        # Test when it's all good
-        tmp = TempDir()
-        key = tmp.touch('key.pem')
-        cert = tmp.touch('cert.pem')
-        self.assertIsNone(
-            usercouch.check_ssl_config({'key_file': key, 'cert_file': cert})
+            "overrides['ssl'] must have ['ca_file', 'cert_file', 'key_file']"
         )
 
     def test_build_config(self):
@@ -218,7 +232,7 @@ class TestFunctions(TestCase):
             usercouch.build_config('open', {'ssl': {}})
         self.assertEqual(
             str(cm.exception),
-            "overrides['ssl'] must have 'key_file', 'cert_file'"
+            "overrides['ssl'] must have ['ca_file', 'cert_file', 'key_file']"
         )
 
         # auth='open'
@@ -512,9 +526,10 @@ class TestFunctions(TestCase):
 
         # Test with ssl_port and ssl:
         cfg = deepcopy(config)
+        ca = tmp.touch('ca.pem')
         key = tmp.touch('key.pem')
         cert = tmp.touch('cert.pem')
-        cfg['ssl'] = {'key_file': key, 'cert_file': cert}
+        cfg['ssl'] = {'ca_file': ca, 'key_file': key, 'cert_file': cert}
         ssl_port = test_port()
         ports = {'port': port, 'ssl_port': ssl_port}
         self.assertEqual(
@@ -528,6 +543,7 @@ class TestFunctions(TestCase):
                 'databases': paths.databases,
                 'views': paths.views,
                 'logfile': paths.logfile,
+                'ca_file': ca,
                 'key_file': key,
                 'cert_file': cert,
             }
@@ -1199,13 +1215,17 @@ class TestUserCouch(TestCase):
 
     def test_bootstrap_ssl(self):
         tmp = TempDir()
+        user_id = usercouch.random_b32()
+        machine_id = usercouch.random_b32()
+        user = sslhelpers.User(tmp.dir, user_id)
+        user.gen()
+        machine = user.get_machine(machine_id)
+        machine.gen()
+        user.sign(machine)
+        ssl_env = machine.get_ssl_env(user)
 
         # Create SSL key and cert
-        key = tmp.join('key.pem')
-        cert = tmp.join('cert.pem')
-        sslhelpers.gen_key(key)
-        sslhelpers.gen_ca(key, '/CN=foobar', cert)
-        overrides = {'ssl': {'key_file': key, 'cert_file': cert}}
+        overrides = {'ssl': ssl_env}
 
         uc = usercouch.UserCouch(tmp.dir)
         self.assertFalse(path.exists(uc.paths.ini))
