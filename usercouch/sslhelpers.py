@@ -27,14 +27,17 @@ from subprocess import check_call
 from os import path
 
 
-def gen_key(dst, bits=2048):
+def gen_key(dst_file, bits=2048):
     """
     Create an RSA keypair and save it to the file *dst*.
     """
-    check_call(['openssl', 'genrsa', '-out', dst, str(bits)])
+    check_call(['openssl', 'genrsa',
+        '-out', dst_file,
+        str(bits)
+    ])
 
 
-def gen_ca(key, subject, dst):
+def gen_ca(key_file, subject, dst_file):
     """
     Create a self-signed X509 certificate authority.
 
@@ -44,13 +47,13 @@ def gen_ca(key, subject, dst):
         '-new',
         '-x509',
         '-days', '3650',
-        '-key', key,
+        '-key', key_file,
         '-subj', subject,
-        '-out', dst,
+        '-out', dst_file,
     ])
 
 
-def gen_csr(key, subject, dst):
+def gen_csr(key_file, subject, dst_file):
     """
     Create a certificate signing request.
 
@@ -58,13 +61,13 @@ def gen_csr(key, subject, dst):
     """
     check_call(['openssl', 'req',
         '-new',
-        '-key', key,
+        '-key', key_file,
         '-subj', subject,
-        '-out', dst,
+        '-out', dst_file,
     ])
 
 
-def sign_csr(csr, ca, ca_key, dst):
+def sign_csr(csr_file, ca_file, key_file, dst_file):
     """
     Create a signed certificate from a certificate signing request.
     """
@@ -72,10 +75,10 @@ def sign_csr(csr, ca, ca_key, dst):
         '-req',
         '-days', '3650',
         '-CAcreateserial',
-        '-in', csr,
-        '-CA', ca,
-        '-CAkey', ca_key,
-        '-out', dst
+        '-in', csr_file,
+        '-CA', ca_file,
+        '-CAkey', key_file,
+        '-out', dst_file
     ])
 
 
