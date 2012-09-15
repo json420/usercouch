@@ -1218,11 +1218,8 @@ class TestUserCouch(TestCase):
         user_id = usercouch.random_b32()
         machine_id = usercouch.random_b32()
         user = sslhelpers.User(tmp.dir, user_id)
-        user.gen()
         machine = user.get_machine(machine_id)
-        machine.gen()
-        user.sign(machine)
-        ssl_env = machine.get_ssl_env(user)
+        ssl_env = machine.get_ssl_env()
 
         # Create SSL key and cert
         overrides = {'ssl': ssl_env}
