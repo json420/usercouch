@@ -87,10 +87,10 @@ class Helper:
         self.ssldir = ssldir
         self.id = _id
         self.subject = '/CN={}'.format(_id)
-        self.key = path.join(ssldir, _id + '-key.pem')
+        self.key_file = path.join(ssldir, _id + '-key.pem')
 
     def gen_key(self):
-        gen_key(self.key)
+        gen_key(self.key_file)
 
 
 class User(Helper):
@@ -100,7 +100,7 @@ class User(Helper):
 
     def gen(self):
         self.gen_key()
-        gen_ca(self.key, self.subject, self.ca)
+        gen_ca(self.key_file, self.subject, self.ca)
 
     def gen_if_needed(self):
         if path.isfile(self.ca):
@@ -110,7 +110,7 @@ class User(Helper):
 
     def sign(self, machine):
         assert isinstance(machine, Machine)
-        sign_csr(machine.csr, self.ca, self.key, machine.cert)
+        sign_csr(machine.csr, self.ca, self.key_file, machine.cert)
 
     def get_machine(self, machine_id):
         return Machine(self.ssldir, '-'.join([self.id, machine_id]))
@@ -124,12 +124,12 @@ class Machine(Helper):
 
     def gen(self):
         self.gen_key()
-        gen_csr(self.key, self.subject, self.csr)
+        gen_csr(self.key_file, self.subject, self.csr)
 
     def get_ssl_env(self, user):
         assert isinstance(user, User)
         return {
-            'key_file': self.key,
+            'key_file': self.key_file,
             'cert_file': self.cert,
             'ca_file': user.ca,
             'check_hostname': False,

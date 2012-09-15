@@ -92,15 +92,15 @@ class TestHelper(TestCase):
         self.assertEqual(inst.ssldir, tmp.dir)
         self.assertEqual(inst.id, _id)
         self.assertEqual(inst.subject, '/CN=' + _id)
-        self.assertEqual(inst.key, tmp.join(_id + '-key.pem'))
+        self.assertEqual(inst.key_file, tmp.join(_id + '-key.pem'))
 
     def test_gen_key(self):
         tmp = TempDir()
         _id = random_b32()
         inst = sslhelpers.Helper(tmp.dir, _id)
-        self.assertFalse(path.isfile(inst.key))
+        self.assertFalse(path.isfile(inst.key_file))
         inst.gen_key()
-        self.assertGreater(path.getsize(inst.key), 0)
+        self.assertGreater(path.getsize(inst.key_file), 0)
 
 
 class TestUser(TestCase):
@@ -111,27 +111,27 @@ class TestUser(TestCase):
         self.assertEqual(inst.ssldir, tmp.dir)
         self.assertEqual(inst.id, _id)
         self.assertEqual(inst.subject, '/CN=' + _id)
-        self.assertEqual(inst.key, tmp.join(_id + '-key.pem'))
+        self.assertEqual(inst.key_file, tmp.join(_id + '-key.pem'))
         self.assertEqual(inst.ca, tmp.join(_id + '-ca.pem'))
 
     def test_gen(self):
         tmp = TempDir()
         _id = random_b32()
         inst = sslhelpers.User(tmp.dir, _id)
-        self.assertFalse(path.isfile(inst.key))
+        self.assertFalse(path.isfile(inst.key_file))
         self.assertFalse(path.isfile(inst.ca))
         inst.gen()
-        self.assertGreater(path.getsize(inst.key), 0)
+        self.assertGreater(path.getsize(inst.key_file), 0)
         self.assertGreater(path.getsize(inst.ca), 0)
 
     def test_gen_if_needed(self):
         tmp = TempDir()
         user_id = random_b32()
         user = sslhelpers.User(tmp.dir, user_id)
-        self.assertFalse(path.isfile(user.key))
+        self.assertFalse(path.isfile(user.key_file))
         self.assertFalse(path.isfile(user.ca))
         self.assertTrue(user.gen_if_needed())
-        self.assertGreater(path.getsize(user.key), 0)
+        self.assertGreater(path.getsize(user.key_file), 0)
         self.assertGreater(path.getsize(user.ca), 0)
         self.assertFalse(user.gen_if_needed())
 
@@ -168,7 +168,7 @@ class TestMachine(TestCase):
         self.assertEqual(inst.ssldir, tmp.dir)
         self.assertEqual(inst.id, _id)
         self.assertEqual(inst.subject, '/CN=' + _id)
-        self.assertEqual(inst.key, tmp.join(_id + '-key.pem'))
+        self.assertEqual(inst.key_file, tmp.join(_id + '-key.pem'))
         self.assertEqual(inst.csr, tmp.join(_id + '-csr.pem'))
         self.assertEqual(inst.cert, tmp.join(_id + '-cert.pem'))
 
@@ -176,10 +176,10 @@ class TestMachine(TestCase):
         tmp = TempDir()
         _id = random_b32()
         inst = sslhelpers.Machine(tmp.dir, _id)
-        self.assertFalse(path.isfile(inst.key))
+        self.assertFalse(path.isfile(inst.key_file))
         self.assertFalse(path.isfile(inst.csr))
         inst.gen()
-        self.assertGreater(path.getsize(inst.key), 0)
+        self.assertGreater(path.getsize(inst.key_file), 0)
         self.assertGreater(path.getsize(inst.csr), 0)
 
     def test_get_ssl_env(self):
