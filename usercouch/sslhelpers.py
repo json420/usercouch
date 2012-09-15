@@ -99,15 +99,21 @@ class Helper:
 class User(Helper):
     def __init__(self, ssldir, _id):
         super().__init__(ssldir, _id)
-        self.ca = path.join(ssldir, _id + '-ca.pem')
+        self.ca_file = path.join(ssldir, _id + '-ca.pem')
+
+    def gen_ca(self):
+        if path.isfile(self.ca_file):
+            return False
+        self.gen_key()
+        gen_ca(self.key_file, self.subject, self.ca_file)
+        return True
 
     def gen(self):
-        self.gen_key()
-        gen_ca(self.key_file, self.subject, self.ca)
+        return self.gen_ca()
 
     def sign(self, machine):
         assert isinstance(machine, Machine)
-        sign_csr(machine.csr, self.ca, self.key_file, machine.cert)
+        sign_csr(machine.csr, self.ca_file, self.key_file, machine.cert)
 
     def get_machine(self, machine_id):
         return Machine(self.ssldir, '-'.join([self.id, machine_id]))
@@ -123,16 +129,22 @@ class Machine(Helper):
         self.csr_file = path.join(user.ssldir, _id + '-csr.pem')
         self.cert_file = path.join(user.ssldir, _id + '-cert.pem')
 
+    def gen_csr(self):
+        if path.isfile(self.csr_file):
+            return False
+        self.gen_key()
+        gen_csr(self.key_file, self.subject, self.csr_file)
+        return True
+
     def gen(self):
         self.gen_key()
         gen_csr(self.key_file, self.subject, self.csr)
 
-    def get_ssl_env(self, user):
-        assert isinstance(user, User)
+    def get_ssl_env(self):
         return {
+            'ca_file': self.user.ca_file,
+            'cert_file': self.cert_file,
             'key_file': self.key_file,
-            'cert_file': self.cert,
-            'ca_file': user.ca,
             'check_hostname': False,
         }
 

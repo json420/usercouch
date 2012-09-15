@@ -117,20 +117,30 @@ class TestUser(TestCase):
         self.assertEqual(inst.id, _id)
         self.assertEqual(inst.subject, '/CN=' + _id)
         self.assertEqual(inst.key_file, tmp.join(_id + '-key.pem'))
-        self.assertEqual(inst.ca, tmp.join(_id + '-ca.pem'))
+        self.assertEqual(inst.ca_file, tmp.join(_id + '-ca.pem'))
 
-    def test_gen(self):
+    def test_gen_ca(self):
         tmp = TempDir()
-        _id = random_b32()
-        inst = sslhelpers.User(tmp.dir, _id)
-        self.assertFalse(path.isfile(inst.key_file))
-        self.assertFalse(path.isfile(inst.ca))
-        inst.gen()
-        self.assertGreater(path.getsize(inst.key_file), 0)
-        self.assertGreater(path.getsize(inst.ca), 0)
+        user_id = random_b32()
+        user = sslhelpers.User(tmp.dir, user_id)
+        self.assertFalse(path.isfile(user.key_file))
+        self.assertFalse(path.isfile(user.ca_file))
+        self.assertTrue(user.gen_ca())
+        self.assertGreater(path.getsize(user.key_file), 0)
+        self.assertGreater(path.getsize(user.ca_file), 0)
+        self.assertFalse(user.gen_ca())
+        os.remove(user.ca_file)
+        self.assertTrue(user.gen_ca())
+        self.assertGreater(path.getsize(user.ca_file), 0)
 
     def test_sign(self):
         return
+        tmp = TempDir()
+        user_id = random_b32()
+        machine_id = random_b32()
+        _id = user_id + '-' + machine_id
+        user = sslhelpers.User(tmp.dir, user_id)
+        machine = sslhelpers.Machine(user, machine_id)
         tmp = TempDir()
         user_id = random_b32()
         machine_id = random_b32()
@@ -172,6 +182,24 @@ class TestMachine(TestCase):
         self.assertEqual(machine.key_file, tmp.join(_id + '-key.pem'))
         self.assertEqual(machine.csr_file, tmp.join(_id + '-csr.pem'))
         self.assertEqual(machine.cert_file, tmp.join(_id + '-cert.pem'))
+
+    def test_gen_csr(self):
+        tmp = TempDir()
+        user_id = random_b32()
+        machine_id = random_b32()
+        _id = user_id + '-' + machine_id
+        user = sslhelpers.User(tmp.dir, user_id)
+        machine = sslhelpers.Machine(user, machine_id)
+        self.assertFalse(path.isfile(machine.key_file))
+        self.assertFalse(path.isfile(machine.csr_file))
+        self.assertTrue(machine.gen_csr())
+        self.assertGreater(path.getsize(machine.key_file), 0)
+        self.assertGreater(path.getsize(machine.csr_file), 0)
+        self.assertFalse(machine.gen_csr())
+        os.remove(machine.csr_file)
+        self.assertTrue(machine.gen_csr())
+        self.assertGreater(path.getsize(machine.csr_file), 0)
+        self.assertFalse(machine.gen_csr())
 
     def test_gen(self):
         return
