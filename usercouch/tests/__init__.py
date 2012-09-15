@@ -1239,7 +1239,7 @@ class TestUserCouch(TestCase):
         self.assertIsInstance(ssl_port, int)
         self.assertGreater(ssl_port, 1024)
         self.assertNotEqual(ssl_port, port)
-        self.assertEqual(ssl['url'], 'http://localhost:{}/'.format(ssl_port))
+        self.assertEqual(ssl['url'], 'https://localhost:{}/'.format(ssl_port))
         self.assertEqual(ssl['basic'], env['basic'])
 
         # check UserCouch.couchdb, make sure UserCouch.start() was called

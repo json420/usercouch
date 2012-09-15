@@ -207,7 +207,7 @@ def build_config(auth, overrides=None):
     return config
 
 
-def build_url(address, port):
+def build_url(address, port, https=False):
     """
     Build an appropriate URL from *address* and *port*.
 
@@ -218,12 +218,21 @@ def build_url(address, port):
     >>> build_url('::1', 50000)
     'http://[::1]:50000/'
 
+    Or for an HTTPS URL:
+
+    >>> build_url('127.0.0.1', 50000, https=True)
+    'https://localhost:50000/'
+
     """
     if address in ('127.0.0.1', '0.0.0.0'):
-        return 'http://localhost:{}/'.format(port)
-    if address in ('::1', '::'):
-        return 'http://[::1]:{}/'.format(port)
-    raise ValueError('invalid address: {!r}'.format(address))
+        netloc = 'localhost:{}'
+    elif address in ('::1', '::'):
+        netloc = '[::1]:{}'
+    else:
+        raise ValueError('invalid address: {!r}'.format(address))
+    if https:
+        return 'https://' + netloc.format(port) + '/'
+    return 'http://' + netloc.format(port) + '/'
 
 
 def build_env(auth, config, ports):
@@ -243,7 +252,9 @@ def build_env(auth, config, ports):
     if 'ssl_port' in ports:
         env['ssl'] = deepcopy(env)
         env['ssl']['port'] = ports['ssl_port']
-        env['ssl']['url'] = build_url(config['address'], ports['ssl_port'])
+        env['ssl']['url'] = build_url(
+            config['address'], ports['ssl_port'], https=True
+        )  
     return env
 
 
