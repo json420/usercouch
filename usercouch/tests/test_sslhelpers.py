@@ -24,6 +24,7 @@ Unit tests for the `usercouch.sslhelpers` module.
 """
 
 from unittest import TestCase
+import os
 from os import path
 
 from usercouch import random_b32
@@ -99,7 +100,11 @@ class TestHelper(TestCase):
         _id = random_b32()
         inst = sslhelpers.Helper(tmp.dir, _id)
         self.assertFalse(path.isfile(inst.key_file))
-        inst.gen_key()
+        self.assertTrue(inst.gen_key())
+        self.assertGreater(path.getsize(inst.key_file), 0)
+        self.assertFalse(inst.gen_key())
+        os.remove(inst.key_file)
+        self.assertTrue(inst.gen_key())
         self.assertGreater(path.getsize(inst.key_file), 0)
 
 
@@ -123,17 +128,6 @@ class TestUser(TestCase):
         inst.gen()
         self.assertGreater(path.getsize(inst.key_file), 0)
         self.assertGreater(path.getsize(inst.ca), 0)
-
-    def test_gen_if_needed(self):
-        tmp = TempDir()
-        user_id = random_b32()
-        user = sslhelpers.User(tmp.dir, user_id)
-        self.assertFalse(path.isfile(user.key_file))
-        self.assertFalse(path.isfile(user.ca))
-        self.assertTrue(user.gen_if_needed())
-        self.assertGreater(path.getsize(user.key_file), 0)
-        self.assertGreater(path.getsize(user.ca), 0)
-        self.assertFalse(user.gen_if_needed())
 
     def test_sign(self):
         return

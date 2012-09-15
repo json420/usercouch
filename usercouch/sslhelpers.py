@@ -90,7 +90,10 @@ class Helper:
         self.key_file = path.join(ssldir, _id + '-key.pem')
 
     def gen_key(self):
+        if path.isfile(self.key_file):
+            return False
         gen_key(self.key_file)
+        return True
 
 
 class User(Helper):
@@ -101,12 +104,6 @@ class User(Helper):
     def gen(self):
         self.gen_key()
         gen_ca(self.key_file, self.subject, self.ca)
-
-    def gen_if_needed(self):
-        if path.isfile(self.ca):
-            return False
-        self.gen()
-        return True
 
     def sign(self, machine):
         assert isinstance(machine, Machine)
