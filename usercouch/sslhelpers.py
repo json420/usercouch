@@ -106,6 +106,9 @@ class User(Helper):
         assert isinstance(machine, Machine)
         sign_csr(machine.csr, self.ca, self.key, machine.cert)
 
+    def get_machine(self, machine_id):
+        return Machine(self.ssldir, '-'.join([self.id, machine_id]))
+
 
 class Machine(Helper):
     def __init__(self, ssldir, _id):

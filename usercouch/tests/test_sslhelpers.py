@@ -136,6 +136,18 @@ class TestUser(TestCase):
         user.sign(machine)
         self.assertGreater(path.getsize(machine.cert), 0)
 
+    def test_get_machine(self):
+        tmp = TempDir()
+        user_id = random_b32()
+        machine_id = random_b32()
+        user = sslhelpers.User(tmp.dir, user_id)
+        machine = user.get_machine(machine_id)
+        self.assertIsInstance(machine, sslhelpers.Machine)
+        self.assertEqual(machine.ssldir, tmp.dir)
+        self.assertEqual(machine.id,
+            '{}-{}'.format(user_id, machine_id)
+        )
+
 
 class TestMachine(TestCase):
     def test_init(self):
