@@ -320,14 +320,30 @@ def build_session_ini(auth, kw):
     return template.format(**kw)
 
 
-def bind_socket(address):
-    if address in ('127.0.0.1', '0.0.0.0'):
+def bind_socket(bind_address):
+    """
+    Bind a socket to *bind_address* and a random port.
+
+    For IPv4, *bind_address* must be ``'127.0.0.1'`` to listen only internally,
+    or ``'0.0.0.0'`` to accept outside connections.  For example:
+
+    >>> sock = bind_socket('127.0.0.1')
+
+    For IPv6, *bind_address* must be ``'::1'`` to listen only internally, or
+    ``'::'`` to accept outside connections.  For example:
+
+    >>> sock = bind_socket('::1')
+
+    The random port will be chosen by the operating system based on currently
+    available ports.
+    """
+    if bind_address in ('127.0.0.1', '0.0.0.0'):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    elif address in ('::1', '::'):
+    elif bind_address in ('::1', '::'):
         sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
     else:
-        raise ValueError('invalid address: {!r}'.format(address))
-    sock.bind((address, 0))
+        raise ValueError('invalid bind_address: {!r}'.format(bind_address))
+    sock.bind((bind_address, 0))
     return sock
 
 

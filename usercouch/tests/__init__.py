@@ -748,7 +748,7 @@ class TestFunctions(TestCase):
             usercouch.bind_socket('192.168.0.2')
         self.assertEqual(
             str(cm.exception),
-            "invalid address: '192.168.0.2'"
+            "invalid bind_address: '192.168.0.2'"
         )
 
     def test_get_cmd(self):
