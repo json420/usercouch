@@ -60,6 +60,10 @@ FILE_COMPRESSION = (
     'snappy',
 )
 
+# Minimum SSL config that must be provided in overrides['ssl']:
+REQUIRED_SSL_CONFIG = frozenset(['ca_file', 'cert_file', 'key_file'])
+
+
 DEFAULT_CONFIG = (
     ('bind_address', '127.0.0.1'),
     ('loglevel', 'notice'),
@@ -173,12 +177,12 @@ def check_ssl_config(ssl_config):
             "overrides['ssl'] must be a {!r}; got a {!r}: {!r}".format(
                 dict, type(ssl_config), ssl_config)
         )
-    required = set(['ca_file', 'cert_file', 'key_file'])
-    if not required.issubset(ssl_config):
+    if not REQUIRED_SSL_CONFIG.issubset(ssl_config):
+        pretty = sorted(REQUIRED_SSL_CONFIG)
         raise ValueError(
-            "overrides['ssl'] must have {!r}".format(sorted(required))
+            "overrides['ssl'] must have {!r}".format(pretty)
         )
-    for key in required:
+    for key in REQUIRED_SSL_CONFIG:
         value = ssl_config[key]
         if not path.isfile(value):
             raise ValueError(
@@ -233,7 +237,7 @@ def netloc_template(bind_address):
     """
     if bind_address in ('127.0.0.1', '0.0.0.0'):
         return '127.0.0.1:{}'
-    elif bind_address in ('::1', '::'):
+    if bind_address in ('::1', '::'):
         return '[::1]:{}'
     raise ValueError('invalid bind_address: {!r}'.format(bind_address))
 
@@ -301,8 +305,10 @@ def build_template_kw(auth, config, ports, paths):
     }
     kw.update(ports)
     if 'ssl' in config:
+        ssl_cfg = config['ssl']
         for key in ['ca_file', 'cert_file', 'key_file']:
-            kw[key] = config['ssl'][key]
+            if key in ssl_cfg:
+                kw[key] = ssl_cfg[key]
     if auth in ('basic', 'oauth'):
         kw['username'] = config['username']
         kw['hashed'] = couch_hashed(config['password'], config['salt'])
