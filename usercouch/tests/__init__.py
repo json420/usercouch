@@ -376,11 +376,11 @@ class TestFunctions(TestCase):
     def test_build_url(self):
         self.assertEqual(
             usercouch.build_url('127.0.0.1', 54321),
-            'http://localhost:54321/'
+            'http://127.0.0.1:54321/'
         )
         self.assertEqual(
             usercouch.build_url('0.0.0.0', 54321),
-            'http://localhost:54321/'
+            'http://127.0.0.1:54321/'
         )
         self.assertEqual(
             usercouch.build_url('::1', 54321),
@@ -419,7 +419,7 @@ class TestFunctions(TestCase):
             usercouch.build_env('open', deepcopy(config), ports),
             {
                 'port': port,
-                'url': 'http://localhost:{}/'.format(port),
+                'url': 'http://127.0.0.1:{}/'.format(port),
             }
         )
 
@@ -428,7 +428,7 @@ class TestFunctions(TestCase):
             usercouch.build_env('basic', deepcopy(config), ports),
             {
                 'port': port,
-                'url': 'http://localhost:{}/'.format(port),
+                'url': 'http://127.0.0.1:{}/'.format(port),
                 'basic': {
                     'username': config['username'],
                     'password': config['password'],
@@ -441,7 +441,7 @@ class TestFunctions(TestCase):
             usercouch.build_env('oauth', deepcopy(config), ports),
             {
                 'port': port,
-                'url': 'http://localhost:{}/'.format(port),
+                'url': 'http://127.0.0.1:{}/'.format(port),
                 'basic': {
                     'username': config['username'],
                     'password': config['password'],
@@ -1025,7 +1025,7 @@ class TestUserCouch(TestCase):
         port = env['port']
         self.assertIsInstance(port, int)
         self.assertGreater(port, 1024)
-        self.assertEqual(env['url'], 'http://localhost:{}/'.format(port))
+        self.assertEqual(env['url'], 'http://127.0.0.1:{}/'.format(port))
 
         # check UserCouch.couchdb, make sure UserCouch.start() was called
         self.assertIsInstance(uc.couchdb, subprocess.Popen)
@@ -1054,7 +1054,7 @@ class TestUserCouch(TestCase):
         port = env['port']
         self.assertIsInstance(port, int)
         self.assertGreater(port, 1024)
-        self.assertEqual(env['url'], 'http://localhost:{}/'.format(port))
+        self.assertEqual(env['url'], 'http://127.0.0.1:{}/'.format(port))
         self.assertIsInstance(env['basic'], dict)
         self.assertEqual(
             set(env['basic']),
@@ -1092,7 +1092,7 @@ class TestUserCouch(TestCase):
         port = env['port']
         self.assertIsInstance(port, int)
         self.assertGreater(port, 1024)
-        self.assertEqual(env['url'], 'http://localhost:{}/'.format(port))
+        self.assertEqual(env['url'], 'http://127.0.0.1:{}/'.format(port))
         self.assertIsInstance(env['basic'], dict)
         self.assertEqual(
             set(env['basic']),
@@ -1237,7 +1237,7 @@ class TestUserCouch(TestCase):
         port = env['port']
         self.assertIsInstance(port, int)
         self.assertGreater(port, 1024)
-        self.assertEqual(env['url'], 'http://localhost:{}/'.format(port))
+        self.assertEqual(env['url'], 'http://127.0.0.1:{}/'.format(port))
         self.assertIsInstance(env['basic'], dict)
         self.assertEqual(
             set(env['basic']),
@@ -1256,7 +1256,7 @@ class TestUserCouch(TestCase):
         self.assertIsInstance(ssl_port, int)
         self.assertGreater(ssl_port, 1024)
         self.assertNotEqual(ssl_port, port)
-        self.assertEqual(env2['url'], 'https://localhost:{}/'.format(ssl_port))
+        self.assertEqual(env2['url'], 'https://127.0.0.1:{}/'.format(ssl_port))
         self.assertEqual(env2['basic'], env['basic'])
         self.assertEqual(env2['ssl'], ssl_env)
 

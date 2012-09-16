@@ -218,18 +218,18 @@ def build_url(address, port, https=False):
     For example:
 
     >>> build_url('127.0.0.1', 50000)
-    'http://localhost:50000/'
+    'http://127.0.0.1:50000/'
     >>> build_url('::1', 50000)
     'http://[::1]:50000/'
 
     Or for an HTTPS URL:
 
     >>> build_url('127.0.0.1', 50000, https=True)
-    'https://localhost:50000/'
+    'https://127.0.0.1:50000/'
 
     """
     if address in ('127.0.0.1', '0.0.0.0'):
-        netloc = 'localhost:{}'
+        netloc = '127.0.0.1:{}'
     elif address in ('::1', '::'):
         netloc = '[::1]:{}'
     else:
