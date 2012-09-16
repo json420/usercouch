@@ -769,7 +769,7 @@ class TestFunctions(TestCase):
 class TestSockets(TestCase):
     def test_init(self):
         socks = usercouch.Sockets('127.0.0.1')
-        self.assertEqual(socks.address, '127.0.0.1')
+        self.assertEqual(socks.bind_address, '127.0.0.1')
         self.assertIsInstance(socks.socks, dict)
         self.assertEqual(set(socks.socks), set(['port']))
         self.assertIsInstance(socks.socks['port'], socket.socket)

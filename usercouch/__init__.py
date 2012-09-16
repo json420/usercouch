@@ -352,12 +352,12 @@ class Sockets:
     A helper class to make it easy to deal with one or two random ports.
     """
 
-    def __init__(self, address):
-        self.address = address
-        self.socks = {'port': bind_socket(address)}
+    def __init__(self, bind_address):
+        self.bind_address = bind_address
+        self.socks = {'port': bind_socket(bind_address)}
 
     def add_ssl(self):
-        self.socks['ssl_port'] = bind_socket(self.address)
+        self.socks['ssl_port'] = bind_socket(self.bind_address)
 
     def get_ports(self):
         return dict(
