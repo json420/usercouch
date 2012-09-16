@@ -211,6 +211,32 @@ def build_config(auth, overrides=None):
     return config
 
 
+def netloc_template(bind_address):
+    """
+    Return a netloc template appropriate for *bind_address*
+
+    For example, for IPv4:
+
+    >>> netloc_template('127.0.0.1')
+    '127.0.0.1:{}'
+    >>> netloc_template('0.0.0.0')
+    '127.0.0.1:{}'
+
+    And for IPv6:
+
+    >>> netloc_template('::1')
+    '[::1]:{}'
+    >>> netloc_template('::')
+    '[::1]:{}'
+
+    """
+    if bind_address in ('127.0.0.1', '0.0.0.0'):
+        return '127.0.0.1:{}'
+    elif bind_address in ('::1', '::'):
+        return '[::1]:{}'
+    raise ValueError('invalid bind_address: {!r}'.format(bind_address))
+
+
 def build_url(address, port, https=False):
     """
     Build an appropriate URL from *address* and *port*.

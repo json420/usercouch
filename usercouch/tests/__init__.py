@@ -373,6 +373,30 @@ class TestFunctions(TestCase):
             }
         )
 
+    def test_netloc_template(self):
+        self.assertEqual(
+            usercouch.netloc_template('127.0.0.1'),
+            '127.0.0.1:{}'
+        )
+        self.assertEqual(
+            usercouch.netloc_template('0.0.0.0'),
+            '127.0.0.1:{}'
+        )
+        self.assertEqual(
+            usercouch.netloc_template('::1'),
+            '[::1]:{}'
+        )
+        self.assertEqual(
+            usercouch.netloc_template('::'),
+            '[::1]:{}'
+        )
+        with self.assertRaises(ValueError) as cm:
+            usercouch.netloc_template('192.168.0.2')
+        self.assertEqual(
+            str(cm.exception),
+            "invalid bind_address: '192.168.0.2'"
+        )
+
     def test_build_url(self):
         self.assertEqual(
             usercouch.build_url('127.0.0.1', 54321),
