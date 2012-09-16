@@ -229,6 +229,7 @@ def netloc_template(bind_address):
     >>> netloc_template('::')
     '[::1]:{}'
 
+    Also see `build_url()`.
     """
     if bind_address in ('127.0.0.1', '0.0.0.0'):
         return '127.0.0.1:{}'
@@ -239,10 +240,19 @@ def netloc_template(bind_address):
 
 def build_url(scheme, bind_address, port):
     """
-    Build appropriate URL for *scheme*, *address*, and *port*.
+    Build appropriate URL for *scheme*, *bind_address*, and *port*.
 
-    For example:
+    For example, an IPv4 HTTP URL:
 
+    >>> build_url('http', '127.0.0.1', 5984)
+    'http://127.0.0.1:5984/'
+
+    And an IPv6 HTTPS URL:
+
+    >>> build_url('https', '::1', 6984)
+    'https://[::1]:6984/'
+
+    Also see `netloc_template()`.
     """
     if scheme not in ('http', 'https'):
         raise ValueError(
