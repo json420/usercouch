@@ -130,8 +130,6 @@ verify_fun = ???
 """
 
 
-
-
 ########################################################################
 # Functions for building CouchDB session.ini file, Microfiber-style env:
 
@@ -294,11 +292,12 @@ def build_env(auth, config, ports):
         env['oauth'] = config['oauth']
     if 'ssl_port' in ports:
         ssl_port = ports['ssl_port']
-        env['env2'] = deepcopy(env)
-        env['env2']['port'] = ssl_port
-        env['env2']['url'] = build_url('https', bind_address, ssl_port)
+        env2 = deepcopy(env)
+        env2['port'] = ssl_port
+        env2['url'] = build_url('https', bind_address, ssl_port)
         if 'ssl' in config:
-            env['env2']['ssl'] = deepcopy(config['ssl'])
+            env2['ssl'] = deepcopy(config['ssl'])
+        env['env2'] = env2
     return env
 
 
