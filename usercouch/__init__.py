@@ -237,6 +237,21 @@ def netloc_template(bind_address):
     raise ValueError('invalid bind_address: {!r}'.format(bind_address))
 
 
+def build_url2(scheme, bind_address, port):
+    """
+    Build appropriate URL for *scheme*, *address*, and *port*.
+
+    For example:
+
+    """
+    if scheme not in ('http', 'https'):
+        raise ValueError(
+            "scheme must be 'http' or 'https'; got {!r}".format(scheme)
+        )
+    netloc = netloc_template(bind_address).format(port)
+    return ''.join([scheme, '://', netloc, '/'])
+
+
 def build_url(address, port, https=False):
     """
     Build an appropriate URL from *address* and *port*.
