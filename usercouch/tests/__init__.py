@@ -37,6 +37,7 @@ from base64 import b32decode
 from http.client import HTTPConnection
 from random import SystemRandom
 
+from usercouch import sslhelpers
 import usercouch
 
 
@@ -136,9 +137,67 @@ class TestFunctions(TestCase):
             '-hashed-791a7d0f893bfbf6311d36081f797fe166cee072,' + salt
         )
 
+    def test_check_ssl_config(self):
+        tmp = TempDir()
+        ca = tmp.touch('ca.pem')
+        cert = tmp.touch('cert.pem')
+        key = tmp.touch('key.pem')
+        nope = tmp.join('nope.pem')
+        good = {
+            'ca_file': ca,
+            'cert_file': cert,
+            'key_file': key,
+            'check_hostname': False,
+        }
+        required = ('ca_file', 'cert_file', 'key_file')
+
+        # Test when it's all good:
+        self.assertIsNone(usercouch.check_ssl_config(good))
+        also_good = deepcopy(good)
+        del also_good['check_hostname']
+        self.assertIsNone(usercouch.check_ssl_config(also_good))
+
+        # Test when a required key is missing:
+        for key in required:
+            bad = deepcopy(good)
+            del bad[key]
+            with self.assertRaises(ValueError) as cm:
+                usercouch.check_ssl_config(bad)
+            self.assertEqual(
+                str(cm.exception),
+                "overrides['ssl'] must have ['ca_file', 'cert_file', 'key_file']"
+            )
+
+        # Test when a required key isn't a file:
+        for key in required:
+            bad = deepcopy(good)
+            bad[key] = nope
+            with self.assertRaises(ValueError) as cm:
+                usercouch.check_ssl_config(bad)
+            self.assertEqual(
+                str(cm.exception),
+                "overrides['ssl'][{!r}] not a file: {!r}".format(key, nope)
+            )
+
+        # Test when ssl_env is wrong type:
+        with self.assertRaises(TypeError) as cm:
+            usercouch.check_ssl_config('hello')
+        self.assertEqual(
+            str(cm.exception),
+            "overrides['ssl'] must be a <class 'dict'>; got a <class 'str'>: 'hello'"
+        )
+
+        # Test when an empty ssl_env dict:
+        with self.assertRaises(ValueError) as cm:
+            usercouch.check_ssl_config({})
+        self.assertEqual(
+            str(cm.exception),
+            "overrides['ssl'] must have ['ca_file', 'cert_file', 'key_file']"
+        )
+
     def test_build_config(self):
         overrides = {
-            'address': usercouch.random_b32(),
+            'bind_address': usercouch.random_b32(),
             'loglevel': usercouch.random_b32(),
             'file_compression': 'deflate_9',
         }
@@ -168,13 +227,21 @@ class TestFunctions(TestCase):
             "invalid 'file_compression': 'deflate_10'"
         )
 
+        # Test with bad 'ssl' (makes sure check_ssl_config() is called):
+        with self.assertRaises(ValueError) as cm:
+            usercouch.build_config('open', {'ssl': {}})
+        self.assertEqual(
+            str(cm.exception),
+            "overrides['ssl'] must have ['ca_file', 'cert_file', 'key_file']"
+        )
+
         # auth='open'
         config = usercouch.build_config('open')
         self.assertIsInstance(config, dict)
         self.assertEqual(set(config),
-            set(['address', 'loglevel', 'file_compression'])
+            set(['bind_address', 'loglevel', 'file_compression'])
         )
-        self.assertEqual(config['address'], '127.0.0.1')
+        self.assertEqual(config['bind_address'], '127.0.0.1')
         self.assertEqual(config['loglevel'], 'notice')
         self.assertEqual(config['file_compression'], 'snappy')
 
@@ -182,7 +249,7 @@ class TestFunctions(TestCase):
         self.assertEqual(
             usercouch.build_config('open', deepcopy(overrides)),
             {
-                'address': overrides['address'],
+                'bind_address': overrides['bind_address'],
                 'loglevel': overrides['loglevel'],
                 'file_compression': 'deflate_9',
             }
@@ -193,7 +260,7 @@ class TestFunctions(TestCase):
         self.assertIsInstance(config, dict)
         self.assertEqual(set(config),
             set([
-                'address',
+                'bind_address',
                 'loglevel',
                 'file_compression',
                 'username',
@@ -201,7 +268,7 @@ class TestFunctions(TestCase):
                 'salt',
             ])
         )
-        self.assertEqual(config['address'], '127.0.0.1')
+        self.assertEqual(config['bind_address'], '127.0.0.1')
         self.assertEqual(config['loglevel'], 'notice')
         self.assertEqual(config['file_compression'], 'snappy')
 
@@ -210,7 +277,7 @@ class TestFunctions(TestCase):
         self.assertIsInstance(config, dict)
         self.assertEqual(set(config),
             set([
-                'address',
+                'bind_address',
                 'loglevel',
                 'file_compression',
                 'username',
@@ -218,11 +285,11 @@ class TestFunctions(TestCase):
                 'salt',
             ])
         )
-        self.assertEqual(config['address'], overrides['address'])
+        self.assertEqual(config['bind_address'], overrides['bind_address'])
         self.assertEqual(config['loglevel'], overrides['loglevel'])
         self.assertEqual(config['file_compression'], 'deflate_9')
         o2 = {
-            'address': usercouch.random_b32(),
+            'bind_address': usercouch.random_b32(),
             'loglevel': usercouch.random_b32(),
             'file_compression': 'none',
             'username': usercouch.random_b32(),
@@ -232,7 +299,7 @@ class TestFunctions(TestCase):
         self.assertEqual(
             usercouch.build_config('basic', deepcopy(o2)),
             {
-                'address': o2['address'],
+                'bind_address': o2['bind_address'],
                 'loglevel': o2['loglevel'],
                 'file_compression': 'none',
                 'username': o2['username'],
@@ -246,7 +313,7 @@ class TestFunctions(TestCase):
         self.assertIsInstance(config, dict)
         self.assertEqual(set(config),
             set([
-                'address',
+                'bind_address',
                 'loglevel',
                 'file_compression',
                 'username',
@@ -255,7 +322,7 @@ class TestFunctions(TestCase):
                 'oauth',
             ])
         )
-        self.assertEqual(config['address'], '127.0.0.1')
+        self.assertEqual(config['bind_address'], '127.0.0.1')
         self.assertEqual(config['loglevel'], 'notice')
         self.assertEqual(config['file_compression'], 'snappy')
         self.assertIsInstance(config['oauth'], dict)
@@ -268,7 +335,7 @@ class TestFunctions(TestCase):
         self.assertIsInstance(config, dict)
         self.assertEqual(set(config),
             set([
-                'address',
+                'bind_address',
                 'loglevel',
                 'file_compression',
                 'username',
@@ -277,7 +344,7 @@ class TestFunctions(TestCase):
                 'oauth',
             ])
         )
-        self.assertEqual(config['address'], overrides['address'])
+        self.assertEqual(config['bind_address'], overrides['bind_address'])
         self.assertEqual(config['loglevel'], overrides['loglevel'])
         self.assertEqual(config['file_compression'], 'deflate_9')
         self.assertIsInstance(config['oauth'], dict)
@@ -285,7 +352,7 @@ class TestFunctions(TestCase):
             set(['token', 'token_secret', 'consumer_key', 'consumer_secret'])
         )
         o3 = {
-            'address': usercouch.random_b32(),
+            'bind_address': usercouch.random_b32(),
             'loglevel': usercouch.random_b32(),
             'file_compression': 'none',
             'username': usercouch.random_b32(),
@@ -296,7 +363,7 @@ class TestFunctions(TestCase):
         self.assertEqual(
             usercouch.build_config('basic', deepcopy(o3)),
             {
-                'address': o3['address'],
+                'bind_address': o3['bind_address'],
                 'loglevel': o3['loglevel'],
                 'file_compression': 'none',
                 'username': o3['username'],
@@ -306,34 +373,113 @@ class TestFunctions(TestCase):
             }
         )
 
+    def test_netloc_template(self):
+        self.assertEqual(
+            usercouch.netloc_template('127.0.0.1'),
+            '127.0.0.1:{}'
+        )
+        self.assertEqual(
+            usercouch.netloc_template('0.0.0.0'),
+            '127.0.0.1:{}'
+        )
+        self.assertEqual(
+            usercouch.netloc_template('::1'),
+            '[::1]:{}'
+        )
+        self.assertEqual(
+            usercouch.netloc_template('::'),
+            '[::1]:{}'
+        )
+        with self.assertRaises(ValueError) as cm:
+            usercouch.netloc_template('192.168.0.2')
+        self.assertEqual(
+            str(cm.exception),
+            "invalid bind_address: '192.168.0.2'"
+        )
+
+    def test_build_url(self):
+        # Test with invalid scheme
+        with self.assertRaises(ValueError) as cm:
+            usercouch.build_url('sftp', None, None)
+        self.assertEqual(
+            str(cm.exception),
+            "scheme must be 'http' or 'https'; got 'sftp'"
+        )
+
+        # Test with an invalid address:
+        with self.assertRaises(ValueError) as cm:
+            usercouch.build_url('http', '192.168.0.2', None)
+        self.assertEqual(
+            str(cm.exception),
+            "invalid bind_address: '192.168.0.2'"
+        )
+
+        # IPv4:
+        self.assertEqual(
+            usercouch.build_url('http', '127.0.0.1', 2001),
+            'http://127.0.0.1:2001/'
+        )
+        self.assertEqual(
+            usercouch.build_url('http', '0.0.0.0', 2002),
+            'http://127.0.0.1:2002/'
+        )
+        self.assertEqual(
+            usercouch.build_url('https', '127.0.0.1', 2003),
+            'https://127.0.0.1:2003/'
+        )
+        self.assertEqual(
+            usercouch.build_url('https', '0.0.0.0', 2004),
+            'https://127.0.0.1:2004/'
+        )
+
+        # IPv6:
+        self.assertEqual(
+            usercouch.build_url('http', '::1', 2005),
+            'http://[::1]:2005/'
+        )
+        self.assertEqual(
+            usercouch.build_url('http', '::', 2006),
+            'http://[::1]:2006/'
+        )
+        self.assertEqual(
+            usercouch.build_url('https', '::1', 2007),
+            'https://[::1]:2007/'
+        )
+        self.assertEqual(
+            usercouch.build_url('https', '::', 2008),
+            'https://[::1]:2008/'
+        )
+
     def test_build_env(self):
         config = {
             'username': usercouch.random_b32(),
             'password': usercouch.random_b32(),
             'oauth': usercouch.random_oauth(),
+            'bind_address': '127.0.0.1',
         }
         port = test_port()
+        ports = {'port': port}
 
         # Test with bad auth
         with self.assertRaises(ValueError) as cm:
-            usercouch.build_env('magic', deepcopy(config), port)
+            usercouch.build_env('magic', deepcopy(config), ports)
         self.assertEqual(str(cm.exception), "invalid auth: 'magic'")
 
         # auth='open'
         self.assertEqual(
-            usercouch.build_env('open', deepcopy(config), port),
+            usercouch.build_env('open', deepcopy(config), ports),
             {
                 'port': port,
-                'url': 'http://localhost:{}/'.format(port),
+                'url': 'http://127.0.0.1:{}/'.format(port),
             }
         )
 
         # auth='basic'
         self.assertEqual(
-            usercouch.build_env('basic', deepcopy(config), port),
+            usercouch.build_env('basic', deepcopy(config), ports),
             {
                 'port': port,
-                'url': 'http://localhost:{}/'.format(port),
+                'url': 'http://127.0.0.1:{}/'.format(port),
                 'basic': {
                     'username': config['username'],
                     'password': config['password'],
@@ -343,10 +489,10 @@ class TestFunctions(TestCase):
 
         # auth='oauth'
         self.assertEqual(
-            usercouch.build_env('oauth', deepcopy(config), port),
+            usercouch.build_env('oauth', deepcopy(config), ports),
             {
                 'port': port,
-                'url': 'http://localhost:{}/'.format(port),
+                'url': 'http://127.0.0.1:{}/'.format(port),
                 'basic': {
                     'username': config['username'],
                     'password': config['password'],
@@ -357,7 +503,7 @@ class TestFunctions(TestCase):
 
     def test_build_template_kw(self):
         config = {
-            'address': usercouch.random_b32(),
+            'bind_address': usercouch.random_b32(),
             'loglevel': usercouch.random_b32(),
             'file_compression': usercouch.random_b32(), 
             'username': usercouch.random_b32(),
@@ -366,19 +512,20 @@ class TestFunctions(TestCase):
             'oauth': usercouch.random_oauth(),
         }
         port = test_port()
+        ports = {'port': port}
         tmp = TempDir()
         paths = usercouch.Paths(tmp.dir)
 
         # Test with bad auth
         with self.assertRaises(ValueError) as cm:
-            usercouch.build_template_kw('magic', deepcopy(config), port, paths)
+            usercouch.build_template_kw('magic', deepcopy(config), ports, paths)
         self.assertEqual(str(cm.exception), "invalid auth: 'magic'")
 
         # auth='open'
         self.assertEqual(
-            usercouch.build_template_kw('open', deepcopy(config), port, paths),
+            usercouch.build_template_kw('open', deepcopy(config), ports, paths),
             {
-                'address': config['address'],
+                'bind_address': config['bind_address'],
                 'loglevel': config['loglevel'],
                 'file_compression': config['file_compression'],
                 'port': port,
@@ -390,9 +537,9 @@ class TestFunctions(TestCase):
 
         # auth='basic'
         self.assertEqual(
-            usercouch.build_template_kw('basic', deepcopy(config), port, paths),
+            usercouch.build_template_kw('basic', deepcopy(config), ports, paths),
             {
-                'address': config['address'],
+                'bind_address': config['bind_address'],
                 'loglevel': config['loglevel'],
                 'file_compression': config['file_compression'],
                 'port': port,
@@ -408,9 +555,9 @@ class TestFunctions(TestCase):
 
         # auth='oauth'
         self.assertEqual(
-            usercouch.build_template_kw('oauth', deepcopy(config), port, paths),
+            usercouch.build_template_kw('oauth', deepcopy(config), ports, paths),
             {
-                'address': config['address'],
+                'bind_address': config['bind_address'],
                 'loglevel': config['loglevel'],
                 'file_compression': config['file_compression'],
                 'port': port,
@@ -428,6 +575,31 @@ class TestFunctions(TestCase):
             }
         )
 
+        # Test with ssl_port and ssl:
+        cfg = deepcopy(config)
+        ca = tmp.touch('ca.pem')
+        key = tmp.touch('key.pem')
+        cert = tmp.touch('cert.pem')
+        cfg['ssl'] = {'ca_file': ca, 'key_file': key, 'cert_file': cert}
+        ssl_port = test_port()
+        ports = {'port': port, 'ssl_port': ssl_port}
+        self.assertEqual(
+            usercouch.build_template_kw('open', cfg, ports, paths),
+            {
+                'bind_address': config['bind_address'],
+                'loglevel': config['loglevel'],
+                'file_compression': config['file_compression'],
+                'port': port,
+                'ssl_port': ssl_port,
+                'databases': paths.databases,
+                'views': paths.views,
+                'logfile': paths.logfile,
+                'ca_file': ca,
+                'key_file': key,
+                'cert_file': cert,
+            }
+        )
+
     def test_build_session_ini(self):
         # Test with bad auth
         with self.assertRaises(ValueError) as cm:
@@ -436,7 +608,7 @@ class TestFunctions(TestCase):
 
         # Test with auth='open'
         keys = (
-            'address',
+            'bind_address',
             'port',
             'databases',
             'views',
@@ -461,7 +633,7 @@ class TestFunctions(TestCase):
 
         # Test with auth='basic'
         keys = (
-            'address',
+            'bind_address',
             'port',
             'databases',
             'views',
@@ -487,7 +659,7 @@ class TestFunctions(TestCase):
 
         # Test with auth='oauth'
         keys = (
-            'address',
+            'bind_address',
             'port',
             'databases',
             'views',
@@ -512,21 +684,71 @@ class TestFunctions(TestCase):
                 usercouch.build_session_ini('oauth', bad)
             self.assertEqual(str(cm.exception), repr(key))
 
-    def test_bind_random_port(self):
-        (sock, port) = usercouch.bind_random_port('127.0.0.1')
-        self.assertIsInstance(sock, socket.socket)
-        self.assertIsInstance(port, int)
-        self.assertEqual(sock.getsockname(), ('127.0.0.1', port))
-        self.assertNotEqual(port,
-            usercouch.bind_random_port('127.0.0.1')[1]
+        # Test with auth='basic' and SSL
+        keys = (
+            'bind_address',
+            'port',
+            'databases',
+            'views',
+            'file_compression',
+            'logfile',
+            'loglevel',
+            'username', 'hashed',
+            'ssl_port', 'cert_file', 'key_file',
         )
+        kw = dict(
+            (key, usercouch.random_b32())
+            for key in keys
+        )
+        template = usercouch.BASIC + usercouch.SSL
+        self.assertEqual(
+            usercouch.build_session_ini('basic', deepcopy(kw)),
+            template.format(**kw)
+        )
+        for key in keys:
+            if key == 'ssl_port':
+                continue
+            bad = deepcopy(kw)
+            del bad[key]
+            with self.assertRaises(KeyError) as cm:
+                usercouch.build_session_ini('basic', bad)
+            self.assertEqual(str(cm.exception), repr(key))
 
-        (sock, port) = usercouch.bind_random_port('0.0.0.0')
+    def test_bind_socket(self):
+        sock = usercouch.bind_socket('127.0.0.1')
         self.assertIsInstance(sock, socket.socket)
-        self.assertIsInstance(port, int)
+        port = sock.getsockname()[1]
+        self.assertEqual(sock.getsockname(), ('127.0.0.1', port))
+        sock2 = usercouch.bind_socket('127.0.0.1')
+        self.assertNotEqual(sock2.getsockname()[1], port)
+
+        sock = usercouch.bind_socket('0.0.0.0')
+        self.assertIsInstance(sock, socket.socket)
+        port = sock.getsockname()[1]
         self.assertEqual(sock.getsockname(), ('0.0.0.0', port))
-        self.assertNotEqual(port,
-            usercouch.bind_random_port('0.0.0.0')[1]
+        sock2 = usercouch.bind_socket('0.0.0.0')
+        self.assertNotEqual(sock2.getsockname()[1], port)
+
+        sock = usercouch.bind_socket('::1')
+        self.assertIsInstance(sock, socket.socket)
+        port = sock.getsockname()[1]
+        self.assertEqual(sock.getsockname(), ('::1', port, 0, 0))
+        sock2 = usercouch.bind_socket('::1')
+        self.assertNotEqual(sock2.getsockname()[1], port)
+
+        sock = usercouch.bind_socket('::')
+        self.assertIsInstance(sock, socket.socket)
+        port = sock.getsockname()[1]
+        self.assertEqual(sock.getsockname(), ('::', port, 0, 0))
+        sock2 = usercouch.bind_socket('::')
+        self.assertNotEqual(sock2.getsockname()[1], port)
+
+        # Test with an invalid bind_address:
+        with self.assertRaises(ValueError) as cm:
+            usercouch.bind_socket('192.168.0.2')
+        self.assertEqual(
+            str(cm.exception),
+            "invalid bind_address: '192.168.0.2'"
         )
 
     def test_get_cmd(self):
@@ -542,6 +764,55 @@ class TestFunctions(TestCase):
                 '-a', ini,
             ]
         )
+
+
+class TestSockets(TestCase):
+    def test_init(self):
+        socks = usercouch.Sockets('127.0.0.1')
+        self.assertEqual(socks.bind_address, '127.0.0.1')
+        self.assertIsInstance(socks.socks, dict)
+        self.assertEqual(set(socks.socks), set(['port']))
+        self.assertIsInstance(socks.socks['port'], socket.socket)
+
+    def test_add_ssl(self):
+        socks = usercouch.Sockets('127.0.0.1')
+        self.assertIsNone(socks.add_ssl())
+        self.assertIsInstance(socks.socks, dict)
+        self.assertEqual(set(socks.socks), set(['port', 'ssl_port']))
+        self.assertIsInstance(socks.socks['port'], socket.socket)
+        self.assertIsInstance(socks.socks['ssl_port'], socket.socket)
+        self.assertIsNot(socks.socks['port'], socks.socks['ssl_port'])
+
+    def test_get_ports(self):
+        socks = usercouch.Sockets('127.0.0.1')
+        port = socks.socks['port'].getsockname()[1]
+        self.assertEqual(socks.get_ports(),
+            {'port': port}
+        )
+
+        socks = usercouch.Sockets('127.0.0.1')
+        socks.add_ssl()
+        port = socks.socks['port'].getsockname()[1]
+        ssl_port = socks.socks['ssl_port'].getsockname()[1]
+        self.assertEqual(socks.get_ports(),
+            {'port': port, 'ssl_port': ssl_port}
+        )
+
+    def test_close(self):
+        socks = usercouch.Sockets('127.0.0.1')
+        for sock in socks.socks.values():
+            self.assertFalse(sock._closed)
+        self.assertIsNone(socks.close())
+        for sock in socks.socks.values():
+            self.assertTrue(sock._closed)
+
+        socks = usercouch.Sockets('127.0.0.1')
+        socks.add_ssl()
+        for sock in socks.socks.values():
+            self.assertFalse(sock._closed)
+        self.assertIsNone(socks.close())
+        for sock in socks.socks.values():
+            self.assertTrue(sock._closed)
 
 
 class TestPathFunctions(TestCase):
@@ -610,17 +881,17 @@ class TestPaths(TestCase):
         self.assertEqual(paths.databases, tmp.join('databases'))
         self.assertEqual(paths.views, tmp.join('views'))
         self.assertEqual(paths.dump, tmp.join('dump'))
-        self.assertEqual(paths.bzr, tmp.join('bzr'))
+        self.assertEqual(paths.ssl, tmp.join('ssl'))
         self.assertEqual(paths.log, tmp.join('log'))
         self.assertEqual(paths.logfile, tmp.join('log', 'couchdb.log'))
         self.assertTrue(path.isdir(paths.databases))
         self.assertTrue(path.isdir(paths.views))
         self.assertTrue(path.isdir(paths.dump))
-        self.assertTrue(path.isdir(paths.bzr))
+        self.assertTrue(path.isdir(paths.ssl))
         self.assertTrue(path.isdir(paths.log))
         self.assertEqual(
             sorted(os.listdir(tmp.dir)),
-            ['bzr', 'databases', 'dump', 'log', 'views']
+            ['databases', 'dump', 'log', 'ssl', 'views']
         )
         self.assertEqual(os.listdir(tmp.join('log')), [])
 
@@ -630,17 +901,17 @@ class TestPaths(TestCase):
         self.assertEqual(paths.databases, tmp.join('databases'))
         self.assertEqual(paths.views, tmp.join('views'))
         self.assertEqual(paths.dump, tmp.join('dump'))
-        self.assertEqual(paths.bzr, tmp.join('bzr'))
+        self.assertEqual(paths.ssl, tmp.join('ssl'))
         self.assertEqual(paths.log, tmp.join('log'))
         self.assertEqual(paths.logfile, tmp.join('log', 'couchdb.log'))
         self.assertTrue(path.isdir(paths.databases))
         self.assertTrue(path.isdir(paths.views))
         self.assertTrue(path.isdir(paths.dump))
-        self.assertTrue(path.isdir(paths.bzr))
+        self.assertTrue(path.isdir(paths.ssl))
         self.assertTrue(path.isdir(paths.log))
         self.assertEqual(
             sorted(os.listdir(tmp.dir)),
-            ['bzr', 'databases', 'dump', 'log', 'views']
+            ['databases', 'dump', 'log', 'ssl', 'views']
         )
         self.assertEqual(
             os.listdir(tmp.join('log')),
@@ -805,7 +1076,7 @@ class TestUserCouch(TestCase):
         port = env['port']
         self.assertIsInstance(port, int)
         self.assertGreater(port, 1024)
-        self.assertEqual(env['url'], 'http://localhost:{}/'.format(port))
+        self.assertEqual(env['url'], 'http://127.0.0.1:{}/'.format(port))
 
         # check UserCouch.couchdb, make sure UserCouch.start() was called
         self.assertIsInstance(uc.couchdb, subprocess.Popen)
@@ -834,7 +1105,7 @@ class TestUserCouch(TestCase):
         port = env['port']
         self.assertIsInstance(port, int)
         self.assertGreater(port, 1024)
-        self.assertEqual(env['url'], 'http://localhost:{}/'.format(port))
+        self.assertEqual(env['url'], 'http://127.0.0.1:{}/'.format(port))
         self.assertIsInstance(env['basic'], dict)
         self.assertEqual(
             set(env['basic']),
@@ -872,7 +1143,7 @@ class TestUserCouch(TestCase):
         port = env['port']
         self.assertIsInstance(port, int)
         self.assertGreater(port, 1024)
-        self.assertEqual(env['url'], 'http://localhost:{}/'.format(port))
+        self.assertEqual(env['url'], 'http://127.0.0.1:{}/'.format(port))
         self.assertIsInstance(env['basic'], dict)
         self.assertEqual(
             set(env['basic']),
@@ -907,7 +1178,7 @@ class TestUserCouch(TestCase):
     def test_bootstrap_override_basic(self):
         overrides = {
             'loglevel': 'debug',
-            'address': '0.0.0.0',
+            'bind_address': '::1',
             'username': usercouch.random_b32(),
             'password': usercouch.random_b32(),
             'salt': usercouch.random_salt(),
@@ -921,13 +1192,13 @@ class TestUserCouch(TestCase):
         )
         self.assertIsInstance(env['port'], int)
         self.assertEqual(env['url'],
-            'http://localhost:{}/'.format(env['port'])
+            'http://[::1]:{}/'.format(env['port'])
         )
         self.assertEqual(env['basic'],
             dict((k, overrides[k]) for k in ('username', 'password'))
         )
         kw = {
-            'address': overrides['address'],
+            'bind_address': overrides['bind_address'],
             'port': env['port'],
             'databases': uc.paths.databases,
             'views': uc.paths.views,
@@ -948,7 +1219,7 @@ class TestUserCouch(TestCase):
     def test_bootstrap_override_oauth(self):
         overrides = {
             'loglevel': 'debug',
-            'address': '0.0.0.0',
+            'bind_address': '::1',
             'username': usercouch.random_b32(),
             'password': usercouch.random_b32(),
             'salt': usercouch.random_salt(),
@@ -963,14 +1234,14 @@ class TestUserCouch(TestCase):
         )
         self.assertIsInstance(env['port'], int)
         self.assertEqual(env['url'],
-            'http://localhost:{}/'.format(env['port'])
+            'http://[::1]:{}/'.format(env['port'])
         )
         self.assertEqual(env['basic'],
             dict((k, overrides[k]) for k in ('username', 'password'))
         )
         self.assertEqual(env['oauth'], overrides['oauth'])
         kw = {
-            'address': overrides['address'],
+            'bind_address': overrides['bind_address'],
             'port': env['port'],
             'databases': uc.paths.databases,
             'views': uc.paths.views,
@@ -991,6 +1262,65 @@ class TestUserCouch(TestCase):
         self.assertEqual(
             open(uc.paths.ini, 'r').read(),
             usercouch.OAUTH.format(**kw)
+        )
+
+    def test_bootstrap_ssl(self):
+        tmp = TempDir()
+        user_id = usercouch.random_b32()
+        machine_id = usercouch.random_b32()
+        user = sslhelpers.User(tmp.dir, user_id)
+        machine = user.get_machine(machine_id)
+        ssl_env = machine.get_ssl_env()
+
+        # Create SSL key and cert
+        overrides = {'ssl': ssl_env}
+
+        uc = usercouch.UserCouch(tmp.dir)
+        self.assertFalse(path.exists(uc.paths.ini))
+        env = uc.bootstrap('basic', overrides)
+        self.assertTrue(path.isfile(uc.paths.ini))
+        self.assertEqual(uc._headers, usercouch.get_headers(env))
+        self.assertEqual(set(uc._headers), set(['Accept', 'Authorization']))
+
+        # check env
+        self.assertIsInstance(env, dict)
+        self.assertEqual(set(env), set(['port', 'url', 'basic', 'env2']))
+        port = env['port']
+        self.assertIsInstance(port, int)
+        self.assertGreater(port, 1024)
+        self.assertEqual(env['url'], 'http://127.0.0.1:{}/'.format(port))
+        self.assertIsInstance(env['basic'], dict)
+        self.assertEqual(
+            set(env['basic']),
+            set(['username', 'password'])
+        )
+        for value in env['basic'].values():
+            self.assertIsInstance(value, str)
+            self.assertEqual(len(value), 24)
+            self.assertTrue(set(value).issubset(B32ALPHABET))
+
+        # check env['env2']
+        env2 = env['env2']
+        self.assertIsInstance(env2, dict)
+        self.assertEqual(set(env2), set(['port', 'url', 'basic', 'ssl']))
+        ssl_port = env2['port']
+        self.assertIsInstance(ssl_port, int)
+        self.assertGreater(ssl_port, 1024)
+        self.assertNotEqual(ssl_port, port)
+        self.assertEqual(env2['url'], 'https://127.0.0.1:{}/'.format(ssl_port))
+        self.assertEqual(env2['basic'], env['basic'])
+        self.assertEqual(env2['ssl'], ssl_env)
+
+        # check UserCouch.couchdb, make sure UserCouch.start() was called
+        self.assertIsInstance(uc.couchdb, subprocess.Popen)
+        self.assertIsNone(uc.couchdb.returncode)
+
+        # check that Exception is raised if you call bootstrap() more than once
+        with self.assertRaises(Exception) as cm:
+            uc.bootstrap()
+        self.assertEqual(
+            str(cm.exception),
+            'UserCouch.bootstrap() already called'
         )
 
     def test_start(self):

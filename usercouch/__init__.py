@@ -29,6 +29,7 @@ from os import path
 import stat
 import fcntl
 import time
+from copy import deepcopy
 from subprocess import Popen
 from hashlib import sha1, md5
 from base64 import b32encode, b64encode
@@ -59,14 +60,18 @@ FILE_COMPRESSION = (
     'snappy',
 )
 
+# Minimum SSL config that must be provided in overrides['ssl']:
+REQUIRED_SSL_CONFIG = frozenset(['ca_file', 'cert_file', 'key_file'])
+
+
 DEFAULT_CONFIG = (
-    ('address', '127.0.0.1'),
+    ('bind_address', '127.0.0.1'),
     ('loglevel', 'notice'),
     ('file_compression', 'snappy'),
 )
 
 OPEN = """[httpd]
-bind_address = {address}
+bind_address = {bind_address}
 port = {port}
 
 [couchdb]
@@ -103,6 +108,26 @@ TEMPLATES = {
     'basic': BASIC,
     'oauth': OAUTH,
 }
+
+SSL = """
+[daemons]
+httpsd = {{couch_httpd, start_link, [https]}}
+
+[ssl]
+port = {ssl_port}
+cert_file = {cert_file}
+key_file = {key_file}
+"""
+
+# FIXME: Currently client cert verification isn't working.  I believe we
+# need to write a custom `verify_fun` Erlang function, see:
+#   http://www.erlang.org/doc/man/ssl.html
+SSL_EXTRA = """
+[ssl]
+verify_ssl_certificates = true
+cacert_file = {ca_file}
+verify_fun = ???
+"""
 
 
 ########################################################################
@@ -154,6 +179,25 @@ def couch_hashed(password, salt):
     return '-hashed-{},{}'.format(hexdigest, salt)
 
 
+def check_ssl_config(ssl_config):
+    if not isinstance(ssl_config, dict):
+        raise TypeError(
+            "overrides['ssl'] must be a {!r}; got a {!r}: {!r}".format(
+                dict, type(ssl_config), ssl_config)
+        )
+    if not REQUIRED_SSL_CONFIG.issubset(ssl_config):
+        pretty = sorted(REQUIRED_SSL_CONFIG)
+        raise ValueError(
+            "overrides['ssl'] must have {!r}".format(pretty)
+        )
+    for key in REQUIRED_SSL_CONFIG:
+        value = ssl_config[key]
+        if not path.isfile(value):
+            raise ValueError(
+                "overrides['ssl'][{!r}] not a file: {!r}".format(key, value)
+            )
+
+
 def build_config(auth, overrides=None):
     if auth not in TEMPLATES:
         raise ValueError('invalid auth: {!r}'.format(auth))
@@ -164,6 +208,8 @@ def build_config(auth, overrides=None):
         raise ValueError("invalid 'file_compression': {!r}".format(
                 config['file_compression'])
         )
+    if 'ssl' in config:
+        check_ssl_config(config['ssl'])
     if auth in ('basic', 'oauth'):
         if 'username' not in config:
             config['username'] = random_b32()
@@ -177,12 +223,65 @@ def build_config(auth, overrides=None):
     return config
 
 
-def build_env(auth, config, port):
+def netloc_template(bind_address):
+    """
+    Return a netloc template appropriate for *bind_address*
+
+    For example, for IPv4:
+
+    >>> netloc_template('127.0.0.1')
+    '127.0.0.1:{}'
+    >>> netloc_template('0.0.0.0')
+    '127.0.0.1:{}'
+
+    And for IPv6:
+
+    >>> netloc_template('::1')
+    '[::1]:{}'
+    >>> netloc_template('::')
+    '[::1]:{}'
+
+    Also see `build_url()`.
+    """
+    if bind_address in ('127.0.0.1', '0.0.0.0'):
+        return '127.0.0.1:{}'
+    if bind_address in ('::1', '::'):
+        return '[::1]:{}'
+    raise ValueError('invalid bind_address: {!r}'.format(bind_address))
+
+
+def build_url(scheme, bind_address, port):
+    """
+    Build appropriate URL for *scheme*, *bind_address*, and *port*.
+
+    For example, an IPv4 HTTP URL:
+
+    >>> build_url('http', '127.0.0.1', 5984)
+    'http://127.0.0.1:5984/'
+
+    And an IPv6 HTTPS URL:
+
+    >>> build_url('https', '::1', 6984)
+    'https://[::1]:6984/'
+
+    Also see `netloc_template()`.
+    """
+    if scheme not in ('http', 'https'):
+        raise ValueError(
+            "scheme must be 'http' or 'https'; got {!r}".format(scheme)
+        )
+    netloc = netloc_template(bind_address).format(port)
+    return ''.join([scheme, '://', netloc, '/'])
+
+
+def build_env(auth, config, ports):
     if auth not in TEMPLATES:
         raise ValueError('invalid auth: {!r}'.format(auth))
+    bind_address = config['bind_address']
+    port = ports['port']
     env = {
-        'port': port,
-        'url': 'http://localhost:{}/'.format(port),
+        'port': ports['port'],
+        'url': build_url('http', bind_address, port),
     }
     if auth in ('basic', 'oauth'):
         env['basic'] = {
@@ -191,21 +290,34 @@ def build_env(auth, config, port):
         }
     if auth == 'oauth':
         env['oauth'] = config['oauth']
+    if 'ssl_port' in ports:
+        ssl_port = ports['ssl_port']
+        env2 = deepcopy(env)
+        env2['port'] = ssl_port
+        env2['url'] = build_url('https', bind_address, ssl_port)
+        if 'ssl' in config:
+            env2['ssl'] = deepcopy(config['ssl'])
+        env['env2'] = env2
     return env
 
 
-def build_template_kw(auth, config, port, paths):
+def build_template_kw(auth, config, ports, paths):
     if auth not in TEMPLATES:
         raise ValueError('invalid auth: {!r}'.format(auth))
     kw = {
-        'address': config['address'],
+        'bind_address': config['bind_address'],
         'loglevel': config['loglevel'],
         'file_compression': config['file_compression'],
-        'port': port,
         'databases': paths.databases,
         'views': paths.views,
         'logfile': paths.logfile,
     }
+    kw.update(ports)
+    if 'ssl' in config:
+        ssl_cfg = config['ssl']
+        for key in ['ca_file', 'cert_file', 'key_file']:
+            if key in ssl_cfg:
+                kw[key] = ssl_cfg[key]
     if auth in ('basic', 'oauth'):
         kw['username'] = config['username']
         kw['hashed'] = couch_hashed(config['password'], config['salt'])
@@ -218,14 +330,59 @@ def build_session_ini(auth, kw):
     if auth not in TEMPLATES:
         raise ValueError('invalid auth: {!r}'.format(auth))
     template = TEMPLATES[auth]
+    if 'ssl_port' in kw:
+        template += SSL
     return template.format(**kw)
 
 
-def bind_random_port(address):
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.bind((address, 0))
-    port = sock.getsockname()[1]
-    return (sock, port)
+def bind_socket(bind_address):
+    """
+    Bind a socket to *bind_address* and a random port.
+
+    For IPv4, *bind_address* must be ``'127.0.0.1'`` to listen only internally,
+    or ``'0.0.0.0'`` to accept outside connections.  For example:
+
+    >>> sock = bind_socket('127.0.0.1')
+
+    For IPv6, *bind_address* must be ``'::1'`` to listen only internally, or
+    ``'::'`` to accept outside connections.  For example:
+
+    >>> sock = bind_socket('::1')
+
+    The random port will be chosen by the operating system based on currently
+    available ports.
+    """
+    if bind_address in ('127.0.0.1', '0.0.0.0'):
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    elif bind_address in ('::1', '::'):
+        sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+    else:
+        raise ValueError('invalid bind_address: {!r}'.format(bind_address))
+    sock.bind((bind_address, 0))
+    return sock
+
+
+class Sockets:
+    """
+    A helper class to make it easy to deal with one or two random ports.
+    """
+
+    def __init__(self, bind_address):
+        self.bind_address = bind_address
+        self.socks = {'port': bind_socket(bind_address)}
+
+    def add_ssl(self):
+        self.socks['ssl_port'] = bind_socket(self.bind_address)
+
+    def get_ports(self):
+        return dict(
+            (key, sock.getsockname()[1])
+            for (key, sock) in self.socks.items()
+        )
+
+    def close(self):
+        for sock in self.socks.values():
+            sock.close()
 
 
 def get_cmd(session_ini):
@@ -265,15 +422,14 @@ class Paths:
     Just a namespace for the various files and directories in *basedir*.
     """
 
-    __slots__ = ('ini', 'databases', 'views', 'dump', 'bzr', 'log', 'logfile')
+    __slots__ = ('ini', 'databases', 'views', 'dump', 'ssl', 'log', 'logfile')
 
     def __init__(self, basedir):
-        # FIXME: We should remove the `bzr` dir and use `dump` instead
         self.ini = path.join(basedir, 'session.ini')
         self.databases = mkdir(basedir, 'databases')
         self.views = mkdir(basedir, 'views')
         self.dump = mkdir(basedir, 'dump')
-        self.bzr = mkdir(basedir, 'bzr')
+        self.ssl = mkdir(basedir, 'ssl')
         self.log = mkdir(basedir, 'log')
         self.logfile = logfile(self.log, 'couchdb')
 
@@ -358,14 +514,17 @@ class UserCouch:
             )
         self.__bootstraped = True
         config = build_config(auth, overrides)
-        (sock, port) = bind_random_port(config['address'])
-        env = build_env(auth, config, port)
-        kw = build_template_kw(auth, config, port, self.paths)
+        socks = Sockets(config['bind_address'])
+        if 'ssl' in config:
+            socks.add_ssl()
+        ports = socks.get_ports()
+        env = build_env(auth, config, ports)
+        kw = build_template_kw(auth, config, ports, self.paths)
         session = build_session_ini(auth, kw)
         open(self.paths.ini, 'w').write(session)
         self._conn = get_conn(env)
         self._headers = get_headers(env)
-        sock.close()
+        socks.close()
         self.start()
         return env
 
