@@ -61,13 +61,13 @@ FILE_COMPRESSION = (
 )
 
 DEFAULT_CONFIG = (
-    ('address', '127.0.0.1'),
+    ('bind_address', '127.0.0.1'),
     ('loglevel', 'notice'),
     ('file_compression', 'snappy'),
 )
 
 OPEN = """[httpd]
-bind_address = {address}
+bind_address = {bind_address}
 port = {port}
 
 [couchdb]
@@ -265,7 +265,7 @@ def build_url(scheme, bind_address, port):
 def build_env(auth, config, ports):
     if auth not in TEMPLATES:
         raise ValueError('invalid auth: {!r}'.format(auth))
-    bind_address = config['address']
+    bind_address = config['bind_address']
     port = ports['port']
     env = {
         'port': ports['port'],
@@ -292,7 +292,7 @@ def build_template_kw(auth, config, ports, paths):
     if auth not in TEMPLATES:
         raise ValueError('invalid auth: {!r}'.format(auth))
     kw = {
-        'address': config['address'],
+        'bind_address': config['bind_address'],
         'loglevel': config['loglevel'],
         'file_compression': config['file_compression'],
         'databases': paths.databases,
@@ -499,7 +499,7 @@ class UserCouch:
             )
         self.__bootstraped = True
         config = build_config(auth, overrides)
-        socks = Sockets(config['address'])
+        socks = Sockets(config['bind_address'])
         if 'ssl' in config:
             socks.add_ssl()
         ports = socks.get_ports()
