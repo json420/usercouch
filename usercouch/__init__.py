@@ -237,7 +237,7 @@ def netloc_template(bind_address):
     raise ValueError('invalid bind_address: {!r}'.format(bind_address))
 
 
-def build_url2(scheme, bind_address, port):
+def build_url(scheme, bind_address, port):
     """
     Build appropriate URL for *scheme*, *address*, and *port*.
 
@@ -252,40 +252,14 @@ def build_url2(scheme, bind_address, port):
     return ''.join([scheme, '://', netloc, '/'])
 
 
-def build_url(address, port, https=False):
-    """
-    Build an appropriate URL from *address* and *port*.
-
-    For example:
-
-    >>> build_url('127.0.0.1', 50000)
-    'http://127.0.0.1:50000/'
-    >>> build_url('::1', 50000)
-    'http://[::1]:50000/'
-
-    Or for an HTTPS URL:
-
-    >>> build_url('127.0.0.1', 50000, https=True)
-    'https://127.0.0.1:50000/'
-
-    """
-    if address in ('127.0.0.1', '0.0.0.0'):
-        netloc = '127.0.0.1:{}'
-    elif address in ('::1', '::'):
-        netloc = '[::1]:{}'
-    else:
-        raise ValueError('invalid address: {!r}'.format(address))
-    if https:
-        return 'https://' + netloc.format(port) + '/'
-    return 'http://' + netloc.format(port) + '/'
-
-
 def build_env(auth, config, ports):
     if auth not in TEMPLATES:
         raise ValueError('invalid auth: {!r}'.format(auth))
+    bind_address = config['address']
+    port = ports['port']
     env = {
         'port': ports['port'],
-        'url': build_url(config['address'], ports['port']),
+        'url': build_url('http', bind_address, port),
     }
     if auth in ('basic', 'oauth'):
         env['basic'] = {
@@ -295,11 +269,10 @@ def build_env(auth, config, ports):
     if auth == 'oauth':
         env['oauth'] = config['oauth']
     if 'ssl_port' in ports:
+        ssl_port = ports['ssl_port']
         env['env2'] = deepcopy(env)
-        env['env2']['port'] = ports['ssl_port']
-        env['env2']['url'] = build_url(
-            config['address'], ports['ssl_port'], https=True
-        )
+        env['env2']['port'] = ssl_port
+        env['env2']['url'] = build_url('https', bind_address, ssl_port)
         if 'ssl' in config:
             env['env2']['ssl'] = deepcopy(config['ssl'])
     return env

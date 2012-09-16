@@ -397,10 +397,10 @@ class TestFunctions(TestCase):
             "invalid bind_address: '192.168.0.2'"
         )
 
-    def test_build_url2(self):
+    def test_build_url(self):
         # Test with invalid scheme
         with self.assertRaises(ValueError) as cm:
-            usercouch.build_url2('sftp', None, None)
+            usercouch.build_url('sftp', None, None)
         self.assertEqual(
             str(cm.exception),
             "scheme must be 'http' or 'https'; got 'sftp'"
@@ -408,7 +408,7 @@ class TestFunctions(TestCase):
 
         # Test with an invalid address:
         with self.assertRaises(ValueError) as cm:
-            usercouch.build_url2('http', '192.168.0.2', None)
+            usercouch.build_url('http', '192.168.0.2', None)
         self.assertEqual(
             str(cm.exception),
             "invalid bind_address: '192.168.0.2'"
@@ -416,64 +416,38 @@ class TestFunctions(TestCase):
 
         # IPv4:
         self.assertEqual(
-            usercouch.build_url2('http', '127.0.0.1', 2001),
+            usercouch.build_url('http', '127.0.0.1', 2001),
             'http://127.0.0.1:2001/'
         )
         self.assertEqual(
-            usercouch.build_url2('http', '0.0.0.0', 2002),
+            usercouch.build_url('http', '0.0.0.0', 2002),
             'http://127.0.0.1:2002/'
         )
         self.assertEqual(
-            usercouch.build_url2('https', '127.0.0.1', 2003),
+            usercouch.build_url('https', '127.0.0.1', 2003),
             'https://127.0.0.1:2003/'
         )
         self.assertEqual(
-            usercouch.build_url2('https', '0.0.0.0', 2004),
+            usercouch.build_url('https', '0.0.0.0', 2004),
             'https://127.0.0.1:2004/'
         )
 
         # IPv6:
         self.assertEqual(
-            usercouch.build_url2('http', '::1', 2005),
+            usercouch.build_url('http', '::1', 2005),
             'http://[::1]:2005/'
         )
         self.assertEqual(
-            usercouch.build_url2('http', '::', 2006),
+            usercouch.build_url('http', '::', 2006),
             'http://[::1]:2006/'
         )
         self.assertEqual(
-            usercouch.build_url2('https', '::1', 2007),
+            usercouch.build_url('https', '::1', 2007),
             'https://[::1]:2007/'
         )
         self.assertEqual(
-            usercouch.build_url2('https', '::', 2008),
+            usercouch.build_url('https', '::', 2008),
             'https://[::1]:2008/'
-        )
-
-    def test_build_url(self):
-        self.assertEqual(
-            usercouch.build_url('127.0.0.1', 54321),
-            'http://127.0.0.1:54321/'
-        )
-        self.assertEqual(
-            usercouch.build_url('0.0.0.0', 54321),
-            'http://127.0.0.1:54321/'
-        )
-        self.assertEqual(
-            usercouch.build_url('::1', 54321),
-            'http://[::1]:54321/'
-        )
-        self.assertEqual(
-            usercouch.build_url('::', 54321),
-            'http://[::1]:54321/'
-        )
-
-        # Test with an invalid address:
-        with self.assertRaises(ValueError) as cm:
-            usercouch.build_url('192.168.0.2', 54321)
-        self.assertEqual(
-            str(cm.exception),
-            "invalid address: '192.168.0.2'"
         )
 
     def test_build_env(self):
