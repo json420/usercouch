@@ -103,23 +103,33 @@ OAUTH = BASIC + """
 {consumer_key} = {consumer_secret}
 """
 
+TEMPLATES = {
+    'open': OPEN,
+    'basic': BASIC,
+    'oauth': OAUTH,
+}
+
 SSL = """
 [daemons]
 httpsd = {{couch_httpd, start_link, [https]}}
 
 [ssl]
 port = {ssl_port}
-verify_ssl_certificates = true
-cacert_file = {ca_file}
 cert_file = {cert_file}
 key_file = {key_file}
 """
 
-TEMPLATES = {
-    'open': OPEN,
-    'basic': BASIC,
-    'oauth': OAUTH,
-}
+# FIXME: Currently client cert verification isn't working.  I believe we
+# need to write a custom `verify_fun` Erlang function, see:
+#   http://www.erlang.org/doc/man/ssl.html
+SSL_EXTRA = """
+[ssl]
+verify_ssl_certificates = true
+cacert_file = {ca_file}
+verify_fun = ???
+"""
+
+
 
 
 ########################################################################

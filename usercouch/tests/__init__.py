@@ -694,7 +694,7 @@ class TestFunctions(TestCase):
             'logfile',
             'loglevel',
             'username', 'hashed',
-            'ssl_port', 'ca_file', 'cert_file', 'key_file',
+            'ssl_port', 'cert_file', 'key_file',
         )
         kw = dict(
             (key, usercouch.random_b32())
