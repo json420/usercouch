@@ -1285,7 +1285,7 @@ class TestUserCouch(TestCase):
 
         # check env
         self.assertIsInstance(env, dict)
-        self.assertEqual(set(env), set(['port', 'url', 'basic', 'env2']))
+        self.assertEqual(set(env), set(['port', 'url', 'basic', 'x_env_ssl']))
         port = env['port']
         self.assertIsInstance(port, int)
         self.assertGreater(port, 1024)
@@ -1300,8 +1300,8 @@ class TestUserCouch(TestCase):
             self.assertEqual(len(value), 24)
             self.assertTrue(set(value).issubset(B32ALPHABET))
 
-        # check env['env2']
-        env2 = env['env2']
+        # check env['x_env_ssl']
+        env2 = env['x_env_ssl']
         self.assertIsInstance(env2, dict)
         self.assertEqual(set(env2), set(['port', 'url', 'basic']))
         ssl_port = env2['port']

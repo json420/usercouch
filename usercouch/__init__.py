@@ -301,7 +301,7 @@ def build_env(auth, config, ports):
         env2 = deepcopy(env)
         env2['port'] = ssl_port
         env2['url'] = build_url('https', bind_address, ssl_port)
-        env['env2'] = env2
+        env['x_env_ssl'] = env2
     return env
 
 
