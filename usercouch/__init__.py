@@ -61,7 +61,10 @@ FILE_COMPRESSION = (
 )
 
 # Minimum SSL config that must be provided in overrides['ssl']:
-REQUIRED_SSL_CONFIG = frozenset(['ca_file', 'cert_file', 'key_file'])
+REQUIRED_SSL_CONFIG = ('cert_file', 'key_file')
+
+# ALL config that can be provided in overrides['ssl']:
+POSSIBLE_SSL_CONFIG = REQUIRED_SSL_CONFIG + ('ca_file',)
 
 
 DEFAULT_CONFIG = (
@@ -185,12 +188,15 @@ def check_ssl_config(ssl_config):
             "overrides['ssl'] must be a {!r}; got a {!r}: {!r}".format(
                 dict, type(ssl_config), ssl_config)
         )
-    if not REQUIRED_SSL_CONFIG.issubset(ssl_config):
-        pretty = sorted(REQUIRED_SSL_CONFIG)
-        raise ValueError(
-            "overrides['ssl'] must have {!r}".format(pretty)
-        )
     for key in REQUIRED_SSL_CONFIG:
+        if key not in ssl_config:
+            raise ValueError(
+                "overrides['ssl'][{!r}] is required, but missing".format(key)
+            )
+    for key in POSSIBLE_SSL_CONFIG:
+        if key not in ssl_config:
+            assert key == 'ca_file'
+            continue
         value = ssl_config[key]
         if not path.isfile(value):
             raise ValueError(

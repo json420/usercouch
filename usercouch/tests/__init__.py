@@ -144,17 +144,17 @@ class TestFunctions(TestCase):
         key = tmp.touch('key.pem')
         nope = tmp.join('nope.pem')
         good = {
-            'ca_file': ca,
             'cert_file': cert,
             'key_file': key,
-            'check_hostname': False,
+            'ca_file': ca,
         }
-        required = ('ca_file', 'cert_file', 'key_file')
+        required = ('cert_file', 'key_file')
+        possible = required + ('ca_file',)
 
         # Test when it's all good:
         self.assertIsNone(usercouch.check_ssl_config(good))
         also_good = deepcopy(good)
-        del also_good['check_hostname']
+        del also_good['ca_file']
         self.assertIsNone(usercouch.check_ssl_config(also_good))
 
         # Test when a required key is missing:
@@ -165,11 +165,11 @@ class TestFunctions(TestCase):
                 usercouch.check_ssl_config(bad)
             self.assertEqual(
                 str(cm.exception),
-                "overrides['ssl'] must have ['ca_file', 'cert_file', 'key_file']"
+                "overrides['ssl'][{!r}] is required, but missing".format(key)
             )
 
-        # Test when a required key isn't a file:
-        for key in required:
+        # Test when a possible key isn't a file:
+        for key in possible:
             bad = deepcopy(good)
             bad[key] = nope
             with self.assertRaises(ValueError) as cm:
@@ -192,7 +192,7 @@ class TestFunctions(TestCase):
             usercouch.check_ssl_config({})
         self.assertEqual(
             str(cm.exception),
-            "overrides['ssl'] must have ['ca_file', 'cert_file', 'key_file']"
+            "overrides['ssl']['cert_file'] is required, but missing"
         )
 
     def test_build_config(self):
@@ -232,7 +232,7 @@ class TestFunctions(TestCase):
             usercouch.build_config('open', {'ssl': {}})
         self.assertEqual(
             str(cm.exception),
-            "overrides['ssl'] must have ['ca_file', 'cert_file', 'key_file']"
+            "overrides['ssl']['cert_file'] is required, but missing"
         )
 
         # auth='open'
