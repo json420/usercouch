@@ -1270,9 +1270,9 @@ class TestUserCouch(TestCase):
         # Create CA, machine cert:
         user_id = usercouch.random_b32()
         machine_id = usercouch.random_b32()
-        user = sslhelpers.User(tmp.dir, user_id)
-        machine = user.get_machine(machine_id)
-        ssl_config = machine.get_config()
+        pki = sslhelpers.PKIHelper(tmp.dir)
+        pki.load_server(user_id, machine_id)
+        ssl_config = pki.get_server_config()
 
         overrides = {'ssl': ssl_config}
 

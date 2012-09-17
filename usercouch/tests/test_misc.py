@@ -33,29 +33,12 @@ from usercouch import misc
 from usercouch.misc import TempCouch, CouchTestCase
 
 
-class TestTempCerts(TestCase):
+class TestTempPKI(TestCase):
     def test_init(self):
-        tc = misc.TempCerts()
-        self.assertTrue(path.isdir(tc.ssldir))
-        self.assertTrue(tc.ssldir.startswith('/tmp/TempCerts.'))
-        self.assertIsInstance(tc.user, sslhelpers.User)
-        self.assertIsInstance(tc.machine, sslhelpers.Machine)
-        self.assertEqual(tc.user.ssldir, tc.ssldir)
-        self.assertEqual(tc.machine.ssldir, tc.ssldir)
-        self.assertIs(tc.machine.user, tc.user)
-        self.assertEqual(tc.user.id, tc.user_id)
-        self.assertEqual(tc.machine.machine_id, tc.machine_id)
-        self.assertEqual(tc.machine.id,
-            '-'.join([tc.user_id, tc.machine_id])
-        )
-
-    def test_get_user(self):
-        tc = misc.TempCerts()
-        user_id = usercouch.random_b32()
-        user = tc.get_user(user_id)
-        self.assertIsInstance(user, sslhelpers.User)
-        self.assertEqual(user.ssldir, tc.ssldir)
-        self.assertEqual(user.id, user_id)
+        pki = misc.TempPKI()
+        self.assertIsInstance(pki, sslhelpers.PKIHelper)
+        self.assertTrue(path.isdir(pki.ssldir))
+        self.assertTrue(pki.ssldir.startswith('/tmp/TempPKI.'))
 
 
 class TestTempCouch(TestCase):
