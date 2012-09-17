@@ -164,7 +164,7 @@ class TestPKIHelper(TestCase):
             pki.get_server_config()
         self.assertEqual(
             str(cm.exception),
-            'You must call PKIHelper.load_server() first'
+            'You must first call PKIHelper.load_server()'
         )
 
         ca_id = random_b32()
@@ -199,7 +199,7 @@ class TestPKIHelper(TestCase):
             pki.get_client_config()
         self.assertEqual(
             str(cm.exception),
-            'You must call PKIHelper.load_server() first'
+            'You must first call PKIHelper.load_server()'
         )
 
         ca_id = random_b32()

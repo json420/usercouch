@@ -108,7 +108,9 @@ class PKIHelper:
 
     def get_server_config(self):
         if self.server is None:
-            raise Exception('You must call PKIHelper.load_server() first')
+            raise Exception('You must first call {}.load_server()'.format(
+                    self.__class__.__name__)   
+            )
         config = self.server.get_config()
         if self.client_ca is not None:
             config.update(self.client_ca.get_config())
@@ -116,7 +118,9 @@ class PKIHelper:
 
     def get_client_config(self):
         if self.server_ca is None:
-            raise Exception('You must call PKIHelper.load_server() first')
+            raise Exception('You must first call {}.load_server()'.format(
+                    self.__class__.__name__)   
+            )
         config = self.server_ca.get_config()
         if self.client is not None:
             config.update(self.client.get_config())
