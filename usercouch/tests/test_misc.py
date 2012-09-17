@@ -33,29 +33,48 @@ from usercouch import misc
 from usercouch.misc import TempCouch, CouchTestCase
 
 
-class TestTempCerts(TestCase):
+class TestTempPKI(TestCase):
     def test_init(self):
-        tc = misc.TempCerts()
-        self.assertTrue(path.isdir(tc.ssldir))
-        self.assertTrue(tc.ssldir.startswith('/tmp/TempCerts.'))
-        self.assertIsInstance(tc.user, sslhelpers.User)
-        self.assertIsInstance(tc.machine, sslhelpers.Machine)
-        self.assertEqual(tc.user.ssldir, tc.ssldir)
-        self.assertEqual(tc.machine.ssldir, tc.ssldir)
-        self.assertIs(tc.machine.user, tc.user)
-        self.assertEqual(tc.user.id, tc.user_id)
-        self.assertEqual(tc.machine.machine_id, tc.machine_id)
-        self.assertEqual(tc.machine.id,
-            '-'.join([tc.user_id, tc.machine_id])
+        # client_pki = False
+        pki = misc.TempPKI()
+        self.assertIsInstance(pki, sslhelpers.PKIHelper)
+        self.assertTrue(path.isdir(pki.ssldir))
+        self.assertTrue(pki.ssldir.startswith('/tmp/TempPKI.'))
+        self.assertEqual(
+            repr(pki),
+            'TempPKI({!r})'.format(pki.ssldir)
         )
 
-    def test_get_user(self):
-        tc = misc.TempCerts()
-        user_id = usercouch.random_b32()
-        user = tc.get_user(user_id)
-        self.assertIsInstance(user, sslhelpers.User)
-        self.assertEqual(user.ssldir, tc.ssldir)
-        self.assertEqual(user.id, user_id)
+        self.assertIsInstance(pki.server_ca, sslhelpers.CAHelper)
+        self.assertIsInstance(pki.server, sslhelpers.CertHelper)
+        self.assertIs(pki.server_ca.ssldir, pki.ssldir)
+        self.assertIs(pki.server.ssldir, pki.ssldir)
+        self.assertIs(pki.server.ca, pki.server_ca)
+
+        self.assertIsNone(pki.client_ca)
+        self.assertIsNone(pki.client)
+
+        # client_pki = True
+        pki = misc.TempPKI(client_pki=True)
+        self.assertIsInstance(pki, sslhelpers.PKIHelper)
+        self.assertTrue(path.isdir(pki.ssldir))
+        self.assertTrue(pki.ssldir.startswith('/tmp/TempPKI.'))
+        self.assertEqual(
+            repr(pki),
+            'TempPKI({!r})'.format(pki.ssldir)
+        )
+
+        self.assertIsInstance(pki.server_ca, sslhelpers.CAHelper)
+        self.assertIsInstance(pki.server, sslhelpers.CertHelper)
+        self.assertIs(pki.server_ca.ssldir, pki.ssldir)
+        self.assertIs(pki.server.ssldir, pki.ssldir)
+        self.assertIs(pki.server.ca, pki.server_ca)
+
+        self.assertIsInstance(pki.client_ca, sslhelpers.CAHelper)
+        self.assertIsInstance(pki.client, sslhelpers.CertHelper)
+        self.assertIs(pki.client_ca.ssldir, pki.ssldir)
+        self.assertIs(pki.client.ssldir, pki.ssldir)
+        self.assertIs(pki.client.ca, pki.client_ca)
 
 
 class TestTempCouch(TestCase):

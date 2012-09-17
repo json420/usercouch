@@ -82,12 +82,62 @@ def sign_csr(csr_file, ca_file, key_file, dst_file):
     ])
 
 
+class PKIHelper:
+    def __init__(self, ssldir):
+        self.ssldir = ssldir
+        self.server_ca = None
+        self.server = None
+        self.client_ca = None
+        self.client = None
+
+    def __repr__(self):
+        return '{}({!r})'.format(self.__class__.__name__, self.ssldir)
+
+    def get_ca(self, ca_id):
+        ca = CAHelper(self.ssldir, ca_id)
+        ca.gen()
+        return ca
+
+    def load_server(self, ca_id, cert_id):
+        self.server_ca = self.get_ca(ca_id)
+        self.server = self.server_ca.get_cert(cert_id)
+
+    def load_client(self, ca_id, cert_id):
+        self.client_ca = self.get_ca(ca_id)
+        self.client = self.client_ca.get_cert(cert_id)
+
+    def get_server_config(self):
+        if self.server is None:
+            raise Exception('You must first call {}.load_server()'.format(
+                    self.__class__.__name__)   
+            )
+        config = self.server.get_config()
+        if self.client_ca is not None:
+            config.update(self.client_ca.get_config())
+        return config
+
+    def get_client_config(self):
+        if self.server_ca is None:
+            raise Exception('You must first call {}.load_server()'.format(
+                    self.__class__.__name__)   
+            )
+        config = self.server_ca.get_config()
+        if self.client is not None:
+            config.update(self.client.get_config())
+        return config
+
+
 class Helper:
     def __init__(self, ssldir, _id):
         self.ssldir = ssldir
         self.id = _id
         self.subject = '/CN={}'.format(_id)
         self.key_file = path.join(ssldir, _id + '.key')
+
+    def __repr__(self):
+        return '{}({!r}, {!r})'.format(
+            self.__class__.__name__, self.ssldir, self.id
+        )
 
     def gen_key(self):
         if path.isfile(self.key_file):
@@ -96,29 +146,26 @@ class Helper:
         return True
 
 
-class User(Helper):
+class CAHelper(Helper):
     def __init__(self, ssldir, _id):
         super().__init__(ssldir, _id)
         self.ca_file = path.join(ssldir, _id + '.ca')
 
-    def gen_ca(self):
+    def gen(self):
         if path.isfile(self.ca_file):
             return False
         self.gen_key()
         gen_ca(self.key_file, self.subject, self.ca_file)
         return True
 
-    def gen(self):
-        return self.gen_ca()
-
     def sign(self, csr_file, cert_file):
         self.gen()
         sign_csr(csr_file, self.ca_file, self.key_file, cert_file)
 
-    def get_machine(self, machine_id):
-        machine = Machine(self, machine_id)
-        machine.gen()
-        return machine
+    def get_cert(self, cert_id):
+        cert = CertHelper(self, cert_id)
+        cert.gen()
+        return cert
 
     def get_config(self):
         """
@@ -135,15 +182,15 @@ class User(Helper):
         }
 
 
-class Machine(Helper):
-    def __init__(self, user, machine_id):
-        assert isinstance(user, User)
-        self.user = user
-        self.machine_id = machine_id
-        _id = '-'.join([user.id, machine_id])
-        super().__init__(user.ssldir, _id)
-        self.csr_file = path.join(user.ssldir, _id + '.csr')
-        self.cert_file = path.join(user.ssldir, _id + '.cert')
+class CertHelper(Helper):
+    def __init__(self, ca, cert_id):
+        assert isinstance(ca, CAHelper)
+        self.ca = ca
+        self.cert_id = cert_id
+        _id = '-'.join([ca.id, cert_id])
+        super().__init__(ca.ssldir, _id)
+        self.csr_file = path.join(ca.ssldir, _id + '.csr')
+        self.cert_file = path.join(ca.ssldir, _id + '.cert')
 
     def gen_csr(self):
         if path.isfile(self.csr_file):
@@ -152,15 +199,12 @@ class Machine(Helper):
         gen_csr(self.key_file, self.subject, self.csr_file)
         return True
 
-    def gen_cert(self):
+    def gen(self):
         if path.isfile(self.cert_file):
             return False
         self.gen_csr()
-        self.user.sign(self.csr_file, self.cert_file)
+        self.ca.sign(self.csr_file, self.cert_file)
         return True
-
-    def gen(self):
-        return self.gen_cert()
 
     def get_config(self):
         """

@@ -29,24 +29,20 @@ import shutil
 from os import path
 
 from usercouch import UserCouch, random_b32
-from usercouch import sslhelpers
+from usercouch.sslhelpers import PKIHelper
 
 
-class TempCerts:
-    def __init__(self):
-        self.ssldir = tempfile.mkdtemp(prefix='TempCerts.')
-        self.user_id = random_b32()
-        self.machine_id = random_b32()
-        self.user = self.get_user(self.user_id)
-        self.machine = self.user.get_machine(self.machine_id)
-        self.config = self.machine.get_config()
+class TempPKI(PKIHelper):
+    def __init__(self, client_pki=False):
+        ssldir = tempfile.mkdtemp(prefix='TempPKI.')
+        super().__init__(ssldir)
+        self.load_server(random_b32(), random_b32())
+        if client_pki:
+            self.load_client(random_b32(), random_b32())
 
     def __del__(self):
         if path.isdir(self.ssldir):
             shutil.rmtree(self.ssldir)
-
-    def get_user(self, user_id):
-        return sslhelpers.User(self.ssldir, user_id)
 
 
 class TempCouch(UserCouch):
