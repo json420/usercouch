@@ -1303,14 +1303,13 @@ class TestUserCouch(TestCase):
         # check env['env2']
         env2 = env['env2']
         self.assertIsInstance(env2, dict)
-        self.assertEqual(set(env2), set(['port', 'url', 'basic', 'ssl']))
+        self.assertEqual(set(env2), set(['port', 'url', 'basic']))
         ssl_port = env2['port']
         self.assertIsInstance(ssl_port, int)
         self.assertGreater(ssl_port, 1024)
         self.assertNotEqual(ssl_port, port)
         self.assertEqual(env2['url'], 'https://127.0.0.1:{}/'.format(ssl_port))
         self.assertEqual(env2['basic'], env['basic'])
-        self.assertEqual(env2['ssl'], ssl_config)
 
         # check UserCouch.couchdb, make sure UserCouch.start() was called
         self.assertIsInstance(uc.couchdb, subprocess.Popen)
