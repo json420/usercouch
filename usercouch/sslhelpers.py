@@ -135,15 +135,12 @@ class CAHelper(Helper):
         super().__init__(ssldir, _id)
         self.ca_file = path.join(ssldir, _id + '.ca')
 
-    def gen_ca(self):
+    def gen(self):
         if path.isfile(self.ca_file):
             return False
         self.gen_key()
         gen_ca(self.key_file, self.subject, self.ca_file)
         return True
-
-    def gen(self):
-        return self.gen_ca()
 
     def sign(self, csr_file, cert_file):
         self.gen()
@@ -186,15 +183,12 @@ class CertHelper(Helper):
         gen_csr(self.key_file, self.subject, self.csr_file)
         return True
 
-    def gen_cert(self):
+    def gen(self):
         if path.isfile(self.cert_file):
             return False
         self.gen_csr()
         self.ca.sign(self.csr_file, self.cert_file)
         return True
-
-    def gen(self):
-        return self.gen_cert()
 
     def get_config(self):
         """

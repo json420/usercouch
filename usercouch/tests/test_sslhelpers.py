@@ -120,20 +120,20 @@ class TestCAHelper(TestCase):
         self.assertEqual(ca.key_file, tmp.join(ca_id + '.key'))
         self.assertEqual(ca.ca_file, tmp.join(ca_id + '.ca'))
 
-    def test_gen_ca(self):
+    def test_gen(self):
         tmp = TempDir()
         ca_id = random_b32()
         ca = sslhelpers.CAHelper(tmp.dir, ca_id)
         self.assertFalse(path.isfile(ca.key_file))
         self.assertFalse(path.isfile(ca.ca_file))
-        self.assertTrue(ca.gen_ca())
+        self.assertTrue(ca.gen())
         self.assertGreater(path.getsize(ca.key_file), 0)
         self.assertGreater(path.getsize(ca.ca_file), 0)
-        self.assertFalse(ca.gen_ca())
+        self.assertFalse(ca.gen())
         os.remove(ca.ca_file)
-        self.assertTrue(ca.gen_ca())
+        self.assertTrue(ca.gen())
         self.assertGreater(path.getsize(ca.ca_file), 0)
-        self.assertFalse(ca.gen_ca())
+        self.assertFalse(ca.gen())
 
     def test_sign(self):
         tmp = TempDir()
@@ -212,7 +212,7 @@ class TestCertHelper(TestCase):
         self.assertGreater(path.getsize(cert.csr_file), 0)
         self.assertFalse(cert.gen_csr())
 
-    def test_gen_cert(self):
+    def test_gen(self):
         tmp = TempDir()
         ca_id = random_b32()
         cert_id = random_b32()
@@ -222,15 +222,15 @@ class TestCertHelper(TestCase):
         self.assertFalse(path.isfile(cert.key_file))
         self.assertFalse(path.isfile(cert.csr_file))
         self.assertFalse(path.isfile(cert.cert_file))
-        self.assertTrue(cert.gen_cert())
+        self.assertTrue(cert.gen())
         self.assertGreater(path.getsize(cert.key_file), 0)
         self.assertGreater(path.getsize(cert.csr_file), 0)
         self.assertGreater(path.getsize(cert.cert_file), 0)
-        self.assertFalse(cert.gen_cert())
+        self.assertFalse(cert.gen())
         os.remove(cert.cert_file)
-        self.assertTrue(cert.gen_cert())
+        self.assertTrue(cert.gen())
         self.assertGreater(path.getsize(cert.cert_file), 0)
-        self.assertFalse(cert.gen_cert())
+        self.assertFalse(cert.gen())
 
     def test_get_config(self):
         tmp = TempDir()
