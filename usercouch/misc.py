@@ -59,10 +59,13 @@ class TempCouch(UserCouch):
 
 class CouchTestCase(TestCase):
     auth = 'basic'
+    bind_address = '127.0.0.1'
 
     def setUp(self):
         self.tmpcouch = TempCouch()
-        self.env = self.tmpcouch.bootstrap(self.auth)
+        self.env = self.tmpcouch.bootstrap(self.auth,
+            {'bind_address': self.bind_address}
+        )
 
     def tearDown(self):
         self.tmpcouch = None

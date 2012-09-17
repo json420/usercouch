@@ -98,25 +98,42 @@ class TestTempCouch(TestCase):
 
 
 class SelfTest1(CouchTestCase):
-    auth = 'open'
 
     def test_self(self):
+        self.assertEqual(self.auth, 'basic')
+        self.assertEqual(self.bind_address, '127.0.0.1')
         self.assertIsInstance(self.tmpcouch, TempCouch)
-        self.assertEqual(set(self.env), set(['port', 'url']))
+        self.assertEqual(set(self.env), set(['port', 'url', 'basic']))
+        self.assertTrue(self.env['url'].startswith('http://127.0.0.1:'))
 
 
 class SelfTest2(CouchTestCase):
-    auth = 'basic'
+    bind_address = '::1'
 
     def test_self(self):
+        self.assertEqual(self.auth, 'basic')
         self.assertIsInstance(self.tmpcouch, TempCouch)
         self.assertEqual(set(self.env), set(['port', 'url', 'basic']))
+        self.assertTrue(self.env['url'].startswith('http://[::1]:'))
 
 
 class SelfTest3(CouchTestCase):
+    auth = 'open'
+
+    def test_self(self):
+        self.assertEqual(self.bind_address, '127.0.0.1')
+        self.assertIsInstance(self.tmpcouch, TempCouch)
+        self.assertEqual(set(self.env), set(['port', 'url']))
+        self.assertTrue(self.env['url'].startswith('http://127.0.0.1:'))
+
+
+class SelfTest4(CouchTestCase):
     auth = 'oauth'
 
     def test_self(self):
+        self.assertEqual(self.bind_address, '127.0.0.1')
         self.assertIsInstance(self.tmpcouch, TempCouch)
         self.assertEqual(set(self.env), set(['port', 'url', 'basic', 'oauth']))
+        self.assertTrue(self.env['url'].startswith('http://127.0.0.1:'))
+
 
