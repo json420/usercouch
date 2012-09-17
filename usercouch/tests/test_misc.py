@@ -35,10 +35,46 @@ from usercouch.misc import TempCouch, CouchTestCase
 
 class TestTempPKI(TestCase):
     def test_init(self):
+        # client_pki = False
         pki = misc.TempPKI()
         self.assertIsInstance(pki, sslhelpers.PKIHelper)
         self.assertTrue(path.isdir(pki.ssldir))
         self.assertTrue(pki.ssldir.startswith('/tmp/TempPKI.'))
+        self.assertEqual(
+            repr(pki),
+            'TempPKI({!r})'.format(pki.ssldir)
+        )
+
+        self.assertIsInstance(pki.server_ca, sslhelpers.CAHelper)
+        self.assertIsInstance(pki.server, sslhelpers.CertHelper)
+        self.assertIs(pki.server_ca.ssldir, pki.ssldir)
+        self.assertIs(pki.server.ssldir, pki.ssldir)
+        self.assertIs(pki.server.ca, pki.server_ca)
+
+        self.assertIsNone(pki.client_ca)
+        self.assertIsNone(pki.client)
+
+        # client_pki = True
+        pki = misc.TempPKI(client_pki=True)
+        self.assertIsInstance(pki, sslhelpers.PKIHelper)
+        self.assertTrue(path.isdir(pki.ssldir))
+        self.assertTrue(pki.ssldir.startswith('/tmp/TempPKI.'))
+        self.assertEqual(
+            repr(pki),
+            'TempPKI({!r})'.format(pki.ssldir)
+        )
+
+        self.assertIsInstance(pki.server_ca, sslhelpers.CAHelper)
+        self.assertIsInstance(pki.server, sslhelpers.CertHelper)
+        self.assertIs(pki.server_ca.ssldir, pki.ssldir)
+        self.assertIs(pki.server.ssldir, pki.ssldir)
+        self.assertIs(pki.server.ca, pki.server_ca)
+
+        self.assertIsInstance(pki.client_ca, sslhelpers.CAHelper)
+        self.assertIsInstance(pki.client, sslhelpers.CertHelper)
+        self.assertIs(pki.client_ca.ssldir, pki.ssldir)
+        self.assertIs(pki.client.ssldir, pki.ssldir)
+        self.assertIs(pki.client.ca, pki.client_ca)
 
 
 class TestTempCouch(TestCase):
