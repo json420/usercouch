@@ -164,6 +164,18 @@ class TestUser(TestCase):
         self.assertFalse(user.gen())
         self.assertFalse(machine.gen())
 
+    def test_get_config(self):
+        tmp = TempDir()
+        user_id = random_b32()
+        user = sslhelpers.User(tmp.dir, user_id)
+        self.assertEqual(
+            user.get_config(),
+            {
+                'ca_file': tmp.join(user_id + '.ca'),
+                'check_hostname': False,
+            }
+        )
+
 
 class TestMachine(TestCase):
     def test_init(self):
@@ -230,19 +242,7 @@ class TestMachine(TestCase):
         self.assertEqual(
             machine.get_config(),
             {
-                'ca_file': tmp.join(user_id + '.ca'),
                 'cert_file': tmp.join(_id + '.cert'),
                 'key_file': tmp.join(_id + '.key'),
-                'check_hostname': False,
-            }
-        )
-        machine = user.get_machine(machine_id)
-        self.assertEqual(
-            machine.get_config(),
-            {
-                'ca_file': tmp.join(user_id + '.ca'),
-                'cert_file': tmp.join(_id + '.cert'),
-                'key_file': tmp.join(_id + '.key'),
-                'check_hostname': False,
             }
         )

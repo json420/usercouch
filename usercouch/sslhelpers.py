@@ -120,6 +120,20 @@ class User(Helper):
         machine.gen()
         return machine
 
+    def get_config(self):
+        """
+        Get config fragment for this Certificate Authority.
+
+        This config is required by the client to verify the server.
+
+        Optionally, when using client-side certs, this config is used by the
+        server to verify the client.
+        """
+        return {
+            'ca_file': self.ca_file,
+            'check_hostname': False,
+        }
+
 
 class Machine(Helper):
     def __init__(self, user, machine_id):
@@ -149,10 +163,16 @@ class Machine(Helper):
         return self.gen_cert()
 
     def get_config(self):
+        """
+        Get config fragment for this Certificate.
+
+        This config is required by the server in order to use SSL.
+
+        Optionally, when using client-side certs, this config is used by the
+        client to specify the client certificate.
+        """
         return {
-            'ca_file': self.user.ca_file,
             'cert_file': self.cert_file,
             'key_file': self.key_file,
-            'check_hostname': False,
         }
 

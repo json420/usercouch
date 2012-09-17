@@ -1266,13 +1266,14 @@ class TestUserCouch(TestCase):
 
     def test_bootstrap_ssl(self):
         tmp = TempDir()
+
+        # Create CA, machine cert:
         user_id = usercouch.random_b32()
         machine_id = usercouch.random_b32()
         user = sslhelpers.User(tmp.dir, user_id)
         machine = user.get_machine(machine_id)
         ssl_config = machine.get_config()
 
-        # Create SSL key and cert
         overrides = {'ssl': ssl_config}
 
         uc = usercouch.UserCouch(tmp.dir)
