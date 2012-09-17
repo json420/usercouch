@@ -82,6 +82,40 @@ def sign_csr(csr_file, ca_file, key_file, dst_file):
     ])
 
 
+class PKIHelper:
+    def __init__(self, ssldir):
+        self.ssldir = ssldir
+        self.server_ca = None
+        self.server = None
+        self.client_ca = None
+        self.client = None
+
+    def get_ca(self, ca_id):
+        ca = CAHelper(self.ssldir, ca_id)
+        ca.gen()
+        return ca
+
+    def load_server(self, ca_id, cert_id):
+        self.server_ca = self.get_ca(ca_id)
+        self.server = self.server_ca.get_cert(cert_id)
+
+    def load_client(self, ca_id, cert_id):
+        self.client_ca = self.get_ca(ca_id)
+        self.client = self.client_ca.get_cert(cert_id)
+
+    def get_server_config(self):
+        config = self.server.get_config()
+        if self.client_ca is not None:
+            config.update(self.client_ca.get_config())
+        return config
+
+    def get_client_config(self):
+        config = self.server_ca.get_config()
+        if self.client is not None:
+            config.update(self.client.get_config())
+        return config
+
+
 class Helper:
     def __init__(self, ssldir, _id):
         self.ssldir = ssldir
