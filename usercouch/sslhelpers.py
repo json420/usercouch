@@ -148,7 +148,7 @@ class Machine(Helper):
     def gen(self):
         return self.gen_cert()
 
-    def get_ssl_env(self):
+    def get_config(self):
         return {
             'ca_file': self.user.ca_file,
             'cert_file': self.cert_file,

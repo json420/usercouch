@@ -220,7 +220,7 @@ class TestMachine(TestCase):
         self.assertGreater(path.getsize(machine.cert_file), 0)
         self.assertFalse(machine.gen_cert())
 
-    def test_get_ssl_env(self):
+    def test_get_config(self):
         tmp = TempDir()
         user_id = random_b32()
         machine_id = random_b32()
@@ -228,7 +228,7 @@ class TestMachine(TestCase):
         user = sslhelpers.User(tmp.dir, user_id)
         machine = sslhelpers.Machine(user, machine_id)
         self.assertEqual(
-            machine.get_ssl_env(),
+            machine.get_config(),
             {
                 'ca_file': tmp.join(user_id + '.ca'),
                 'cert_file': tmp.join(_id + '.cert'),
@@ -238,7 +238,7 @@ class TestMachine(TestCase):
         )
         machine = user.get_machine(machine_id)
         self.assertEqual(
-            machine.get_ssl_env(),
+            machine.get_config(),
             {
                 'ca_file': tmp.join(user_id + '.ca'),
                 'cert_file': tmp.join(_id + '.cert'),

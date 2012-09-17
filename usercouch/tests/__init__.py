@@ -1270,10 +1270,10 @@ class TestUserCouch(TestCase):
         machine_id = usercouch.random_b32()
         user = sslhelpers.User(tmp.dir, user_id)
         machine = user.get_machine(machine_id)
-        ssl_env = machine.get_ssl_env()
+        ssl_config = machine.get_config()
 
         # Create SSL key and cert
-        overrides = {'ssl': ssl_env}
+        overrides = {'ssl': ssl_config}
 
         uc = usercouch.UserCouch(tmp.dir)
         self.assertFalse(path.exists(uc.paths.ini))
@@ -1309,7 +1309,7 @@ class TestUserCouch(TestCase):
         self.assertNotEqual(ssl_port, port)
         self.assertEqual(env2['url'], 'https://127.0.0.1:{}/'.format(ssl_port))
         self.assertEqual(env2['basic'], env['basic'])
-        self.assertEqual(env2['ssl'], ssl_env)
+        self.assertEqual(env2['ssl'], ssl_config)
 
         # check UserCouch.couchdb, make sure UserCouch.start() was called
         self.assertIsInstance(uc.couchdb, subprocess.Popen)

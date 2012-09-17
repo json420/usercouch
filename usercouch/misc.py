@@ -28,12 +28,30 @@ import tempfile
 import shutil
 from os import path
 
-from usercouch import UserCouch
+from usercouch import UserCouch, random_b32
+from usercouch import sslhelpers
+
+
+class TempCerts:
+    def __init__(self):
+        self.ssldir = tempfile.mkdtemp(prefix='TempCerts.')
+        self.user_id = random_b32()
+        self.machine_id = random_b32()
+        self.user = self.get_user(self.user_id)
+        self.machine = self.user.get_machine(self.machine_id)
+        self.config = self.machine.get_config()
+
+    def __del__(self):
+        if path.isdir(self.ssldir):
+            shutil.rmtree(self.ssldir)
+
+    def get_user(self, user_id):
+        return sslhelpers.User(self.ssldir, user_id)
 
 
 class TempCouch(UserCouch):
     def __init__(self):
-        basedir = tempfile.mkdtemp(prefix='tmpcouch.')
+        basedir = tempfile.mkdtemp(prefix='TempCouch.')
         super().__init__(basedir)
         assert self.basedir == basedir
 
