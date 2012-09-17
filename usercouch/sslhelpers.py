@@ -127,6 +127,11 @@ class Helper:
         self.subject = '/CN={}'.format(_id)
         self.key_file = path.join(ssldir, _id + '.key')
 
+    def __repr__(self):
+        return '{}({!r}, {!r})'.format(
+            self.__class__.__name__, self.ssldir, self.id
+        )
+
     def gen_key(self):
         if path.isfile(self.key_file):
             return False

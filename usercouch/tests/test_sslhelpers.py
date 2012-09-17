@@ -230,6 +230,13 @@ class TestHelper(TestCase):
         self.assertEqual(inst.subject, '/CN=' + _id)
         self.assertEqual(inst.key_file, tmp.join(_id + '.key'))
 
+    def test_repr(self):
+        inst = sslhelpers.Helper('/some/dir', 'foo')
+        self.assertEqual(
+            repr(inst),
+            "Helper('/some/dir', 'foo')"
+        )
+
     def test_gen_key(self):
         tmp = TempDir()
         _id = random_b32()
@@ -254,6 +261,13 @@ class TestCAHelper(TestCase):
         self.assertEqual(ca.subject, '/CN=' + ca_id)
         self.assertEqual(ca.key_file, tmp.join(ca_id + '.key'))
         self.assertEqual(ca.ca_file, tmp.join(ca_id + '.ca'))
+
+    def test_repr(self):
+        ca = sslhelpers.CAHelper('/some/dir', 'foo')
+        self.assertEqual(
+            repr(ca),
+            "CAHelper('/some/dir', 'foo')"
+        )
 
     def test_gen(self):
         tmp = TempDir()
@@ -328,6 +342,14 @@ class TestCertHelper(TestCase):
         self.assertEqual(cert.key_file, tmp.join(_id + '.key'))
         self.assertEqual(cert.csr_file, tmp.join(_id + '.csr'))
         self.assertEqual(cert.cert_file, tmp.join(_id + '.cert'))
+
+    def test_repr(self):
+        ca = sslhelpers.CAHelper('/some/dir', 'foo')
+        cert = sslhelpers.CertHelper(ca, 'bar')
+        self.assertEqual(
+            repr(cert),
+            "CertHelper('/some/dir', 'foo-bar')"
+        )
 
     def test_gen_csr(self):
         tmp = TempDir()
