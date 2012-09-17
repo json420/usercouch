@@ -104,12 +104,16 @@ class PKIHelper:
         self.client = self.client_ca.get_cert(cert_id)
 
     def get_server_config(self):
+        if self.server is None:
+            raise Exception('You must call PKIHelper.load_server() first')
         config = self.server.get_config()
         if self.client_ca is not None:
             config.update(self.client_ca.get_config())
         return config
 
     def get_client_config(self):
+        if self.server_ca is None:
+            raise Exception('You must call PKIHelper.load_server() first')
         config = self.server_ca.get_config()
         if self.client is not None:
             config.update(self.client.get_config())

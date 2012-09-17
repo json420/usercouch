@@ -85,6 +85,141 @@ class TestFunctions(TestCase):
         self.assertGreater(path.getsize(cert), 0)
 
 
+class TestPKIHelper(TestCase):
+    def test_init(self):
+        tmp = TempDir()
+        pki = sslhelpers.PKIHelper(tmp.dir)
+        self.assertIs(pki.ssldir, tmp.dir)
+        self.assertIsNone(pki.server_ca)
+        self.assertIsNone(pki.server)
+        self.assertIsNone(pki.client_ca)
+        self.assertIsNone(pki.client)
+
+    def test_get_ca(self):
+        tmp = TempDir()
+        ca_id = random_b32()
+        pki = sslhelpers.PKIHelper(tmp.dir)
+        ca = pki.get_ca(ca_id)
+        self.assertIsInstance(ca, sslhelpers.CAHelper)
+        self.assertIs(ca.ssldir, tmp.dir)
+        self.assertIs(ca.id, ca_id)
+        self.assertIs(ca.gen(), False)
+
+    def test_load_server(self):
+        tmp = TempDir()
+        ca_id = random_b32()
+        cert_id = random_b32()
+        pki = sslhelpers.PKIHelper(tmp.dir)
+        self.assertIsNone(pki.load_server(ca_id, cert_id))
+
+        self.assertIsInstance(pki.server_ca, sslhelpers.CAHelper)
+        self.assertIs(pki.server_ca.ssldir, tmp.dir)
+        self.assertIs(pki.server_ca.id, ca_id)
+        self.assertIs(pki.server_ca.gen(), False)
+
+        self.assertIsInstance(pki.server, sslhelpers.CertHelper)
+        self.assertIs(pki.server.ca, pki.server_ca)
+        self.assertIs(pki.server.cert_id, cert_id)
+        self.assertIs(pki.server.ssldir, tmp.dir)
+        self.assertEqual(pki.server.id, '-'.join([ca_id, cert_id]))
+        self.assertIs(pki.server.gen(), False)
+
+        self.assertIsNone(pki.client_ca)
+        self.assertIsNone(pki.client)
+
+    def test_load_client(self):
+        tmp = TempDir()
+        ca_id = random_b32()
+        cert_id = random_b32()
+        pki = sslhelpers.PKIHelper(tmp.dir)
+        self.assertIsNone(pki.load_client(ca_id, cert_id))
+
+        self.assertIsInstance(pki.client_ca, sslhelpers.CAHelper)
+        self.assertIs(pki.client_ca.ssldir, tmp.dir)
+        self.assertIs(pki.client_ca.id, ca_id)
+        self.assertIs(pki.client_ca.gen(), False)
+
+        self.assertIsInstance(pki.client, sslhelpers.CertHelper)
+        self.assertIs(pki.client.ca, pki.client_ca)
+        self.assertIs(pki.client.cert_id, cert_id)
+        self.assertIs(pki.client.ssldir, tmp.dir)
+        self.assertEqual(pki.client.id, '-'.join([ca_id, cert_id]))
+        self.assertIs(pki.client.gen(), False)
+
+        self.assertIsNone(pki.server_ca)
+        self.assertIsNone(pki.server)
+
+    def test_get_server_config(self):
+        tmp = TempDir()
+        pki = sslhelpers.PKIHelper(tmp.dir)
+
+        with self.assertRaises(Exception) as cm:
+            pki.get_server_config()
+        self.assertEqual(
+            str(cm.exception),
+            'You must call PKIHelper.load_server() first'
+        )
+
+        ca_id = random_b32()
+        cert_id = random_b32()
+        server_ca = sslhelpers.CAHelper(tmp.dir, ca_id)
+        server = sslhelpers.CertHelper(server_ca, cert_id)
+        pki.server = server
+        self.assertEqual(pki.get_server_config(),
+            {
+                'cert_file': server.cert_file,
+                'key_file': server.key_file,
+            }
+        )
+
+        ca_id = random_b32()
+        client_ca = sslhelpers.CAHelper(tmp.dir, ca_id)
+        pki.client_ca = client_ca
+        self.assertEqual(pki.get_server_config(),
+            {
+                'cert_file': server.cert_file,
+                'key_file': server.key_file,
+                'ca_file': client_ca.ca_file,
+                'check_hostname': False,
+            }
+        )
+
+    def test_get_client_config(self):
+        tmp = TempDir()
+        pki = sslhelpers.PKIHelper(tmp.dir)
+
+        with self.assertRaises(Exception) as cm:
+            pki.get_client_config()
+        self.assertEqual(
+            str(cm.exception),
+            'You must call PKIHelper.load_server() first'
+        )
+
+        ca_id = random_b32()
+        server_ca = sslhelpers.CAHelper(tmp.dir, ca_id)
+        pki.server_ca = server_ca
+        self.assertEqual(pki.get_client_config(),
+            {
+                'ca_file': server_ca.ca_file,
+                'check_hostname': False,
+            }
+        )
+
+        ca_id = random_b32()
+        cert_id = random_b32()
+        client_ca = sslhelpers.CAHelper(tmp.dir, ca_id)
+        client = sslhelpers.CertHelper(client_ca, cert_id)
+        pki.client = client
+        self.assertEqual(pki.get_client_config(),
+            {
+                'ca_file': server_ca.ca_file,
+                'check_hostname': False,
+                'cert_file': client.cert_file,
+                'key_file': client.key_file,
+            }
+        )
+
+
 class TestHelper(TestCase):
     def test_init(self):
         tmp = TempDir()
