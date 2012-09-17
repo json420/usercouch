@@ -66,23 +66,25 @@ class TestFunctions(TestCase):
         tmp = TempDir()
 
         # Create the ca
-        ca_key = tmp.join('ca_key.pem')
-        ca = tmp.join('ca.pem')
-        sslhelpers.gen_key(ca_key)
-        sslhelpers.gen_ca(ca_key, '/CN=user_id', ca)
+        foo_key = tmp.join('foo.key')
+        foo_ca = tmp.join('foo.ca')
+        sslhelpers.gen_key(foo_key)
+        sslhelpers.gen_ca(foo_key, '/CN=foo', foo_ca)
 
-        # Create the machine key and csr
-        key = tmp.join('key.pem')
-        csr = tmp.join('csr.pem')
-        sslhelpers.gen_key(key)
-        sslhelpers.gen_csr(key, '/CN=machine_id', csr)
+        # Create csr
+        bar_key = tmp.join('bar.key')
+        bar_csr = tmp.join('bar.csr')
+        sslhelpers.gen_key(bar_key)
+        sslhelpers.gen_csr(bar_key, '/CN=bar', bar_csr)
 
         # Now sign the csr
-        cert = tmp.join('cert.pem')
-        self.assertFalse(path.isfile(cert))
-        sslhelpers.sign_csr(csr, ca, ca_key, cert)
-        self.assertTrue(path.isfile(cert))
-        self.assertGreater(path.getsize(cert), 0)
+        foo_srl = tmp.join('foo.srl')
+        bar_cert = tmp.join('bar.cert')
+        self.assertFalse(path.isfile(foo_srl))
+        self.assertFalse(path.isfile(bar_cert))
+        sslhelpers.sign_csr(bar_csr, foo_ca, foo_key, foo_srl, bar_cert)
+        self.assertGreater(path.getsize(bar_cert), 0)
+        self.assertGreater(path.getsize(foo_srl), 0)
 
 
 class TestPKIHelper(TestCase):
@@ -268,6 +270,7 @@ class TestCAHelper(TestCase):
         self.assertEqual(ca.subject, '/CN=' + ca_id)
         self.assertEqual(ca.key_file, tmp.join(ca_id + '.key'))
         self.assertEqual(ca.ca_file, tmp.join(ca_id + '.ca'))
+        self.assertEqual(ca.srl_file, tmp.join(ca_id + '.srl'))
 
     def test_repr(self):
         ca = sslhelpers.CAHelper('/some/dir', 'foo')

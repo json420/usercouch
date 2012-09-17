@@ -67,7 +67,7 @@ def gen_csr(key_file, subject, dst_file):
     ])
 
 
-def sign_csr(csr_file, ca_file, key_file, dst_file):
+def sign_csr(csr_file, ca_file, key_file, srl_file, dst_file):
     """
     Create a signed certificate from a certificate signing request.
     """
@@ -78,6 +78,7 @@ def sign_csr(csr_file, ca_file, key_file, dst_file):
         '-in', csr_file,
         '-CA', ca_file,
         '-CAkey', key_file,
+        '-CAserial', srl_file,
         '-out', dst_file
     ])
 
@@ -150,6 +151,7 @@ class CAHelper(Helper):
     def __init__(self, ssldir, _id):
         super().__init__(ssldir, _id)
         self.ca_file = path.join(ssldir, _id + '.ca')
+        self.srl_file = path.join(ssldir, _id + '.srl')
 
     def gen(self):
         if path.isfile(self.ca_file):
@@ -158,9 +160,9 @@ class CAHelper(Helper):
         gen_ca(self.key_file, self.subject, self.ca_file)
         return True
 
-    def sign(self, csr_file, cert_file):
+    def sign(self, csr_file, dst_file):
         self.gen()
-        sign_csr(csr_file, self.ca_file, self.key_file, cert_file)
+        sign_csr(csr_file, self.ca_file, self.key_file, self.srl_file, dst_file)
 
     def get_cert(self, cert_id):
         cert = CertHelper(self, cert_id)
