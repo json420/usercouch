@@ -130,7 +130,7 @@ class Helper:
         return True
 
 
-class User(Helper):
+class CAHelper(Helper):
     def __init__(self, ssldir, _id):
         super().__init__(ssldir, _id)
         self.ca_file = path.join(ssldir, _id + '.ca')
@@ -149,10 +149,10 @@ class User(Helper):
         self.gen()
         sign_csr(csr_file, self.ca_file, self.key_file, cert_file)
 
-    def get_machine(self, machine_id):
-        machine = Machine(self, machine_id)
-        machine.gen()
-        return machine
+    def get_cert(self, cert_id):
+        cert = CertHelper(self, cert_id)
+        cert.gen()
+        return cert
 
     def get_config(self):
         """
@@ -169,15 +169,15 @@ class User(Helper):
         }
 
 
-class Machine(Helper):
-    def __init__(self, user, machine_id):
-        assert isinstance(user, User)
-        self.user = user
-        self.machine_id = machine_id
-        _id = '-'.join([user.id, machine_id])
-        super().__init__(user.ssldir, _id)
-        self.csr_file = path.join(user.ssldir, _id + '.csr')
-        self.cert_file = path.join(user.ssldir, _id + '.cert')
+class CertHelper(Helper):
+    def __init__(self, ca, cert_id):
+        assert isinstance(ca, CAHelper)
+        self.ca = ca
+        self.cert_id = cert_id
+        _id = '-'.join([ca.id, cert_id])
+        super().__init__(ca.ssldir, _id)
+        self.csr_file = path.join(ca.ssldir, _id + '.csr')
+        self.cert_file = path.join(ca.ssldir, _id + '.cert')
 
     def gen_csr(self):
         if path.isfile(self.csr_file):
@@ -190,7 +190,7 @@ class Machine(Helper):
         if path.isfile(self.cert_file):
             return False
         self.gen_csr()
-        self.user.sign(self.csr_file, self.cert_file)
+        self.ca.sign(self.csr_file, self.cert_file)
         return True
 
     def gen(self):
