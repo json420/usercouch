@@ -95,6 +95,13 @@ class TestPKIHelper(TestCase):
         self.assertIsNone(pki.client_ca)
         self.assertIsNone(pki.client)
 
+    def test_repr(self):
+        pki = sslhelpers.PKIHelper('/some/dir')
+        self.assertEqual(
+            repr(pki),
+            "PKIHelper('/some/dir')"
+        )
+
     def test_get_ca(self):
         tmp = TempDir()
         ca_id = random_b32()

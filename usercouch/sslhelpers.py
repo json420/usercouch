@@ -90,6 +90,9 @@ class PKIHelper:
         self.client_ca = None
         self.client = None
 
+    def __repr__(self):
+        return '{}({!r})'.format(self.__class__.__name__, self.ssldir)
+
     def get_ca(self, ca_id):
         ca = CAHelper(self.ssldir, ca_id)
         ca.gen()
