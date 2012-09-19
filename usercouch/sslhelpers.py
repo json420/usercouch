@@ -181,6 +181,15 @@ class CAHelper(Helper):
     def sign(self, csr_file, dst_file):
         gen_cert(csr_file, self.ca_file, self.key_file, self.srl_file, dst_file)
 
+    def issue(self, cert):
+        assert isinstance(cert, CertHelper)
+        assert cert.ca_id == self.id
+        if path.isfile(cert.cert_file):
+            raise Exception(
+                'cert_file already exists: {!r}'.format(cert.cert_file)
+            )
+        self.sign(cert.csr_file, cert.cert_file)
+
     def get_cert(self, cert_id):
         cert = CertHelper(self.ssldir, self.id, cert_id)
         return cert
