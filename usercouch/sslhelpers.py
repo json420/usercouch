@@ -163,6 +163,14 @@ class CAHelper(Helper):
     def exists(self):
         return path.isfile(self.ca_file)
 
+    def create(self):
+        if path.isfile(self.ca_file):
+            raise Exception(
+                'ca_file already exists: {!r}'.format(self.ca_file)
+            )
+        gen_key(self.key_file)
+        gen_ca(self.key_file, self.subject, self.ca_file)
+
     def gen(self):
         if path.isfile(self.ca_file):
             return False
