@@ -114,6 +114,14 @@ class PKI:
         self.client_ca = self.get_ca(ca_id)
         self.client = self.get_cert(ca_id, cert_id)
 
+    def create_server_pki(self, ca_id, cert_id):
+        self.load_server_pki(ca_id, cert_id)
+        create_pki(self.server_ca, self.server)
+
+    def create_client_pki(self, ca_id, cert_id):
+        self.load_client_pki(ca_id, cert_id)
+        create_pki(self.client_ca, self.client)
+
     def get_server_config(self):
         if self.server is None:
             raise Exception('You must first call {}.load_server_pki()'.format(
