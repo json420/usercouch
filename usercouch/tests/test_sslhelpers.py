@@ -394,6 +394,38 @@ class TestCertHelper(TestCase):
         open(cert.cert_file, 'wb').close()
         self.assertIs(cert.exists(), True)
 
+    def test_create(self):
+        tmp = TempDir()
+        ca_id = random_b32()
+        cert_id = random_b32()
+        cert = sslhelpers.CertHelper(tmp.dir, ca_id, cert_id)
+        self.assertFalse(path.isfile(cert.cert_file))
+        self.assertFalse(path.isfile(cert.csr_file))
+        self.assertFalse(path.isfile(cert.key_file))
+
+        open(cert.cert_file, 'wb').close()
+        with self.assertRaises(Exception) as cm:
+            cert.create()
+        self.assertEqual(
+            str(cm.exception),
+            'cert_file already exists: {!r}'.format(cert.cert_file)
+        )
+        os.remove(cert.cert_file)
+
+        open(cert.csr_file, 'wb').close()
+        with self.assertRaises(Exception) as cm:
+            cert.create()
+        self.assertEqual(
+            str(cm.exception),
+            'csr_file already exists: {!r}'.format(cert.csr_file)
+        )
+        os.remove(cert.csr_file)
+
+        self.assertIsNone(cert.create())
+        self.assertFalse(path.isfile(cert.cert_file))
+        self.assertGreater(path.getsize(cert.csr_file), 0)
+        self.assertGreater(path.getsize(cert.key_file), 0)
+
     def test_gen_csr(self):
         tmp = TempDir()
         ca_id = random_b32()

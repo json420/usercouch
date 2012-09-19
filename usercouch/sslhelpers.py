@@ -212,6 +212,18 @@ class CertHelper(Helper):
     def exists(self):
         return path.isfile(self.cert_file)
 
+    def create(self):
+        if path.isfile(self.cert_file):
+            raise Exception(
+                'cert_file already exists: {!r}'.format(self.cert_file)
+            )
+        if path.isfile(self.csr_file):
+            raise Exception(
+                'csr_file already exists: {!r}'.format(self.csr_file)
+            )
+        gen_key(self.key_file)
+        gen_csr(self.key_file, self.subject, self.csr_file)
+
     def gen_csr(self):
         if path.isfile(self.csr_file):
             return False
