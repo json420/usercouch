@@ -114,12 +114,12 @@ class TestPKIHelper(TestCase):
         self.assertIs(ca.id, ca_id)
         self.assertIs(ca.exists(), False)
 
-    def test_load_server(self):
+    def test_load_server_pki(self):
         tmp = TempDir()
         ca_id = random_b32()
         cert_id = random_b32()
         pki = sslhelpers.PKIHelper(tmp.dir)
-        self.assertIsNone(pki.load_server(ca_id, cert_id))
+        self.assertIsNone(pki.load_server_pki(ca_id, cert_id))
 
         self.assertIsInstance(pki.server_ca, sslhelpers.CAHelper)
         self.assertIs(pki.server_ca.ssldir, tmp.dir)
@@ -136,12 +136,12 @@ class TestPKIHelper(TestCase):
         self.assertIsNone(pki.client_ca)
         self.assertIsNone(pki.client)
 
-    def test_load_client(self):
+    def test_load_client_pki(self):
         tmp = TempDir()
         ca_id = random_b32()
         cert_id = random_b32()
         pki = sslhelpers.PKIHelper(tmp.dir)
-        self.assertIsNone(pki.load_client(ca_id, cert_id))
+        self.assertIsNone(pki.load_client_pki(ca_id, cert_id))
 
         self.assertIsInstance(pki.client_ca, sslhelpers.CAHelper)
         self.assertIs(pki.client_ca.ssldir, tmp.dir)
@@ -166,7 +166,7 @@ class TestPKIHelper(TestCase):
             pki.get_server_config()
         self.assertEqual(
             str(cm.exception),
-            'You must first call PKIHelper.load_server()'
+            'You must first call PKIHelper.load_server_pki()'
         )
 
         ca_id = random_b32()
@@ -200,7 +200,7 @@ class TestPKIHelper(TestCase):
             pki.get_client_config()
         self.assertEqual(
             str(cm.exception),
-            'You must first call PKIHelper.load_server()'
+            'You must first call PKIHelper.load_server_pki()'
         )
 
         ca_id = random_b32()

@@ -81,6 +81,12 @@ def gen_cert(csr_file, ca_file, key_file, srl_file, dst_file):
         '-CAserial', srl_file,
         '-out', dst_file
     ])
+ 
+
+def create_pki(ca, cert):
+    ca.create()
+    cert.create()
+    ca.issue(cert)
 
 
 class PKIHelper:
@@ -100,17 +106,17 @@ class PKIHelper:
     def get_cert(self, ca_id, cert_id):
         return CertHelper(self.ssldir, ca_id, cert_id)
 
-    def load_server(self, ca_id, cert_id):
+    def load_server_pki(self, ca_id, cert_id):
         self.server_ca = self.get_ca(ca_id)
         self.server = self.get_cert(ca_id, cert_id)
 
-    def load_client(self, ca_id, cert_id):
+    def load_client_pki(self, ca_id, cert_id):
         self.client_ca = self.get_ca(ca_id)
         self.client = self.get_cert(ca_id, cert_id)
 
     def get_server_config(self):
         if self.server is None:
-            raise Exception('You must first call {}.load_server()'.format(
+            raise Exception('You must first call {}.load_server_pki()'.format(
                     self.__class__.__name__)   
             )
         config = self.server.get_config()
@@ -120,7 +126,7 @@ class PKIHelper:
 
     def get_client_config(self):
         if self.server_ca is None:
-            raise Exception('You must first call {}.load_server()'.format(
+            raise Exception('You must first call {}.load_server_pki()'.format(
                     self.__class__.__name__)   
             )
         config = self.server_ca.get_config()
