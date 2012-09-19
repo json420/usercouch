@@ -93,9 +93,9 @@ class TestPKI(TestCase):
         pki = sslhelpers.PKI(tmp.dir)
         self.assertIs(pki.ssldir, tmp.dir)
         self.assertIsNone(pki.server_ca)
-        self.assertIsNone(pki.server)
+        self.assertIsNone(pki.server_cert)
         self.assertIsNone(pki.client_ca)
-        self.assertIsNone(pki.client)
+        self.assertIsNone(pki.client_cert)
 
     def test_repr(self):
         pki = sslhelpers.PKI('/some/dir')
@@ -139,15 +139,15 @@ class TestPKI(TestCase):
         self.assertIs(pki.server_ca.id, ca_id)
         self.assertIs(pki.server_ca.exists(), False)
 
-        self.assertIsInstance(pki.server, sslhelpers.Cert)
-        self.assertIs(pki.server.ca_id, ca_id)
-        self.assertIs(pki.server.cert_id, cert_id)
-        self.assertIs(pki.server.ssldir, tmp.dir)
-        self.assertEqual(pki.server.id, '-'.join([ca_id, cert_id]))
-        self.assertIs(pki.server.exists(), False)
+        self.assertIsInstance(pki.server_cert, sslhelpers.Cert)
+        self.assertIs(pki.server_cert.ca_id, ca_id)
+        self.assertIs(pki.server_cert.cert_id, cert_id)
+        self.assertIs(pki.server_cert.ssldir, tmp.dir)
+        self.assertEqual(pki.server_cert.id, '-'.join([ca_id, cert_id]))
+        self.assertIs(pki.server_cert.exists(), False)
 
         self.assertIsNone(pki.client_ca)
-        self.assertIsNone(pki.client)
+        self.assertIsNone(pki.client_cert)
 
     def test_load_client_pki(self):
         tmp = TempDir()
@@ -161,15 +161,15 @@ class TestPKI(TestCase):
         self.assertIs(pki.client_ca.id, ca_id)
         self.assertIs(pki.client_ca.exists(), False)
 
-        self.assertIsInstance(pki.client, sslhelpers.Cert)
-        self.assertIs(pki.client.ca_id, ca_id)
-        self.assertIs(pki.client.cert_id, cert_id)
-        self.assertIs(pki.client.ssldir, tmp.dir)
-        self.assertEqual(pki.client.id, '-'.join([ca_id, cert_id]))
-        self.assertIs(pki.client.exists(), False)
+        self.assertIsInstance(pki.client_cert, sslhelpers.Cert)
+        self.assertIs(pki.client_cert.ca_id, ca_id)
+        self.assertIs(pki.client_cert.cert_id, cert_id)
+        self.assertIs(pki.client_cert.ssldir, tmp.dir)
+        self.assertEqual(pki.client_cert.id, '-'.join([ca_id, cert_id]))
+        self.assertIs(pki.client_cert.exists(), False)
 
         self.assertIsNone(pki.server_ca)
-        self.assertIsNone(pki.server)
+        self.assertIsNone(pki.server_cert)
 
     def test_get_server_config(self):
         tmp = TempDir()
@@ -184,12 +184,12 @@ class TestPKI(TestCase):
 
         ca_id = random_b32()
         cert_id = random_b32()
-        server = sslhelpers.Cert(tmp.dir, ca_id, cert_id)
-        pki.server = server
+        server_cert = sslhelpers.Cert(tmp.dir, ca_id, cert_id)
+        pki.server_cert = server_cert
         self.assertEqual(pki.get_server_config(),
             {
-                'cert_file': server.cert_file,
-                'key_file': server.key_file,
+                'cert_file': server_cert.cert_file,
+                'key_file': server_cert.key_file,
             }
         )
 
@@ -198,8 +198,8 @@ class TestPKI(TestCase):
         pki.client_ca = client_ca
         self.assertEqual(pki.get_server_config(),
             {
-                'cert_file': server.cert_file,
-                'key_file': server.key_file,
+                'cert_file': server_cert.cert_file,
+                'key_file': server_cert.key_file,
                 'ca_file': client_ca.ca_file,
                 'check_hostname': False,
             }
@@ -228,14 +228,14 @@ class TestPKI(TestCase):
 
         ca_id = random_b32()
         cert_id = random_b32()
-        client = sslhelpers.Cert(tmp.dir, ca_id, cert_id)
-        pki.client = client
+        client_cert = sslhelpers.Cert(tmp.dir, ca_id, cert_id)
+        pki.client_cert = client_cert
         self.assertEqual(pki.get_client_config(),
             {
                 'ca_file': server_ca.ca_file,
                 'check_hostname': False,
-                'cert_file': client.cert_file,
-                'key_file': client.key_file,
+                'cert_file': client_cert.cert_file,
+                'key_file': client_cert.key_file,
             }
         )
 
