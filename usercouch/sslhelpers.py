@@ -165,7 +165,7 @@ class CA(Base):
         gen_key(self.key_file)
         gen_ca(self.key_file, self.subject, self.ca_file)
 
-    def issue_cert(self, csr_file, dst_file):
+    def raw_issue(self, csr_file, dst_file):
         gen_cert(
             csr_file, self.ca_file, self.key_file, self.srl_file, dst_file
         )
@@ -177,11 +177,10 @@ class CA(Base):
             raise Exception(
                 'cert_file already exists: {!r}'.format(cert.cert_file)
             )
-        self.issue_cert(cert.csr_file, cert.cert_file)
+        self.raw_issue(cert.csr_file, cert.cert_file)
 
     def get_cert(self, cert_id):
-        cert = Cert(self.ssldir, self.id, cert_id)
-        return cert
+        return Cert(self.ssldir, self.id, cert_id)
 
     def get_config(self):
         """
