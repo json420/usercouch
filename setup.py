@@ -46,11 +46,11 @@ class Test(Command):
 
     def run(self):
         pynames = [
-            #'usercouch',
-            #'usercouch.misc',
+            'usercouch',
+            'usercouch.misc',
             'usercouch.sslhelpers',
-            #'usercouch.tests',
-            #'usercouch.tests.test_misc',
+            'usercouch.tests',
+            'usercouch.tests.test_misc',
             'usercouch.tests.test_sslhelpers',
         ]
 
