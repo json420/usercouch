@@ -67,7 +67,7 @@ def gen_csr(key_file, subject, dst_file):
     ])
 
 
-def sign_csr(csr_file, ca_file, key_file, srl_file, dst_file):
+def gen_cert(csr_file, ca_file, key_file, srl_file, dst_file):
     """
     Create a signed certificate from a certificate signing request.
     """
@@ -162,7 +162,7 @@ class CAHelper(Helper):
 
     def sign(self, csr_file, dst_file):
         self.gen()
-        sign_csr(csr_file, self.ca_file, self.key_file, self.srl_file, dst_file)
+        gen_cert(csr_file, self.ca_file, self.key_file, self.srl_file, dst_file)
 
     def get_cert(self, cert_id):
         cert = CertHelper(self, cert_id)

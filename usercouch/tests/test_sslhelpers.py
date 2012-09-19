@@ -62,7 +62,7 @@ class TestFunctions(TestCase):
         self.assertTrue(path.isfile(csr))
         self.assertGreater(path.getsize(csr), 0)
 
-    def test_sign_csr(self):
+    def test_gen_cert(self):
         tmp = TempDir()
 
         # Create the ca
@@ -82,7 +82,7 @@ class TestFunctions(TestCase):
         bar_cert = tmp.join('bar.cert')
         self.assertFalse(path.isfile(foo_srl))
         self.assertFalse(path.isfile(bar_cert))
-        sslhelpers.sign_csr(bar_csr, foo_ca, foo_key, foo_srl, bar_cert)
+        sslhelpers.gen_cert(bar_csr, foo_ca, foo_key, foo_srl, bar_cert)
         self.assertGreater(path.getsize(bar_cert), 0)
         self.assertGreater(path.getsize(foo_srl), 0)
 
