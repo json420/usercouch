@@ -171,13 +171,6 @@ class CAHelper(Helper):
         gen_key(self.key_file)
         gen_ca(self.key_file, self.subject, self.ca_file)
 
-    def gen(self):
-        if path.isfile(self.ca_file):
-            return False
-        self.gen_key()
-        gen_ca(self.key_file, self.subject, self.ca_file)
-        return True
-
     def sign(self, csr_file, dst_file):
         gen_cert(csr_file, self.ca_file, self.key_file, self.srl_file, dst_file)
 
@@ -232,13 +225,6 @@ class CertHelper(Helper):
             )
         gen_key(self.key_file)
         gen_csr(self.key_file, self.subject, self.csr_file)
-
-    def gen_csr(self):
-        if path.isfile(self.csr_file):
-            return False
-        self.gen_key()
-        gen_csr(self.key_file, self.subject, self.csr_file)
-        return True
 
     def get_config(self):
         """

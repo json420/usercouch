@@ -305,21 +305,6 @@ class TestCAHelper(TestCase):
         self.assertGreater(path.getsize(ca.key_file), 0)
         self.assertGreater(path.getsize(ca.ca_file), 0)
 
-    def test_gen(self):
-        tmp = TempDir()
-        ca_id = random_b32()
-        ca = sslhelpers.CAHelper(tmp.dir, ca_id)
-        self.assertFalse(path.isfile(ca.key_file))
-        self.assertFalse(path.isfile(ca.ca_file))
-        self.assertTrue(ca.gen())
-        self.assertGreater(path.getsize(ca.key_file), 0)
-        self.assertGreater(path.getsize(ca.ca_file), 0)
-        self.assertFalse(ca.gen())
-        os.remove(ca.ca_file)
-        self.assertTrue(ca.gen())
-        self.assertGreater(path.getsize(ca.ca_file), 0)
-        self.assertFalse(ca.gen())
-
     def test_sign(self):
         tmp = TempDir()
         ca_id = random_b32()
@@ -329,7 +314,7 @@ class TestCAHelper(TestCase):
         cert_file = tmp.join('cert.pem')
         sslhelpers.gen_key(key_file)
         sslhelpers.gen_csr(key_file, '/CN=foobar', csr_file)
-        ca.gen()
+        ca.create()
         self.assertFalse(path.exists(cert_file))
         ca.sign(csr_file, cert_file)
         self.assertGreater(path.getsize(cert_file), 0)
@@ -447,23 +432,6 @@ class TestCertHelper(TestCase):
         self.assertFalse(path.isfile(cert.cert_file))
         self.assertGreater(path.getsize(cert.csr_file), 0)
         self.assertGreater(path.getsize(cert.key_file), 0)
-
-    def test_gen_csr(self):
-        tmp = TempDir()
-        ca_id = random_b32()
-        cert_id = random_b32()
-        _id = ca_id + '-' + cert_id
-        cert = sslhelpers.CertHelper(tmp.dir, ca_id, cert_id)
-        self.assertFalse(path.isfile(cert.key_file))
-        self.assertFalse(path.isfile(cert.csr_file))
-        self.assertTrue(cert.gen_csr())
-        self.assertGreater(path.getsize(cert.key_file), 0)
-        self.assertGreater(path.getsize(cert.csr_file), 0)
-        self.assertFalse(cert.gen_csr())
-        os.remove(cert.csr_file)
-        self.assertTrue(cert.gen_csr())
-        self.assertGreater(path.getsize(cert.csr_file), 0)
-        self.assertFalse(cert.gen_csr())
 
     def test_get_config(self):
         tmp = TempDir()
