@@ -277,6 +277,14 @@ class TestCAHelper(TestCase):
             "CAHelper('/some/dir', 'foo')"
         )
 
+    def test_exists(self):
+        tmp = TempDir()
+        ca_id = random_b32()
+        ca = sslhelpers.CAHelper(tmp.dir, ca_id)
+        self.assertIs(ca.exists(), False)
+        open(ca.ca_file, 'wb').close()
+        self.assertIs(ca.exists(), True)
+
     def test_gen(self):
         tmp = TempDir()
         ca_id = random_b32()
@@ -362,9 +370,9 @@ class TestCertHelper(TestCase):
         ca_id = random_b32()
         cert_id = random_b32()
         cert = sslhelpers.CertHelper(tmp.dir, ca_id, cert_id)
-        self.assertFalse(cert.exists())
+        self.assertIs(cert.exists(), False)
         open(cert.cert_file, 'wb').close()
-        self.assertTrue(cert.exists())
+        self.assertIs(cert.exists(), True)
 
     def test_gen_csr(self):
         tmp = TempDir()
