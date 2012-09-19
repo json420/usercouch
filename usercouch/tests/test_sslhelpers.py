@@ -292,7 +292,7 @@ class TestCA(TestCase):
         self.assertGreater(path.getsize(ca.key_file), 0)
         self.assertGreater(path.getsize(ca.ca_file), 0)
 
-    def test_sign(self):
+    def test_issue_cert(self):
         tmp = TempDir()
         ca_id = random_b32()
         ca = sslhelpers.CA(tmp.dir, ca_id)
@@ -303,7 +303,7 @@ class TestCA(TestCase):
         sslhelpers.gen_csr(key_file, '/CN=foobar', csr_file)
         ca.create()
         self.assertFalse(path.exists(cert_file))
-        ca.sign(csr_file, cert_file)
+        ca.issue_cert(csr_file, cert_file)
         self.assertGreater(path.getsize(cert_file), 0)
 
     def test_issue(self):
