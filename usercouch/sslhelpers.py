@@ -20,7 +20,7 @@
 #   Jason Gerard DeRose <jderose@novacut.com>
 
 """
-Helpers for non-interactive creation of SSL certs.
+Bases for non-interactive creation of SSL certs.
 """
 
 from subprocess import check_call
@@ -81,54 +81,69 @@ def gen_cert(csr_file, ca_file, key_file, srl_file, dst_file):
         '-CAserial', srl_file,
         '-out', dst_file
     ])
+ 
+
+def create_pki(ca, cert):
+    ca.create()
+    cert.create()
+    ca.issue(cert)
 
 
-class PKIHelper:
+class PKI:
     def __init__(self, ssldir):
         self.ssldir = ssldir
         self.server_ca = None
-        self.server = None
+        self.server_cert = None
         self.client_ca = None
-        self.client = None
+        self.client_cert = None
 
     def __repr__(self):
         return '{}({!r})'.format(self.__class__.__name__, self.ssldir)
 
     def get_ca(self, ca_id):
-        ca = CAHelper(self.ssldir, ca_id)
-        ca.gen()
-        return ca
+        return CA(self.ssldir, ca_id)
 
-    def load_server(self, ca_id, cert_id):
+    def get_cert(self, ca_id, cert_id):
+        return Cert(self.ssldir, ca_id, cert_id)
+
+    def load_server_pki(self, ca_id, cert_id):
         self.server_ca = self.get_ca(ca_id)
-        self.server = self.server_ca.get_cert(cert_id)
+        self.server_cert = self.get_cert(ca_id, cert_id)
 
-    def load_client(self, ca_id, cert_id):
+    def load_client_pki(self, ca_id, cert_id):
         self.client_ca = self.get_ca(ca_id)
-        self.client = self.client_ca.get_cert(cert_id)
+        self.client_cert = self.get_cert(ca_id, cert_id)
+
+    def create_server_pki(self, ca_id, cert_id):
+        self.load_server_pki(ca_id, cert_id)
+        create_pki(self.server_ca, self.server_cert)
+
+    def create_client_pki(self, ca_id, cert_id):
+        self.load_client_pki(ca_id, cert_id)
+        create_pki(self.client_ca, self.client_cert)
 
     def get_server_config(self):
-        if self.server is None:
-            raise Exception('You must first call {}.load_server()'.format(
+        if self.server_cert is None:
+            raise Exception('You must first call {}.load_server_pki()'.format(
                     self.__class__.__name__)   
             )
-        config = self.server.get_config()
+        config = self.server_cert.get_config()
         if self.client_ca is not None:
             config.update(self.client_ca.get_config())
         return config
 
     def get_client_config(self):
         if self.server_ca is None:
-            raise Exception('You must first call {}.load_server()'.format(
+            raise Exception('You must first call {}.load_server_pki()'.format(
                     self.__class__.__name__)   
             )
         config = self.server_ca.get_config()
-        if self.client is not None:
-            config.update(self.client.get_config())
+        if self.client_cert is not None:
+            config.update(self.client_cert.get_config())
         return config
 
 
-class Helper:
+class Base:
     def __init__(self, ssldir, _id):
         self.ssldir = ssldir
         self.id = _id
@@ -140,34 +155,40 @@ class Helper:
             self.__class__.__name__, self.ssldir, self.id
         )
 
-    def gen_key(self):
-        if path.isfile(self.key_file):
-            return False
-        gen_key(self.key_file)
-        return True
 
-
-class CAHelper(Helper):
+class CA(Base):
     def __init__(self, ssldir, _id):
         super().__init__(ssldir, _id)
         self.ca_file = path.join(ssldir, _id + '.ca')
         self.srl_file = path.join(ssldir, _id + '.srl')
 
-    def gen(self):
-        if path.isfile(self.ca_file):
-            return False
-        self.gen_key()
-        gen_ca(self.key_file, self.subject, self.ca_file)
-        return True
+    def exists(self):
+        return path.isfile(self.ca_file)
 
-    def sign(self, csr_file, dst_file):
-        self.gen()
-        gen_cert(csr_file, self.ca_file, self.key_file, self.srl_file, dst_file)
+    def create(self):
+        if path.isfile(self.ca_file):
+            raise Exception(
+                'ca_file already exists: {!r}'.format(self.ca_file)
+            )
+        gen_key(self.key_file)
+        gen_ca(self.key_file, self.subject, self.ca_file)
+
+    def raw_issue(self, csr_file, dst_file):
+        gen_cert(
+            csr_file, self.ca_file, self.key_file, self.srl_file, dst_file
+        )
+
+    def issue(self, cert):
+        assert isinstance(cert, Cert)
+        assert cert.ca_id == self.id
+        if path.isfile(cert.cert_file):
+            raise Exception(
+                'cert_file already exists: {!r}'.format(cert.cert_file)
+            )
+        self.raw_issue(cert.csr_file, cert.cert_file)
 
     def get_cert(self, cert_id):
-        cert = CertHelper(self, cert_id)
-        cert.gen()
-        return cert
+        return Cert(self.ssldir, self.id, cert_id)
 
     def get_config(self):
         """
@@ -184,29 +205,34 @@ class CAHelper(Helper):
         }
 
 
-class CertHelper(Helper):
-    def __init__(self, ca, cert_id):
-        assert isinstance(ca, CAHelper)
-        self.ca = ca
+class Cert(Base):
+    def __init__(self, ssldir, ca_id, cert_id):
+        self.ca_id = ca_id
         self.cert_id = cert_id
-        _id = '-'.join([ca.id, cert_id])
-        super().__init__(ca.ssldir, _id)
-        self.csr_file = path.join(ca.ssldir, _id + '.csr')
-        self.cert_file = path.join(ca.ssldir, _id + '.cert')
+        _id = '-'.join([ca_id, cert_id])
+        super().__init__(ssldir, _id)
+        self.csr_file = path.join(ssldir, _id + '.csr')
+        self.cert_file = path.join(ssldir, _id + '.cert')
 
-    def gen_csr(self):
-        if path.isfile(self.csr_file):
-            return False
-        self.gen_key()
-        gen_csr(self.key_file, self.subject, self.csr_file)
-        return True
+    def __repr__(self):
+        return '{}({!r}, {!r}, {!r})'.format(
+            self.__class__.__name__, self.ssldir, self.ca_id, self.cert_id
+        )
 
-    def gen(self):
+    def exists(self):
+        return path.isfile(self.cert_file)
+
+    def create(self):
         if path.isfile(self.cert_file):
-            return False
-        self.gen_csr()
-        self.ca.sign(self.csr_file, self.cert_file)
-        return True
+            raise Exception(
+                'cert_file already exists: {!r}'.format(self.cert_file)
+            )
+        if path.isfile(self.csr_file):
+            raise Exception(
+                'csr_file already exists: {!r}'.format(self.csr_file)
+            )
+        gen_key(self.key_file)
+        gen_csr(self.key_file, self.subject, self.csr_file)
 
     def get_config(self):
         """

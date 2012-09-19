@@ -29,16 +29,16 @@ import shutil
 from os import path
 
 from usercouch import UserCouch, random_b32
-from usercouch.sslhelpers import PKIHelper
+from usercouch.sslhelpers import PKI
 
 
-class TempPKI(PKIHelper):
+class TempPKI(PKI):
     def __init__(self, client_pki=False):
         ssldir = tempfile.mkdtemp(prefix='TempPKI.')
         super().__init__(ssldir)
-        self.load_server(random_b32(), random_b32())
+        self.create_server_pki(random_b32(), random_b32())
         if client_pki:
-            self.load_client(random_b32(), random_b32())
+            self.create_client_pki(random_b32(), random_b32())
 
     def __del__(self):
         if path.isdir(self.ssldir):

@@ -37,7 +37,7 @@ class TestTempPKI(TestCase):
     def test_init(self):
         # client_pki = False
         pki = misc.TempPKI()
-        self.assertIsInstance(pki, sslhelpers.PKIHelper)
+        self.assertIsInstance(pki, sslhelpers.PKI)
         self.assertTrue(path.isdir(pki.ssldir))
         self.assertTrue(pki.ssldir.startswith('/tmp/TempPKI.'))
         self.assertEqual(
@@ -45,18 +45,18 @@ class TestTempPKI(TestCase):
             'TempPKI({!r})'.format(pki.ssldir)
         )
 
-        self.assertIsInstance(pki.server_ca, sslhelpers.CAHelper)
-        self.assertIsInstance(pki.server, sslhelpers.CertHelper)
+        self.assertIsInstance(pki.server_ca, sslhelpers.CA)
+        self.assertIsInstance(pki.server_cert, sslhelpers.Cert)
         self.assertIs(pki.server_ca.ssldir, pki.ssldir)
-        self.assertIs(pki.server.ssldir, pki.ssldir)
-        self.assertIs(pki.server.ca, pki.server_ca)
+        self.assertIs(pki.server_cert.ssldir, pki.ssldir)
+        self.assertIs(pki.server_cert.ca_id, pki.server_ca.id)
 
         self.assertIsNone(pki.client_ca)
-        self.assertIsNone(pki.client)
+        self.assertIsNone(pki.client_cert)
 
         # client_pki = True
         pki = misc.TempPKI(client_pki=True)
-        self.assertIsInstance(pki, sslhelpers.PKIHelper)
+        self.assertIsInstance(pki, sslhelpers.PKI)
         self.assertTrue(path.isdir(pki.ssldir))
         self.assertTrue(pki.ssldir.startswith('/tmp/TempPKI.'))
         self.assertEqual(
@@ -64,17 +64,17 @@ class TestTempPKI(TestCase):
             'TempPKI({!r})'.format(pki.ssldir)
         )
 
-        self.assertIsInstance(pki.server_ca, sslhelpers.CAHelper)
-        self.assertIsInstance(pki.server, sslhelpers.CertHelper)
+        self.assertIsInstance(pki.server_ca, sslhelpers.CA)
+        self.assertIsInstance(pki.server_cert, sslhelpers.Cert)
         self.assertIs(pki.server_ca.ssldir, pki.ssldir)
-        self.assertIs(pki.server.ssldir, pki.ssldir)
-        self.assertIs(pki.server.ca, pki.server_ca)
+        self.assertIs(pki.server_cert.ssldir, pki.ssldir)
+        self.assertIs(pki.server_cert.ca_id, pki.server_ca.id)
 
-        self.assertIsInstance(pki.client_ca, sslhelpers.CAHelper)
-        self.assertIsInstance(pki.client, sslhelpers.CertHelper)
+        self.assertIsInstance(pki.client_ca, sslhelpers.CA)
+        self.assertIsInstance(pki.client_cert, sslhelpers.Cert)
         self.assertIs(pki.client_ca.ssldir, pki.ssldir)
-        self.assertIs(pki.client.ssldir, pki.ssldir)
-        self.assertIs(pki.client.ca, pki.client_ca)
+        self.assertIs(pki.client_cert.ssldir, pki.ssldir)
+        self.assertIs(pki.client_cert.ca_id, pki.client_ca.id)
 
 
 class TestTempCouch(TestCase):
