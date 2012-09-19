@@ -95,17 +95,18 @@ class PKIHelper:
         return '{}({!r})'.format(self.__class__.__name__, self.ssldir)
 
     def get_ca(self, ca_id):
-        ca = CAHelper(self.ssldir, ca_id)
-        ca.gen()
-        return ca
+        return CAHelper(self.ssldir, ca_id)
+
+    def get_cert(self, ca_id, cert_id):
+        return CertHelper(self.ssldir, ca_id, cert_id)
 
     def load_server(self, ca_id, cert_id):
         self.server_ca = self.get_ca(ca_id)
-        self.server = self.server_ca.get_cert(cert_id)
+        self.server = self.get_cert(ca_id, cert_id)
 
     def load_client(self, ca_id, cert_id):
         self.client_ca = self.get_ca(ca_id)
-        self.client = self.client_ca.get_cert(cert_id)
+        self.client = self.get_cert(ca_id, cert_id)
 
     def get_server_config(self):
         if self.server is None:
@@ -153,6 +154,9 @@ class CAHelper(Helper):
         self.ca_file = path.join(ssldir, _id + '.ca')
         self.srl_file = path.join(ssldir, _id + '.srl')
 
+    def exists(self):
+        return path.isfile(self.ca_file)
+
     def gen(self):
         if path.isfile(self.ca_file):
             return False
@@ -161,12 +165,10 @@ class CAHelper(Helper):
         return True
 
     def sign(self, csr_file, dst_file):
-        self.gen()
         gen_cert(csr_file, self.ca_file, self.key_file, self.srl_file, dst_file)
 
     def get_cert(self, cert_id):
-        cert = CertHelper(self, cert_id)
-        cert.gen()
+        cert = CertHelper(self.ssldir, self.id, cert_id)
         return cert
 
     def get_config(self):
@@ -185,27 +187,22 @@ class CAHelper(Helper):
 
 
 class CertHelper(Helper):
-    def __init__(self, ca, cert_id):
-        assert isinstance(ca, CAHelper)
-        self.ca = ca
+    def __init__(self, ssldir, ca_id, cert_id):
+        self.ca_id = ca_id
         self.cert_id = cert_id
-        _id = '-'.join([ca.id, cert_id])
-        super().__init__(ca.ssldir, _id)
-        self.csr_file = path.join(ca.ssldir, _id + '.csr')
-        self.cert_file = path.join(ca.ssldir, _id + '.cert')
+        _id = '-'.join([ca_id, cert_id])
+        super().__init__(ssldir, _id)
+        self.csr_file = path.join(ssldir, _id + '.csr')
+        self.cert_file = path.join(ssldir, _id + '.cert')
+
+    def exists(self):
+        return path.isfile(self.cert_file)
 
     def gen_csr(self):
         if path.isfile(self.csr_file):
             return False
         self.gen_key()
         gen_csr(self.key_file, self.subject, self.csr_file)
-        return True
-
-    def gen(self):
-        if path.isfile(self.cert_file):
-            return False
-        self.gen_csr()
-        self.ca.sign(self.csr_file, self.cert_file)
         return True
 
     def get_config(self):
