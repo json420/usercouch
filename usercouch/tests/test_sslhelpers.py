@@ -114,6 +114,19 @@ class TestPKI(TestCase):
         self.assertIs(ca.id, ca_id)
         self.assertIs(ca.exists(), False)
 
+    def test_get_cert(self):
+        tmp = TempDir()
+        ca_id = random_b32()
+        cert_id = random_b32()
+        pki = sslhelpers.PKI(tmp.dir)
+        cert = pki.get_cert(ca_id, cert_id)
+        self.assertIsInstance(cert, sslhelpers.Cert)
+        self.assertIs(cert.ca_id, ca_id)
+        self.assertIs(cert.cert_id, cert_id)
+        self.assertIs(cert.ssldir, tmp.dir)
+        self.assertEqual(cert.id, '-'.join([ca_id, cert_id]))
+        self.assertIs(cert.exists(), False)
+
     def test_load_server_pki(self):
         tmp = TempDir()
         ca_id = random_b32()
