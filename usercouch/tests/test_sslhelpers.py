@@ -413,6 +413,45 @@ class TestCA(TestCase):
         )
 
 
+class TestFlatCert(TestCase):
+    def test_init(self):
+        tmp = TempDir()
+        _id = random_b32()
+        cert = sslhelpers.FlatCert(tmp.dir, _id)
+        self.assertIsInstance(cert, sslhelpers.CA)
+        self.assertIs(cert.ssldir, tmp.dir)
+        self.assertIs(cert.id, _id)
+        self.assertEqual(cert.subject, '/CN=' + _id)
+        self.assertEqual(cert.key_file, tmp.join(_id + '.key'))
+        self.assertEqual(cert.ca_file, tmp.join(_id + '.ca'))
+        self.assertEqual(cert.srl_file, tmp.join(_id + '.srl'))
+        self.assertIs(cert.cert_file, cert.ca_file)
+
+    def test_get_server_config(self):
+        tmp = TempDir()
+        _id = random_b32()
+        cert = sslhelpers.FlatCert(tmp.dir, _id)
+        self.assertEqual(
+            cert.get_server_config(),
+            {
+                'cert_file': cert.ca_file,
+                'key_file': cert.key_file,
+            }
+        )
+
+    def test_get_client_config(self):
+        tmp = TempDir()
+        _id = random_b32()
+        cert = sslhelpers.FlatCert(tmp.dir, _id)
+        self.assertEqual(
+            cert.get_client_config(),
+            {
+                'ca_file': cert.ca_file,
+                'check_hostname': False,
+            }
+        )
+
+
 class TestCert(TestCase):
     def test_init(self):
         tmp = TempDir()

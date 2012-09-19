@@ -20,7 +20,7 @@
 #   Jason Gerard DeRose <jderose@novacut.com>
 
 """
-Bases for non-interactive creation of SSL certs.
+Helpers for non-interactive creation of SSL certs.
 """
 
 from subprocess import check_call
@@ -199,6 +199,24 @@ class CA(Base):
         Optionally, when using client-side certs, this config is used by the
         server to verify the client.
         """
+        return {
+            'ca_file': self.ca_file,
+            'check_hostname': False,
+        }        
+
+
+class FlatCert(CA):
+    def __init__(self, ssldir, _id):
+        super().__init__(ssldir, _id)
+        self.cert_file = self.ca_file
+
+    def get_server_config(self):
+        return {
+            'cert_file': self.ca_file,
+            'key_file': self.key_file,
+        }
+
+    def get_client_config(self):
         return {
             'ca_file': self.ca_file,
             'check_hostname': False,
