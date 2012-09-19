@@ -376,7 +376,7 @@ class TestCert(TestCase):
         cert = sslhelpers.Cert('/some/dir', 'foo', 'bar')
         self.assertEqual(
             repr(cert),
-            "Cert('/some/dir', 'foo-bar')"
+            "Cert('/some/dir', 'foo', 'bar')"
         )
 
     def test_exists(self):

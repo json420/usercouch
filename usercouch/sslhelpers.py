@@ -206,6 +206,11 @@ class Cert(Base):
         self.csr_file = path.join(ssldir, _id + '.csr')
         self.cert_file = path.join(ssldir, _id + '.cert')
 
+    def __repr__(self):
+        return '{}({!r}, {!r}, {!r})'.format(
+            self.__class__.__name__, self.ssldir, self.ca_id, self.cert_id
+        )
+
     def exists(self):
         return path.isfile(self.cert_file)
 
