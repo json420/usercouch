@@ -244,19 +244,6 @@ class TestHelper(TestCase):
             "Helper('/some/dir', 'foo')"
         )
 
-    def test_gen_key(self):
-        tmp = TempDir()
-        _id = random_b32()
-        inst = sslhelpers.Helper(tmp.dir, _id)
-        self.assertFalse(path.isfile(inst.key_file))
-        self.assertTrue(inst.gen_key())
-        self.assertGreater(path.getsize(inst.key_file), 0)
-        self.assertFalse(inst.gen_key())
-        os.remove(inst.key_file)
-        self.assertTrue(inst.gen_key())
-        self.assertGreater(path.getsize(inst.key_file), 0)
-        self.assertFalse(inst.gen_key())
-
 
 class TestCAHelper(TestCase):
     def test_init(self):

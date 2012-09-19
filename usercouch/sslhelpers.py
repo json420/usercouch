@@ -147,12 +147,6 @@ class Helper:
             self.__class__.__name__, self.ssldir, self.id
         )
 
-    def gen_key(self):
-        if path.isfile(self.key_file):
-            return False
-        gen_key(self.key_file)
-        return True
-
 
 class CAHelper(Helper):
     def __init__(self, ssldir, _id):
