@@ -171,6 +171,50 @@ class TestPKI(TestCase):
         self.assertIsNone(pki.server_ca)
         self.assertIsNone(pki.server_cert)
 
+    def test_create_server_pki(self):
+        tmp = TempDir()
+        ca_id = random_b32()
+        cert_id = random_b32()
+        pki = sslhelpers.PKI(tmp.dir)
+        self.assertIsNone(pki.create_server_pki(ca_id, cert_id))
+
+        self.assertIsInstance(pki.server_ca, sslhelpers.CA)
+        self.assertIs(pki.server_ca.ssldir, tmp.dir)
+        self.assertIs(pki.server_ca.id, ca_id)
+        self.assertIs(pki.server_ca.exists(), True)
+
+        self.assertIsInstance(pki.server_cert, sslhelpers.Cert)
+        self.assertIs(pki.server_cert.ca_id, ca_id)
+        self.assertIs(pki.server_cert.cert_id, cert_id)
+        self.assertIs(pki.server_cert.ssldir, tmp.dir)
+        self.assertEqual(pki.server_cert.id, '-'.join([ca_id, cert_id]))
+        self.assertIs(pki.server_cert.exists(), True)
+
+        self.assertIsNone(pki.client_ca)
+        self.assertIsNone(pki.client_cert)
+
+    def test_create_client_pki(self):
+        tmp = TempDir()
+        ca_id = random_b32()
+        cert_id = random_b32()
+        pki = sslhelpers.PKI(tmp.dir)
+        self.assertIsNone(pki.create_client_pki(ca_id, cert_id))
+
+        self.assertIsInstance(pki.client_ca, sslhelpers.CA)
+        self.assertIs(pki.client_ca.ssldir, tmp.dir)
+        self.assertIs(pki.client_ca.id, ca_id)
+        self.assertIs(pki.client_ca.exists(), True)
+
+        self.assertIsInstance(pki.client_cert, sslhelpers.Cert)
+        self.assertIs(pki.client_cert.ca_id, ca_id)
+        self.assertIs(pki.client_cert.cert_id, cert_id)
+        self.assertIs(pki.client_cert.ssldir, tmp.dir)
+        self.assertEqual(pki.client_cert.id, '-'.join([ca_id, cert_id]))
+        self.assertIs(pki.client_cert.exists(), True)
+
+        self.assertIsNone(pki.server_ca)
+        self.assertIsNone(pki.server_cert)
+
     def test_get_server_config(self):
         tmp = TempDir()
         pki = sslhelpers.PKI(tmp.dir)
