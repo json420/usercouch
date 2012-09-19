@@ -87,10 +87,10 @@ class TestFunctions(TestCase):
         self.assertGreater(path.getsize(foo_srl), 0)
 
 
-class TestPKIHelper(TestCase):
+class TestPKI(TestCase):
     def test_init(self):
         tmp = TempDir()
-        pki = sslhelpers.PKIHelper(tmp.dir)
+        pki = sslhelpers.PKI(tmp.dir)
         self.assertIs(pki.ssldir, tmp.dir)
         self.assertIsNone(pki.server_ca)
         self.assertIsNone(pki.server)
@@ -98,18 +98,18 @@ class TestPKIHelper(TestCase):
         self.assertIsNone(pki.client)
 
     def test_repr(self):
-        pki = sslhelpers.PKIHelper('/some/dir')
+        pki = sslhelpers.PKI('/some/dir')
         self.assertEqual(
             repr(pki),
-            "PKIHelper('/some/dir')"
+            "PKI('/some/dir')"
         )
 
     def test_get_ca(self):
         tmp = TempDir()
         ca_id = random_b32()
-        pki = sslhelpers.PKIHelper(tmp.dir)
+        pki = sslhelpers.PKI(tmp.dir)
         ca = pki.get_ca(ca_id)
-        self.assertIsInstance(ca, sslhelpers.CAHelper)
+        self.assertIsInstance(ca, sslhelpers.CA)
         self.assertIs(ca.ssldir, tmp.dir)
         self.assertIs(ca.id, ca_id)
         self.assertIs(ca.exists(), False)
@@ -118,15 +118,15 @@ class TestPKIHelper(TestCase):
         tmp = TempDir()
         ca_id = random_b32()
         cert_id = random_b32()
-        pki = sslhelpers.PKIHelper(tmp.dir)
+        pki = sslhelpers.PKI(tmp.dir)
         self.assertIsNone(pki.load_server_pki(ca_id, cert_id))
 
-        self.assertIsInstance(pki.server_ca, sslhelpers.CAHelper)
+        self.assertIsInstance(pki.server_ca, sslhelpers.CA)
         self.assertIs(pki.server_ca.ssldir, tmp.dir)
         self.assertIs(pki.server_ca.id, ca_id)
         self.assertIs(pki.server_ca.exists(), False)
 
-        self.assertIsInstance(pki.server, sslhelpers.CertHelper)
+        self.assertIsInstance(pki.server, sslhelpers.Cert)
         self.assertIs(pki.server.ca_id, ca_id)
         self.assertIs(pki.server.cert_id, cert_id)
         self.assertIs(pki.server.ssldir, tmp.dir)
@@ -140,15 +140,15 @@ class TestPKIHelper(TestCase):
         tmp = TempDir()
         ca_id = random_b32()
         cert_id = random_b32()
-        pki = sslhelpers.PKIHelper(tmp.dir)
+        pki = sslhelpers.PKI(tmp.dir)
         self.assertIsNone(pki.load_client_pki(ca_id, cert_id))
 
-        self.assertIsInstance(pki.client_ca, sslhelpers.CAHelper)
+        self.assertIsInstance(pki.client_ca, sslhelpers.CA)
         self.assertIs(pki.client_ca.ssldir, tmp.dir)
         self.assertIs(pki.client_ca.id, ca_id)
         self.assertIs(pki.client_ca.exists(), False)
 
-        self.assertIsInstance(pki.client, sslhelpers.CertHelper)
+        self.assertIsInstance(pki.client, sslhelpers.Cert)
         self.assertIs(pki.client.ca_id, ca_id)
         self.assertIs(pki.client.cert_id, cert_id)
         self.assertIs(pki.client.ssldir, tmp.dir)
@@ -160,18 +160,18 @@ class TestPKIHelper(TestCase):
 
     def test_get_server_config(self):
         tmp = TempDir()
-        pki = sslhelpers.PKIHelper(tmp.dir)
+        pki = sslhelpers.PKI(tmp.dir)
 
         with self.assertRaises(Exception) as cm:
             pki.get_server_config()
         self.assertEqual(
             str(cm.exception),
-            'You must first call PKIHelper.load_server_pki()'
+            'You must first call PKI.load_server_pki()'
         )
 
         ca_id = random_b32()
         cert_id = random_b32()
-        server = sslhelpers.CertHelper(tmp.dir, ca_id, cert_id)
+        server = sslhelpers.Cert(tmp.dir, ca_id, cert_id)
         pki.server = server
         self.assertEqual(pki.get_server_config(),
             {
@@ -181,7 +181,7 @@ class TestPKIHelper(TestCase):
         )
 
         ca_id = random_b32()
-        client_ca = sslhelpers.CAHelper(tmp.dir, ca_id)
+        client_ca = sslhelpers.CA(tmp.dir, ca_id)
         pki.client_ca = client_ca
         self.assertEqual(pki.get_server_config(),
             {
@@ -194,17 +194,17 @@ class TestPKIHelper(TestCase):
 
     def test_get_client_config(self):
         tmp = TempDir()
-        pki = sslhelpers.PKIHelper(tmp.dir)
+        pki = sslhelpers.PKI(tmp.dir)
 
         with self.assertRaises(Exception) as cm:
             pki.get_client_config()
         self.assertEqual(
             str(cm.exception),
-            'You must first call PKIHelper.load_server_pki()'
+            'You must first call PKI.load_server_pki()'
         )
 
         ca_id = random_b32()
-        server_ca = sslhelpers.CAHelper(tmp.dir, ca_id)
+        server_ca = sslhelpers.CA(tmp.dir, ca_id)
         pki.server_ca = server_ca
         self.assertEqual(pki.get_client_config(),
             {
@@ -215,7 +215,7 @@ class TestPKIHelper(TestCase):
 
         ca_id = random_b32()
         cert_id = random_b32()
-        client = sslhelpers.CertHelper(tmp.dir, ca_id, cert_id)
+        client = sslhelpers.Cert(tmp.dir, ca_id, cert_id)
         pki.client = client
         self.assertEqual(pki.get_client_config(),
             {
@@ -245,11 +245,11 @@ class TestHelper(TestCase):
         )
 
 
-class TestCAHelper(TestCase):
+class TestCA(TestCase):
     def test_init(self):
         tmp = TempDir()
         ca_id = random_b32()
-        ca = sslhelpers.CAHelper(tmp.dir, ca_id)
+        ca = sslhelpers.CA(tmp.dir, ca_id)
         self.assertEqual(ca.ssldir, tmp.dir)
         self.assertEqual(ca.id, ca_id)
         self.assertEqual(ca.subject, '/CN=' + ca_id)
@@ -258,16 +258,16 @@ class TestCAHelper(TestCase):
         self.assertEqual(ca.srl_file, tmp.join(ca_id + '.srl'))
 
     def test_repr(self):
-        ca = sslhelpers.CAHelper('/some/dir', 'foo')
+        ca = sslhelpers.CA('/some/dir', 'foo')
         self.assertEqual(
             repr(ca),
-            "CAHelper('/some/dir', 'foo')"
+            "CA('/some/dir', 'foo')"
         )
 
     def test_exists(self):
         tmp = TempDir()
         ca_id = random_b32()
-        ca = sslhelpers.CAHelper(tmp.dir, ca_id)
+        ca = sslhelpers.CA(tmp.dir, ca_id)
         self.assertIs(ca.exists(), False)
         open(ca.ca_file, 'wb').close()
         self.assertIs(ca.exists(), True)
@@ -275,7 +275,7 @@ class TestCAHelper(TestCase):
     def test_create(self):
         tmp = TempDir()
         ca_id = random_b32()
-        ca = sslhelpers.CAHelper(tmp.dir, ca_id)
+        ca = sslhelpers.CA(tmp.dir, ca_id)
         self.assertFalse(path.isfile(ca.key_file))
         self.assertFalse(path.isfile(ca.ca_file))
 
@@ -295,7 +295,7 @@ class TestCAHelper(TestCase):
     def test_sign(self):
         tmp = TempDir()
         ca_id = random_b32()
-        ca = sslhelpers.CAHelper(tmp.dir, ca_id)
+        ca = sslhelpers.CA(tmp.dir, ca_id)
         key_file = tmp.join('key.pem')
         csr_file = tmp.join('csr.pem')
         cert_file = tmp.join('cert.pem')
@@ -310,8 +310,8 @@ class TestCAHelper(TestCase):
         tmp = TempDir()
         ca_id = random_b32()
         cert_id = random_b32()
-        ca = sslhelpers.CAHelper(tmp.dir, ca_id)
-        cert = sslhelpers.CertHelper(tmp.dir, ca_id, cert_id)
+        ca = sslhelpers.CA(tmp.dir, ca_id)
+        cert = sslhelpers.Cert(tmp.dir, ca_id, cert_id)
 
         open(cert.cert_file, 'wb').close()
         with self.assertRaises(Exception) as cm:
@@ -333,9 +333,9 @@ class TestCAHelper(TestCase):
         ca_id = random_b32()
         cert_id = random_b32()
         _id = ca_id + '-' + cert_id
-        ca = sslhelpers.CAHelper(tmp.dir, ca_id)
+        ca = sslhelpers.CA(tmp.dir, ca_id)
         cert = ca.get_cert(cert_id)
-        self.assertIsInstance(cert, sslhelpers.CertHelper)
+        self.assertIsInstance(cert, sslhelpers.Cert)
         self.assertIs(cert.ca_id, ca_id)
         self.assertIs(cert.cert_id, cert_id)
         self.assertEqual(cert.ssldir, tmp.dir)
@@ -346,7 +346,7 @@ class TestCAHelper(TestCase):
     def test_get_config(self):
         tmp = TempDir()
         ca_id = random_b32()
-        ca = sslhelpers.CAHelper(tmp.dir, ca_id)
+        ca = sslhelpers.CA(tmp.dir, ca_id)
         self.assertEqual(
             ca.get_config(),
             {
@@ -356,13 +356,13 @@ class TestCAHelper(TestCase):
         )
 
 
-class TestCertHelper(TestCase):
+class TestCert(TestCase):
     def test_init(self):
         tmp = TempDir()
         ca_id = random_b32()
         cert_id = random_b32()
         _id = ca_id + '-' + cert_id
-        cert = sslhelpers.CertHelper(tmp.dir, ca_id, cert_id)
+        cert = sslhelpers.Cert(tmp.dir, ca_id, cert_id)
         self.assertIs(cert.ca_id, ca_id)
         self.assertIs(cert.cert_id, cert_id)
         self.assertEqual(cert.ssldir, tmp.dir)
@@ -373,17 +373,17 @@ class TestCertHelper(TestCase):
         self.assertEqual(cert.cert_file, tmp.join(_id + '.cert'))
 
     def test_repr(self):
-        cert = sslhelpers.CertHelper('/some/dir', 'foo', 'bar')
+        cert = sslhelpers.Cert('/some/dir', 'foo', 'bar')
         self.assertEqual(
             repr(cert),
-            "CertHelper('/some/dir', 'foo-bar')"
+            "Cert('/some/dir', 'foo-bar')"
         )
 
     def test_exists(self):
         tmp = TempDir()
         ca_id = random_b32()
         cert_id = random_b32()
-        cert = sslhelpers.CertHelper(tmp.dir, ca_id, cert_id)
+        cert = sslhelpers.Cert(tmp.dir, ca_id, cert_id)
         self.assertIs(cert.exists(), False)
         open(cert.cert_file, 'wb').close()
         self.assertIs(cert.exists(), True)
@@ -392,7 +392,7 @@ class TestCertHelper(TestCase):
         tmp = TempDir()
         ca_id = random_b32()
         cert_id = random_b32()
-        cert = sslhelpers.CertHelper(tmp.dir, ca_id, cert_id)
+        cert = sslhelpers.Cert(tmp.dir, ca_id, cert_id)
         self.assertFalse(path.isfile(cert.cert_file))
         self.assertFalse(path.isfile(cert.csr_file))
         self.assertFalse(path.isfile(cert.key_file))
@@ -425,7 +425,7 @@ class TestCertHelper(TestCase):
         ca_id = random_b32()
         cert_id = random_b32()
         _id = ca_id + '-' + cert_id
-        cert = sslhelpers.CertHelper(tmp.dir, ca_id, cert_id)
+        cert = sslhelpers.Cert(tmp.dir, ca_id, cert_id)
         self.assertEqual(
             cert.get_config(),
             {

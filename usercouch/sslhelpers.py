@@ -89,7 +89,7 @@ def create_pki(ca, cert):
     ca.issue(cert)
 
 
-class PKIHelper:
+class PKI:
     def __init__(self, ssldir):
         self.ssldir = ssldir
         self.server_ca = None
@@ -101,10 +101,10 @@ class PKIHelper:
         return '{}({!r})'.format(self.__class__.__name__, self.ssldir)
 
     def get_ca(self, ca_id):
-        return CAHelper(self.ssldir, ca_id)
+        return CA(self.ssldir, ca_id)
 
     def get_cert(self, ca_id, cert_id):
-        return CertHelper(self.ssldir, ca_id, cert_id)
+        return Cert(self.ssldir, ca_id, cert_id)
 
     def load_server_pki(self, ca_id, cert_id):
         self.server_ca = self.get_ca(ca_id)
@@ -148,7 +148,7 @@ class Helper:
         )
 
 
-class CAHelper(Helper):
+class CA(Helper):
     def __init__(self, ssldir, _id):
         super().__init__(ssldir, _id)
         self.ca_file = path.join(ssldir, _id + '.ca')
@@ -169,7 +169,7 @@ class CAHelper(Helper):
         gen_cert(csr_file, self.ca_file, self.key_file, self.srl_file, dst_file)
 
     def issue(self, cert):
-        assert isinstance(cert, CertHelper)
+        assert isinstance(cert, Cert)
         assert cert.ca_id == self.id
         if path.isfile(cert.cert_file):
             raise Exception(
@@ -178,7 +178,7 @@ class CAHelper(Helper):
         self.sign(cert.csr_file, cert.cert_file)
 
     def get_cert(self, cert_id):
-        cert = CertHelper(self.ssldir, self.id, cert_id)
+        cert = Cert(self.ssldir, self.id, cert_id)
         return cert
 
     def get_config(self):
@@ -196,7 +196,7 @@ class CAHelper(Helper):
         }
 
 
-class CertHelper(Helper):
+class Cert(Helper):
     def __init__(self, ssldir, ca_id, cert_id):
         self.ca_id = ca_id
         self.cert_id = cert_id
