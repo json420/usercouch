@@ -20,7 +20,7 @@
 #   Jason Gerard DeRose <jderose@novacut.com>
 
 """
-Helpers for non-interactive creation of SSL certs.
+Bases for non-interactive creation of SSL certs.
 """
 
 from subprocess import check_call
@@ -135,7 +135,7 @@ class PKI:
         return config
 
 
-class Helper:
+class Base:
     def __init__(self, ssldir, _id):
         self.ssldir = ssldir
         self.id = _id
@@ -148,7 +148,7 @@ class Helper:
         )
 
 
-class CA(Helper):
+class CA(Base):
     def __init__(self, ssldir, _id):
         super().__init__(ssldir, _id)
         self.ca_file = path.join(ssldir, _id + '.ca')
@@ -196,7 +196,7 @@ class CA(Helper):
         }
 
 
-class Cert(Helper):
+class Cert(Base):
     def __init__(self, ssldir, ca_id, cert_id):
         self.ca_id = ca_id
         self.cert_id = cert_id

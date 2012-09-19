@@ -227,21 +227,21 @@ class TestPKI(TestCase):
         )
 
 
-class TestHelper(TestCase):
+class TestBase(TestCase):
     def test_init(self):
         tmp = TempDir()
         _id = random_b32()
-        inst = sslhelpers.Helper(tmp.dir, _id)
+        inst = sslhelpers.Base(tmp.dir, _id)
         self.assertEqual(inst.ssldir, tmp.dir)
         self.assertEqual(inst.id, _id)
         self.assertEqual(inst.subject, '/CN=' + _id)
         self.assertEqual(inst.key_file, tmp.join(_id + '.key'))
 
     def test_repr(self):
-        inst = sslhelpers.Helper('/some/dir', 'foo')
+        inst = sslhelpers.Base('/some/dir', 'foo')
         self.assertEqual(
             repr(inst),
-            "Helper('/some/dir', 'foo')"
+            "Base('/some/dir', 'foo')"
         )
 
 
