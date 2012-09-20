@@ -215,7 +215,7 @@ class TestPKI(TestCase):
         self.assertIsNone(pki.server_ca)
         self.assertIsNone(pki.server_cert)
 
-    def test_flat_server_cert(self):
+    def test_load_flat_server_cert(self):
         tmp = TempDir()
         _id = random_b32()
         pki = sslhelpers.PKI(tmp.dir)
@@ -242,6 +242,40 @@ class TestPKI(TestCase):
         self.assertIs(pki.client.ssldir, tmp.dir)
         self.assertIs(pki.client.id, _id)
         self.assertIs(pki.client.exists(), False)
+
+        self.assertIsNone(pki.client_ca)
+        self.assertIsNone(pki.client_cert)
+        self.assertIsNone(pki.server)
+        self.assertIsNone(pki.server_ca)
+        self.assertIsNone(pki.server_cert)
+
+    def test_create_flat_server_cert(self):
+        tmp = TempDir()
+        _id = random_b32()
+        pki = sslhelpers.PKI(tmp.dir)
+        self.assertIsNone(pki.create_flat_server_cert(_id))
+
+        self.assertIsInstance(pki.server, sslhelpers.FlatCert)
+        self.assertIs(pki.server.ssldir, tmp.dir)
+        self.assertIs(pki.server.id, _id)
+        self.assertIs(pki.server.exists(), True)
+
+        self.assertIsNone(pki.server_ca)
+        self.assertIsNone(pki.server_cert)
+        self.assertIsNone(pki.client)
+        self.assertIsNone(pki.client_ca)
+        self.assertIsNone(pki.client_cert)
+
+    def test_create_flat_client_cert(self):
+        tmp = TempDir()
+        _id = random_b32()
+        pki = sslhelpers.PKI(tmp.dir)
+        self.assertIsNone(pki.create_flat_client_cert(_id))
+
+        self.assertIsInstance(pki.client, sslhelpers.FlatCert)
+        self.assertIs(pki.client.ssldir, tmp.dir)
+        self.assertIs(pki.client.id, _id)
+        self.assertIs(pki.client.exists(), True)
 
         self.assertIsNone(pki.client_ca)
         self.assertIsNone(pki.client_cert)
