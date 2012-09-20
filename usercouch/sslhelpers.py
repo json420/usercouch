@@ -124,6 +124,12 @@ class PKI:
         self.load_client_pki(ca_id, cert_id)
         create_pki(self.client_ca, self.client_cert)
 
+    def load_flat_server_cert(self, _id):
+        self.server = FlatCert(self.ssldir, _id)
+
+    def load_flat_client_cert(self, _id):
+        self.client = FlatCert(self.ssldir, _id)
+
     def get_server_config(self):
         if self.server is None and self.server_cert is None:
             raise Exception('You must first call {}.load_server_pki()'.format(
