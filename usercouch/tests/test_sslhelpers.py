@@ -215,6 +215,74 @@ class TestPKI(TestCase):
         self.assertIsNone(pki.server_ca)
         self.assertIsNone(pki.server_cert)
 
+    def test_load_flat_server_cert(self):
+        tmp = TempDir()
+        _id = random_b32()
+        pki = sslhelpers.PKI(tmp.dir)
+        self.assertIsNone(pki.load_flat_server_cert(_id))
+
+        self.assertIsInstance(pki.server, sslhelpers.FlatCert)
+        self.assertIs(pki.server.ssldir, tmp.dir)
+        self.assertIs(pki.server.id, _id)
+        self.assertIs(pki.server.exists(), False)
+
+        self.assertIsNone(pki.server_ca)
+        self.assertIsNone(pki.server_cert)
+        self.assertIsNone(pki.client)
+        self.assertIsNone(pki.client_ca)
+        self.assertIsNone(pki.client_cert)
+
+    def test_load_flat_client_cert(self):
+        tmp = TempDir()
+        _id = random_b32()
+        pki = sslhelpers.PKI(tmp.dir)
+        self.assertIsNone(pki.load_flat_client_cert(_id))
+
+        self.assertIsInstance(pki.client, sslhelpers.FlatCert)
+        self.assertIs(pki.client.ssldir, tmp.dir)
+        self.assertIs(pki.client.id, _id)
+        self.assertIs(pki.client.exists(), False)
+
+        self.assertIsNone(pki.client_ca)
+        self.assertIsNone(pki.client_cert)
+        self.assertIsNone(pki.server)
+        self.assertIsNone(pki.server_ca)
+        self.assertIsNone(pki.server_cert)
+
+    def test_create_flat_server_cert(self):
+        tmp = TempDir()
+        _id = random_b32()
+        pki = sslhelpers.PKI(tmp.dir)
+        self.assertIsNone(pki.create_flat_server_cert(_id))
+
+        self.assertIsInstance(pki.server, sslhelpers.FlatCert)
+        self.assertIs(pki.server.ssldir, tmp.dir)
+        self.assertIs(pki.server.id, _id)
+        self.assertIs(pki.server.exists(), True)
+
+        self.assertIsNone(pki.server_ca)
+        self.assertIsNone(pki.server_cert)
+        self.assertIsNone(pki.client)
+        self.assertIsNone(pki.client_ca)
+        self.assertIsNone(pki.client_cert)
+
+    def test_create_flat_client_cert(self):
+        tmp = TempDir()
+        _id = random_b32()
+        pki = sslhelpers.PKI(tmp.dir)
+        self.assertIsNone(pki.create_flat_client_cert(_id))
+
+        self.assertIsInstance(pki.client, sslhelpers.FlatCert)
+        self.assertIs(pki.client.ssldir, tmp.dir)
+        self.assertIs(pki.client.id, _id)
+        self.assertIs(pki.client.exists(), True)
+
+        self.assertIsNone(pki.client_ca)
+        self.assertIsNone(pki.client_cert)
+        self.assertIsNone(pki.server)
+        self.assertIsNone(pki.server_ca)
+        self.assertIsNone(pki.server_cert)
+
     def test_get_server_config(self):
         tmp = TempDir()
         pki = sslhelpers.PKI(tmp.dir)
@@ -237,6 +305,17 @@ class TestPKI(TestCase):
             }
         )
 
+        # Flat server PKI should override server_cert
+        server = sslhelpers.FlatCert(tmp.dir, random_b32())
+        pki.server = server
+        self.assertEqual(pki.get_server_config(),
+            {
+                'cert_file': server.cert_file,
+                'key_file': server.key_file,
+            }
+        )
+        pki.server = None
+
         ca_id = random_b32()
         client_ca = sslhelpers.CA(tmp.dir, ca_id)
         pki.client_ca = client_ca
@@ -245,6 +324,52 @@ class TestPKI(TestCase):
                 'cert_file': server_cert.cert_file,
                 'key_file': server_cert.key_file,
                 'ca_file': client_ca.ca_file,
+                'check_hostname': False,
+            }
+        )
+
+        # Flat client PKI should override client_ca
+        client = sslhelpers.FlatCert(tmp.dir, random_b32())
+        pki.client = client
+        self.assertEqual(pki.get_server_config(),
+            {
+                'cert_file': server_cert.cert_file,
+                'key_file': server_cert.key_file,
+                'ca_file': client.ca_file,
+                'check_hostname': False,
+            }
+        )
+
+        # Both flat
+        pki.server = server
+        self.assertEqual(pki.get_server_config(),
+            {
+                'cert_file': server.cert_file,
+                'key_file': server.key_file,
+                'ca_file': client.ca_file,
+                'check_hostname': False,
+            }
+        )
+
+        # Test with only flat PKI:
+        tmp = TempDir()
+        pki = sslhelpers.PKI(tmp.dir)
+        server = sslhelpers.FlatCert(tmp.dir, random_b32())
+        pki.server = server
+        self.assertEqual(pki.get_server_config(),
+            {
+                'cert_file': server.cert_file,
+                'key_file': server.key_file,
+            }
+        )
+
+        client = sslhelpers.FlatCert(tmp.dir, random_b32())
+        pki.client = client
+        self.assertEqual(pki.get_server_config(),
+            {
+                'cert_file': server.cert_file,
+                'key_file': server.key_file,
+                'ca_file': client.ca_file,
                 'check_hostname': False,
             }
         )
@@ -270,6 +395,17 @@ class TestPKI(TestCase):
             }
         )
 
+        # Flat server PKI should override server_ca
+        server = sslhelpers.FlatCert(tmp.dir, random_b32())
+        pki.server = server
+        self.assertEqual(pki.get_client_config(),
+            {
+                'ca_file': server.ca_file,
+                'check_hostname': False,
+            }
+        )
+        pki.server = None
+
         ca_id = random_b32()
         cert_id = random_b32()
         client_cert = sslhelpers.Cert(tmp.dir, ca_id, cert_id)
@@ -280,6 +416,52 @@ class TestPKI(TestCase):
                 'check_hostname': False,
                 'cert_file': client_cert.cert_file,
                 'key_file': client_cert.key_file,
+            }
+        )
+
+        # Flat client PKI should override client_cert
+        client = sslhelpers.FlatCert(tmp.dir, random_b32())
+        pki.client = client
+        self.assertEqual(pki.get_client_config(),
+            {
+                'ca_file': server_ca.ca_file,
+                'check_hostname': False,
+                'cert_file': client.cert_file,
+                'key_file': client.key_file,
+            }
+        )
+
+        # Both flat
+        pki.server = server
+        self.assertEqual(pki.get_client_config(),
+            {
+                'ca_file': server.ca_file,
+                'check_hostname': False,
+                'cert_file': client.cert_file,
+                'key_file': client.key_file,
+            }
+        )
+
+        # Test with only flat PKI:
+        tmp = TempDir()
+        pki = sslhelpers.PKI(tmp.dir)
+        server = sslhelpers.FlatCert(tmp.dir, random_b32())
+        pki.server = server
+        self.assertEqual(pki.get_client_config(),
+            {
+                'ca_file': server.ca_file,
+                'check_hostname': False,
+            }
+        )
+
+        client = sslhelpers.FlatCert(tmp.dir, random_b32())
+        pki.client = client
+        self.assertEqual(pki.get_client_config(),
+            {
+                'ca_file': server.ca_file,
+                'check_hostname': False,
+                'cert_file': client.cert_file,
+                'key_file': client.key_file,
             }
         )
 
@@ -413,6 +595,45 @@ class TestCA(TestCase):
         )
 
 
+class TestFlatCert(TestCase):
+    def test_init(self):
+        tmp = TempDir()
+        _id = random_b32()
+        cert = sslhelpers.FlatCert(tmp.dir, _id)
+        self.assertIsInstance(cert, sslhelpers.CA)
+        self.assertIs(cert.ssldir, tmp.dir)
+        self.assertIs(cert.id, _id)
+        self.assertEqual(cert.subject, '/CN=' + _id)
+        self.assertEqual(cert.key_file, tmp.join(_id + '.key'))
+        self.assertEqual(cert.ca_file, tmp.join(_id + '.ca'))
+        self.assertEqual(cert.srl_file, tmp.join(_id + '.srl'))
+        self.assertIs(cert.cert_file, cert.ca_file)
+
+    def test_get_server_config(self):
+        tmp = TempDir()
+        _id = random_b32()
+        cert = sslhelpers.FlatCert(tmp.dir, _id)
+        self.assertEqual(
+            cert.get_server_config(),
+            {
+                'cert_file': cert.ca_file,
+                'key_file': cert.key_file,
+            }
+        )
+
+    def test_get_client_config(self):
+        tmp = TempDir()
+        _id = random_b32()
+        cert = sslhelpers.FlatCert(tmp.dir, _id)
+        self.assertEqual(
+            cert.get_client_config(),
+            {
+                'ca_file': cert.ca_file,
+                'check_hostname': False,
+            }
+        )
+
+
 class TestCert(TestCase):
     def test_init(self):
         tmp = TempDir()
@@ -490,3 +711,4 @@ class TestCert(TestCase):
                 'key_file': tmp.join(_id + '.key'),
             }
         )
+

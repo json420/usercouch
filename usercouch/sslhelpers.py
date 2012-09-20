@@ -20,7 +20,7 @@
 #   Jason Gerard DeRose <jderose@novacut.com>
 
 """
-Bases for non-interactive creation of SSL certs.
+Helpers for non-interactive creation of SSL certs.
 """
 
 from subprocess import check_call
@@ -81,7 +81,7 @@ def gen_cert(csr_file, ca_file, key_file, srl_file, dst_file):
         '-CAserial', srl_file,
         '-out', dst_file
     ])
- 
+
 
 def create_pki(ca, cert):
     ca.create()
@@ -92,8 +92,10 @@ def create_pki(ca, cert):
 class PKI:
     def __init__(self, ssldir):
         self.ssldir = ssldir
+        self.server = None
         self.server_ca = None
         self.server_cert = None
+        self.client = None
         self.client_ca = None
         self.client_cert = None
 
@@ -122,23 +124,47 @@ class PKI:
         self.load_client_pki(ca_id, cert_id)
         create_pki(self.client_ca, self.client_cert)
 
+    def load_flat_server_cert(self, _id):
+        self.server = FlatCert(self.ssldir, _id)
+
+    def load_flat_client_cert(self, _id):
+        self.client = FlatCert(self.ssldir, _id)
+
+    def create_flat_server_cert(self, _id):
+        self.load_flat_server_cert(_id)
+        self.server.create()
+
+    def create_flat_client_cert(self, _id):
+        self.load_flat_client_cert(_id)
+        self.client.create()
+
     def get_server_config(self):
-        if self.server_cert is None:
+        if self.server is None and self.server_cert is None:
             raise Exception('You must first call {}.load_server_pki()'.format(
                     self.__class__.__name__)   
             )
-        config = self.server_cert.get_config()
-        if self.client_ca is not None:
+        if self.server is not None:
+            config = self.server.get_server_config()
+        else:
+            config = self.server_cert.get_config()
+        if self.client is not None:
+            config.update(self.client.get_client_config())
+        elif self.client_ca is not None:
             config.update(self.client_ca.get_config())
         return config
 
     def get_client_config(self):
-        if self.server_ca is None:
+        if self.server is None and self.server_ca is None:
             raise Exception('You must first call {}.load_server_pki()'.format(
                     self.__class__.__name__)   
             )
-        config = self.server_ca.get_config()
-        if self.client_cert is not None:
+        if self.server is not None:
+            config = self.server.get_client_config()
+        else:
+            config = self.server_ca.get_config()
+        if self.client is not None:
+            config.update(self.client.get_server_config())
+        elif self.client_cert is not None:
             config.update(self.client_cert.get_config())
         return config
 
@@ -199,6 +225,24 @@ class CA(Base):
         Optionally, when using client-side certs, this config is used by the
         server to verify the client.
         """
+        return {
+            'ca_file': self.ca_file,
+            'check_hostname': False,
+        }        
+
+
+class FlatCert(CA):
+    def __init__(self, ssldir, _id):
+        super().__init__(ssldir, _id)
+        self.cert_file = self.ca_file
+
+    def get_server_config(self):
+        return {
+            'cert_file': self.ca_file,
+            'key_file': self.key_file,
+        }
+
+    def get_client_config(self):
         return {
             'ca_file': self.ca_file,
             'check_hostname': False,
