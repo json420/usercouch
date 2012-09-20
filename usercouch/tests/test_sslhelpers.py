@@ -711,3 +711,4 @@ class TestCert(TestCase):
                 'key_file': tmp.join(_id + '.key'),
             }
         )
+

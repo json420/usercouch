@@ -81,7 +81,7 @@ def gen_cert(csr_file, ca_file, key_file, srl_file, dst_file):
         '-CAserial', srl_file,
         '-out', dst_file
     ])
- 
+
 
 def create_pki(ca, cert):
     ca.create()
