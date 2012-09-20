@@ -92,8 +92,10 @@ def create_pki(ca, cert):
 class PKI:
     def __init__(self, ssldir):
         self.ssldir = ssldir
+        self.server = None
         self.server_ca = None
         self.server_cert = None
+        self.client = None
         self.client_ca = None
         self.client_cert = None
 
@@ -123,22 +125,32 @@ class PKI:
         create_pki(self.client_ca, self.client_cert)
 
     def get_server_config(self):
-        if self.server_cert is None:
+        if self.server is None and self.server_cert is None:
             raise Exception('You must first call {}.load_server_pki()'.format(
                     self.__class__.__name__)   
             )
-        config = self.server_cert.get_config()
-        if self.client_ca is not None:
+        if self.server is not None:
+            config = self.server.get_server_config()
+        else:
+            config = self.server_cert.get_config()
+        if self.client is not None:
+            config.update(self.client.get_client_config())
+        elif self.client_ca is not None:
             config.update(self.client_ca.get_config())
         return config
 
     def get_client_config(self):
-        if self.server_ca is None:
+        if self.server is None and self.server_ca is None:
             raise Exception('You must first call {}.load_server_pki()'.format(
                     self.__class__.__name__)   
             )
-        config = self.server_ca.get_config()
-        if self.client_cert is not None:
+        if self.server is not None:
+            config = self.server.get_client_config()
+        else:
+            config = self.server_ca.get_config()
+        if self.client is not None:
+            config.update(self.client.get_client_config())
+        elif self.client_cert is not None:
             config.update(self.client_cert.get_config())
         return config
 

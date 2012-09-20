@@ -237,6 +237,17 @@ class TestPKI(TestCase):
             }
         )
 
+        # Flat server PKI should override server_cert
+        server = sslhelpers.FlatCert(tmp.dir, random_b32())
+        pki.server = server
+        self.assertEqual(pki.get_server_config(),
+            {
+                'cert_file': server.cert_file,
+                'key_file': server.key_file,
+            }
+        )
+        pki.server = None
+
         ca_id = random_b32()
         client_ca = sslhelpers.CA(tmp.dir, ca_id)
         pki.client_ca = client_ca
@@ -245,6 +256,52 @@ class TestPKI(TestCase):
                 'cert_file': server_cert.cert_file,
                 'key_file': server_cert.key_file,
                 'ca_file': client_ca.ca_file,
+                'check_hostname': False,
+            }
+        )
+
+        # Flat client PKI should override client_cert
+        client = sslhelpers.FlatCert(tmp.dir, random_b32())
+        pki.client = client
+        self.assertEqual(pki.get_server_config(),
+            {
+                'cert_file': server_cert.cert_file,
+                'key_file': server_cert.key_file,
+                'ca_file': client.ca_file,
+                'check_hostname': False,
+            }
+        )
+
+        # Both flat
+        pki.server = server
+        self.assertEqual(pki.get_server_config(),
+            {
+                'cert_file': server.cert_file,
+                'key_file': server.key_file,
+                'ca_file': client.ca_file,
+                'check_hostname': False,
+            }
+        )
+
+        # Test with only flat PKI:
+        tmp = TempDir()
+        pki = sslhelpers.PKI(tmp.dir)
+        server = sslhelpers.FlatCert(tmp.dir, random_b32())
+        pki.server = server
+        self.assertEqual(pki.get_server_config(),
+            {
+                'cert_file': server.cert_file,
+                'key_file': server.key_file,
+            }
+        )
+
+        client = sslhelpers.FlatCert(tmp.dir, random_b32())
+        pki.client = client
+        self.assertEqual(pki.get_server_config(),
+            {
+                'cert_file': server.cert_file,
+                'key_file': server.key_file,
+                'ca_file': client.ca_file,
                 'check_hostname': False,
             }
         )
