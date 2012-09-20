@@ -149,7 +149,7 @@ class PKI:
         else:
             config = self.server_ca.get_config()
         if self.client is not None:
-            config.update(self.client.get_client_config())
+            config.update(self.client.get_server_config())
         elif self.client_cert is not None:
             config.update(self.client_cert.get_config())
         return config
