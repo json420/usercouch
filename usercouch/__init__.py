@@ -367,6 +367,8 @@ def build_session_ini(auth, kw):
     template = TEMPLATES[auth]
     if 'ssl_port' in kw:
         template += SSL
+    if 'replicator_ca_file' in kw:
+        template += REPLICATOR
     return template.format(**kw)
 
 

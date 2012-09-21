@@ -775,6 +775,36 @@ class TestFunctions(TestCase):
                 usercouch.build_session_ini('basic', bad)
             self.assertEqual(str(cm.exception), repr(key))
 
+        # Test with auth='basic' and replicator_ca_file
+        keys = (
+            'bind_address',
+            'port',
+            'databases',
+            'views',
+            'file_compression',
+            'logfile',
+            'loglevel',
+            'username', 'hashed',
+            'replicator_ca_file',
+        )
+        kw = dict(
+            (key, usercouch.random_b32())
+            for key in keys
+        )
+        template = usercouch.BASIC + usercouch.REPLICATOR
+        self.assertEqual(
+            usercouch.build_session_ini('basic', deepcopy(kw)),
+            template.format(**kw)
+        )
+        for key in keys:
+            if key == 'replicator_ca_file':
+                continue
+            bad = deepcopy(kw)
+            del bad[key]
+            with self.assertRaises(KeyError) as cm:
+                usercouch.build_session_ini('basic', bad)
+            self.assertEqual(str(cm.exception), repr(key))
+
     def test_bind_socket(self):
         sock = usercouch.bind_socket('127.0.0.1')
         self.assertIsInstance(sock, socket.socket)
