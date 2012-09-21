@@ -195,6 +195,40 @@ class TestFunctions(TestCase):
             "overrides['ssl']['cert_file'] is required, but missing"
         )
 
+    def test_check_replicator_config(self):
+        tmp = TempDir()
+        ca_file = tmp.touch('ca.pem')
+        nope = tmp.join('nope.pem')
+
+        # Test with config['replicator'] is wrong type
+        with self.assertRaises(TypeError) as cm:
+            usercouch.check_replicator_config('world')
+        self.assertEqual(
+            str(cm.exception),
+            "config['replicator'] must be a <class 'dict'>; got a <class 'str'>: 'world'"
+        )
+
+        # Test when ca_file is missing
+        with self.assertRaises(ValueError) as cm:
+            usercouch.check_replicator_config({})
+        self.assertEqual(
+            str(cm.exception),
+            "config['replicator']['ca_file'] is required, but missing"
+        )
+
+        # Test when ca_file is not a file
+        with self.assertRaises(ValueError) as cm:
+            usercouch.check_replicator_config({'ca_file': nope})
+        self.assertEqual(
+            str(cm.exception),
+            "config['replicator']['ca_file'] not a file: {!r}".format(nope)
+        )
+
+        # Test when it's all good
+        self.assertIsNone(
+            usercouch.check_replicator_config({'ca_file': ca_file})
+        )
+
     def test_build_config(self):
         overrides = {
             'bind_address': usercouch.random_b32(),
@@ -233,6 +267,14 @@ class TestFunctions(TestCase):
         self.assertEqual(
             str(cm.exception),
             "overrides['ssl']['cert_file'] is required, but missing"
+        )
+
+        # Makes sure check_replicator_config() is calld:
+        with self.assertRaises(ValueError) as cm:
+            usercouch.build_config('open', {'replicator': {}})
+        self.assertEqual(
+            str(cm.exception),
+            "config['replicator']['ca_file'] is required, but missing"
         )
 
         # auth='open'
@@ -600,6 +642,25 @@ class TestFunctions(TestCase):
             }
         )
 
+        # Test with replicator['ca_file']
+        cfg = deepcopy(config)
+        remote_ca = tmp.touch('remote.ca')
+        cfg['replicator'] = {'ca_file': remote_ca}
+        ports = {'port': port}
+        self.assertEqual(
+            usercouch.build_template_kw('open', cfg, ports, paths),
+            {
+                'bind_address': config['bind_address'],
+                'loglevel': config['loglevel'],
+                'file_compression': config['file_compression'],
+                'port': port,
+                'databases': paths.databases,
+                'views': paths.views,
+                'logfile': paths.logfile,
+                'replicator_ca_file': remote_ca,
+            }
+        )
+
     def test_build_session_ini(self):
         # Test with bad auth
         with self.assertRaises(ValueError) as cm:
@@ -707,6 +768,36 @@ class TestFunctions(TestCase):
         )
         for key in keys:
             if key == 'ssl_port':
+                continue
+            bad = deepcopy(kw)
+            del bad[key]
+            with self.assertRaises(KeyError) as cm:
+                usercouch.build_session_ini('basic', bad)
+            self.assertEqual(str(cm.exception), repr(key))
+
+        # Test with auth='basic' and replicator_ca_file
+        keys = (
+            'bind_address',
+            'port',
+            'databases',
+            'views',
+            'file_compression',
+            'logfile',
+            'loglevel',
+            'username', 'hashed',
+            'replicator_ca_file',
+        )
+        kw = dict(
+            (key, usercouch.random_b32())
+            for key in keys
+        )
+        template = usercouch.BASIC + usercouch.REPLICATOR
+        self.assertEqual(
+            usercouch.build_session_ini('basic', deepcopy(kw)),
+            template.format(**kw)
+        )
+        for key in keys:
+            if key == 'replicator_ca_file':
                 continue
             bad = deepcopy(kw)
             del bad[key]

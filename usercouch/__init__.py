@@ -112,6 +112,16 @@ TEMPLATES = {
     'oauth': OAUTH,
 }
 
+
+# Wether or not this couch is using SSL, we can make the replicator
+# only trust remote couches with certs signed by a specific CA
+REPLICATOR = """
+[replicator]
+verify_ssl_certificates = true
+ssl_trusted_certificates_file = {replicator_ca_file}
+ssl_certificate_max_depth = 2
+"""
+
 SSL = """
 [daemons]
 httpsd = {{couch_httpd, start_link, [https]}}
@@ -204,6 +214,23 @@ def check_ssl_config(ssl_config):
             )
 
 
+def check_replicator_config(cfg):
+    if not isinstance(cfg, dict):
+        raise TypeError(
+            "config['replicator'] must be a {!r}; got a {!r}: {!r}".format(
+                dict, type(cfg), cfg)
+        )
+    if 'ca_file' not in cfg:
+        raise ValueError(
+            "config['replicator']['ca_file'] is required, but missing"
+        )
+    ca_file = cfg['ca_file']
+    if not path.isfile(ca_file):
+        raise ValueError(
+            "config['replicator']['ca_file'] not a file: {!r}".format(ca_file)
+        )
+
+
 def build_config(auth, overrides=None):
     if auth not in TEMPLATES:
         raise ValueError('invalid auth: {!r}'.format(auth))
@@ -216,6 +243,8 @@ def build_config(auth, overrides=None):
         )
     if 'ssl' in config:
         check_ssl_config(config['ssl'])
+    if 'replicator' in config:
+        check_replicator_config(config['replicator'])
     if auth in ('basic', 'oauth'):
         if 'username' not in config:
             config['username'] = random_b32()
@@ -322,6 +351,8 @@ def build_template_kw(auth, config, ports, paths):
         for key in ['ca_file', 'cert_file', 'key_file']:
             if key in ssl_cfg:
                 kw[key] = ssl_cfg[key]
+    if 'replicator' in config:
+        kw['replicator_ca_file'] = config['replicator']['ca_file']
     if auth in ('basic', 'oauth'):
         kw['username'] = config['username']
         kw['hashed'] = couch_hashed(config['password'], config['salt'])
@@ -336,6 +367,8 @@ def build_session_ini(auth, kw):
     template = TEMPLATES[auth]
     if 'ssl_port' in kw:
         template += SSL
+    if 'replicator_ca_file' in kw:
+        template += REPLICATOR
     return template.format(**kw)
 
 
