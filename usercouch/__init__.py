@@ -118,7 +118,7 @@ TEMPLATES = {
 REPLICATOR = """
 [replicator]
 verify_ssl_certificates = true
-ssl_trusted_certificates_file = {ssl_trusted_certificates_file}
+ssl_trusted_certificates_file = {replicator_ca_file}
 ssl_certificate_max_depth = 2
 """
 
@@ -351,6 +351,8 @@ def build_template_kw(auth, config, ports, paths):
         for key in ['ca_file', 'cert_file', 'key_file']:
             if key in ssl_cfg:
                 kw[key] = ssl_cfg[key]
+    if 'replicator' in config:
+        kw['replicator_ca_file'] = config['replicator']['ca_file']
     if auth in ('basic', 'oauth'):
         kw['username'] = config['username']
         kw['hashed'] = couch_hashed(config['password'], config['salt'])

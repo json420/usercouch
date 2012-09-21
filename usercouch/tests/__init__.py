@@ -642,6 +642,25 @@ class TestFunctions(TestCase):
             }
         )
 
+        # Test with replicator['ca_file']
+        cfg = deepcopy(config)
+        remote_ca = tmp.touch('remote.ca')
+        cfg['replicator'] = {'ca_file': remote_ca}
+        ports = {'port': port}
+        self.assertEqual(
+            usercouch.build_template_kw('open', cfg, ports, paths),
+            {
+                'bind_address': config['bind_address'],
+                'loglevel': config['loglevel'],
+                'file_compression': config['file_compression'],
+                'port': port,
+                'databases': paths.databases,
+                'views': paths.views,
+                'logfile': paths.logfile,
+                'replicator_ca_file': remote_ca,
+            }
+        )
+
     def test_build_session_ini(self):
         # Test with bad auth
         with self.assertRaises(ValueError) as cm:
