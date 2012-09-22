@@ -18,6 +18,45 @@ Exceptions
 
 
 
+:class:`Paths` class
+------------------------
+
+.. class:: Paths(basedir)
+
+    Various files and directories within a :attr:`UserCouch.basedir`.
+    
+    Attributes include:
+
+    .. attribute:: ini
+
+        The CouchDB ``'session.ini'`` configuration file
+
+    .. attribute:: databases
+
+        The directory containing the CouchDB database files
+
+    .. attribute:: views
+
+        The directory containing the CouchDB view files
+
+    .. attribute:: log
+
+        A directory for log files, including those used by UserCouch itself
+
+    .. attribute:: logfile
+
+        The ``'couchdb.log'`` used by CouchDB
+
+    .. attribute:: ssl
+
+        A directory for SSL certificates and keys (not used by UserCouch)
+
+    .. attribute:: dump
+
+        A directory for storing JSON dumps of CouchDB databases (not used by UserCouch)
+
+
+
 :class:`UserCouch` class
 ------------------------
 
@@ -33,6 +72,11 @@ Exceptions
     .. attribute:: basedir
 
         The directory provided when instance was created.
+
+    .. attribute:: paths
+
+        A :class:`Paths` instances for handy access to the files and
+        directories inside the *basedir*
 
     .. method:: bootstrap(auth='basic', config=None, extra=None)
 

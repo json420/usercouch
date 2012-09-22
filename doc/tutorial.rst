@@ -212,7 +212,7 @@ Security Notes
 --------------
 
 For security reasons, use of a static password is never recommended.  Instead,
-let :meth:`UserCouch.bootstrap()` generated a per-session random password for
+let :meth:`UserCouch.bootstrap()` generate a per-session random password for
 you.
 
 The best security is achieved using ``auth='basic'`` as only the hashed value
