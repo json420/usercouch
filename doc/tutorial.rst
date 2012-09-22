@@ -40,69 +40,6 @@ circumstances, you may need to manually call :meth:`UserCouch.kill()`.
 
 
 
-Bootstrap Options
------------------
-
-The :meth:`UserCouch.bootstrap()` *auth* kwarg can be ``'open'``, ``'basic'``,
-or ``'oauth'``.  As noted above, it defaults to ``'basic'``.
-
-If you use ``auth='open'``, you'll get an *env* similar to this:
-
->>> {
-...     'port': 41505,
-...     'url': 'http://localhost:41505/',
-... }
-
-If you use ``auth='basic'``, you'll get an *env* similar to this:
-
->>> {
-...     'port': 57910,
-...     'url': 'http://localhost:57910/',
-...     'basic': {
-...         'username': 'BKBTG7MX5Z6CTWHBOBXOX63S',
-...         'password': 'YGQQRSDMIF6GTZ6JMETWPUUE',
-...     },
-... }
-
-If you use ``auth='oauth'``, you'll get an *env* similar to this:
-
->>> {
-...     'port': 56618
-...     'url': 'http://localhost:56618/', 
-...     'basic': {
-...         'username': 'MAO5VQIKCJWS7NGGMV2IYC7S',
-...         'password': 'A7RDFDAMUFFFBP72VWSGK5QD',
-...     },
-...     'oauth': {
-...         'consumer_key': 'MDWS6LVY4N7TSBKCNW4UWMVW',
-...         'consumer_secret': 'DA2TGMAUTRASC67ZZPVJAXYY',
-...         'token': 'PU7WWZNC3RJDX3CAOW3Q6TZW',
-...         'token_secret': 'H7XPTS2QHKYFQ4Z35NSKF3FR',
-...     },
-... }
-
-
-
-The Lockfile
-------------
-
-The :class:`UserCouch` instance will store all the CouchDB data within the
-*basedir* you provide.  To prevent multiple :class:`UserCouch` instances from
-starting multiple CouchDB instances pointing at the same database files, a
-lockfile is used.
-
-If the lock cannot be aquired, a :exc:`LockError` is raised:
-
->>> mycouch2 = UserCouch('/home/jderose/.usercouch')
-Traceback (most recent call last):
-  ...
-usercouch.LockError: cannot acquire exclusive lock on '/home/jderose/.usercouch/lockfile'
-
-Note that it's perfectly fine for multiple :class:`UserCouch` instances to be running
-simultaneously as long as each uses its own *basedir*.
-
-
-
 Unit Testing
 ------------
 
@@ -146,6 +83,164 @@ The typical :class:`CouchTestCase` pattern looks like this:
 
 Because a new :class:`TempCouch` is created by ``setUp()`` prior to running
 each test method, both the ``test_bar()`` and ``test_baz()`` tests will pass.
+
+
+
+Bootstrap *auth* Options
+------------------------
+
+.. py:currentmodule:: usercouch
+
+
+The :meth:`UserCouch.bootstrap()` *auth* kwarg can be ``'open'``, ``'basic'``,
+or ``'oauth'``.  As noted above, it defaults to ``'basic'``.
+
+If you use ``auth='open'``, you'll get an *env* similar to this:
+
+>>> {
+...     'port': 41505,
+...     'url': 'http://localhost:41505/',
+... }
+
+If you use ``auth='basic'``, you'll get an *env* similar to this:
+
+>>> {
+...     'port': 57910,
+...     'url': 'http://localhost:57910/',
+...     'basic': {
+...         'username': 'BKBTG7MX5Z6CTWHBOBXOX63S',
+...         'password': 'YGQQRSDMIF6GTZ6JMETWPUUE',
+...     },
+... }
+
+If you use ``auth='oauth'``, you'll get an *env* similar to this:
+
+>>> {
+...     'port': 56618
+...     'url': 'http://localhost:56618/', 
+...     'basic': {
+...         'username': 'MAO5VQIKCJWS7NGGMV2IYC7S',
+...         'password': 'A7RDFDAMUFFFBP72VWSGK5QD',
+...     },
+...     'oauth': {
+...         'consumer_key': 'MDWS6LVY4N7TSBKCNW4UWMVW',
+...         'consumer_secret': 'DA2TGMAUTRASC67ZZPVJAXYY',
+...         'token': 'PU7WWZNC3RJDX3CAOW3Q6TZW',
+...         'token_secret': 'H7XPTS2QHKYFQ4Z35NSKF3FR',
+...     },
+... }
+
+
+
+Bootstrap *config* Options
+--------------------------
+
+If provided, the :meth:`UserCouch.bootstrap()` *config* kwarg must be a
+dictionary.  These values generally map directly into values in the
+session.ini file that is written just before your per-user CouchDB instance
+is started.  For example:
+
+>>> tmpcouch = TempCouch()
+>>> config = {
+...     'bind_address': '::1',
+...     'file_compression': 'deflate_9',
+...     'username': 'joe',
+...     'ssl': {
+...         'key_file': '/my/couch.key',
+...         'cert_file': '/my/couch.cert',
+...     },
+...     'replicator': {
+...         'ca_file': '/only/trust/this/remote.ca',
+...     },
+... }
+>>> env = tmpcouch.bootstrap('basic',  config)
+
+The available options include:
+
+    * `bind_address`: IP address CouchDB will bind to; default is
+      ``'127.0.0.1'``; override with ``'0.0.0.0'``, ``'::1'``, or ``'::'``
+
+    * `file_compression`: compression CouchDB will use for database and view
+      files; default is ``'snappy'``; override with ``'none'`` or any
+      ``'deflate_1'`` through ``'deflate_9'``
+
+    * `loglevel`: CouchDB log verbosity; default is ``'notice'``; override with
+      any valid CouchDB log level
+
+    * `username`: CouchDB admin username; default is a random username
+
+    * `password`: CouchDB admin password; default is a random password
+
+    * `oauth`: a dictionary containing OAuth 1.0a tokens; by default random
+      tokens are created
+
+    * `ssl`: a dictionary containing ``'key_file'`` and ``'cert_file'``
+
+    * `replicator`: a dictionary containing ``'ca_file'``
+
+The above mentioned random values are 120-bit, base32-encoded, 24 character
+strings generated using ``os.urandom()``.
+
+The *ssl* and *replicator* values are different than the rest in that they
+cause additional sections of the session.ini file to be written.
+
+If you provide *ssl*, CouchDB will be configured for SSL support and will be
+listening on two different random ports (one with SSL, the other without).
+When you call :meth:`UserCouch.bootstrap()`, the returned *env* will have an
+``env['x_env_ssl']`` sub-dictionary like this:
+
+>>> {
+...     'basic': {
+...         'password': 'F5KTCQAIKTFBOW7TKRRUUNMT',
+...         'username': 'BJPIMDUNVDULIJHECBFCZHDQ'
+...     },
+...     'port': 56355,
+...     'url': 'http://127.0.0.1:56355/',
+...     'x_env_ssl': {
+...         'basic': {
+...             'password': 'F5KTCQAIKTFBOW7TKRRUUNMT',
+...             'username': 'BJPIMDUNVDULIJHECBFCZHDQ'
+...         },
+...         'port': 42647,
+...         'url': 'https://127.0.0.1:42647/'
+...     }
+... }
+
+
+
+Security Notes
+--------------
+
+For security reasons, use of a static password is never recommended.  Instead,
+let :meth:`UserCouch.bootstrap()` generated a per-session random password for
+you.
+
+The best security is achieved using ``auth='basic'`` as only the hashed value
+of the random password will be written to the CouchDB session.ini file.  Only
+the process that started the UserCouch will know the password.
+
+Using ``auth='oauth'`` is less attractive because the clear-text of the OAuth
+tokens must be written to the session.ini file.
+
+
+
+The Lockfile
+------------
+
+The :class:`UserCouch` instance will store all the CouchDB data within the
+*basedir* you provide.  To prevent multiple :class:`UserCouch` instances from
+starting multiple CouchDB instances pointing at the same database files, a
+lockfile is used.
+
+If the lock cannot be aquired, a :exc:`LockError` is raised:
+
+>>> mycouch2 = UserCouch('/home/jderose/.usercouch')
+Traceback (most recent call last):
+  ...
+usercouch.LockError: cannot acquire exclusive lock on '/home/jderose/.usercouch/lockfile'
+
+Note that it's perfectly fine for multiple :class:`UserCouch` instances to be running
+simultaneously as long as each uses its own *basedir*.
 
 
 
