@@ -165,7 +165,7 @@ class TestFunctions(TestCase):
                 usercouch.check_ssl_config(bad)
             self.assertEqual(
                 str(cm.exception),
-                "overrides['ssl'][{!r}] is required, but missing".format(key)
+                "config['ssl'][{!r}] is required, but missing".format(key)
             )
 
         # Test when a possible key isn't a file:
@@ -176,7 +176,7 @@ class TestFunctions(TestCase):
                 usercouch.check_ssl_config(bad)
             self.assertEqual(
                 str(cm.exception),
-                "overrides['ssl'][{!r}] not a file: {!r}".format(key, nope)
+                "config['ssl'][{!r}] not a file: {!r}".format(key, nope)
             )
 
         # Test when ssl_env is wrong type:
@@ -184,7 +184,7 @@ class TestFunctions(TestCase):
             usercouch.check_ssl_config('hello')
         self.assertEqual(
             str(cm.exception),
-            "overrides['ssl'] must be a <class 'dict'>; got a <class 'str'>: 'hello'"
+            "config['ssl'] must be a <class 'dict'>; got a <class 'str'>: 'hello'"
         )
 
         # Test when an empty ssl_env dict:
@@ -192,7 +192,7 @@ class TestFunctions(TestCase):
             usercouch.check_ssl_config({})
         self.assertEqual(
             str(cm.exception),
-            "overrides['ssl']['cert_file'] is required, but missing"
+            "config['ssl']['cert_file'] is required, but missing"
         )
 
     def test_check_replicator_config(self):
@@ -258,7 +258,7 @@ class TestFunctions(TestCase):
             usercouch.build_config('open', {'file_compression': 'deflate_10'})
         self.assertEqual(
             str(cm.exception),
-            "invalid 'file_compression': 'deflate_10'"
+            "invalid config['file_compression']: 'deflate_10'"
         )
 
         # Test with bad 'ssl' (makes sure check_ssl_config() is called):
@@ -266,7 +266,7 @@ class TestFunctions(TestCase):
             usercouch.build_config('open', {'ssl': {}})
         self.assertEqual(
             str(cm.exception),
-            "overrides['ssl']['cert_file'] is required, but missing"
+            "config['ssl']['cert_file'] is required, but missing"
         )
 
         # Makes sure check_replicator_config() is calld:

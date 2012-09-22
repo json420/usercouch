@@ -195,13 +195,13 @@ def couch_hashed(password, salt):
 def check_ssl_config(ssl_config):
     if not isinstance(ssl_config, dict):
         raise TypeError(
-            "overrides['ssl'] must be a {!r}; got a {!r}: {!r}".format(
+            "config['ssl'] must be a {!r}; got a {!r}: {!r}".format(
                 dict, type(ssl_config), ssl_config)
         )
     for key in REQUIRED_SSL_CONFIG:
         if key not in ssl_config:
             raise ValueError(
-                "overrides['ssl'][{!r}] is required, but missing".format(key)
+                "config['ssl'][{!r}] is required, but missing".format(key)
             )
     for key in POSSIBLE_SSL_CONFIG:
         if key not in ssl_config:
@@ -210,7 +210,7 @@ def check_ssl_config(ssl_config):
         value = ssl_config[key]
         if not path.isfile(value):
             raise ValueError(
-                "overrides['ssl'][{!r}] not a file: {!r}".format(key, value)
+                "config['ssl'][{!r}] not a file: {!r}".format(key, value)
             )
 
 
@@ -238,7 +238,7 @@ def build_config(auth, overrides=None):
     if overrides:
         config.update(overrides)
     if config['file_compression'] not in FILE_COMPRESSION:
-        raise ValueError("invalid 'file_compression': {!r}".format(
+        raise ValueError("invalid config['file_compression']: {!r}".format(
                 config['file_compression'])
         )
     if 'ssl' in config:
