@@ -34,11 +34,16 @@ Exceptions
 
         The directory provided when instance was created.
 
-    .. method:: bootstrap(auth='basic', overrides=None)
+    .. method:: bootstrap(auth='basic', config=None, extra=None)
 
         Create the one-time configuration and start CouchDB.
-        
+
         *auth* must be ``'open'``, ``'basic'``, or ``'oauth'``.
+
+        If provided, *config* must be a ``dict`` with configuration values.
+
+        If provide, *extra* must be an ``str`` with CouchDB configuration text
+        that will be appended to the session.ini file.
 
         The return value is an *env* dictionary that follows the
         `Microfiber`_ conventions.

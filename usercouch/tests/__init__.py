@@ -1219,6 +1219,14 @@ class TestUserCouch(TestCase):
             'UserCouch.bootstrap() already called'
         )
 
+        # Test with extra
+        extra = usercouch.random_b32()
+        tmp = TempDir()
+        uc = usercouch.UserCouch(tmp.dir)
+        env = uc.bootstrap(extra=extra)
+        ini = open(tmp.join('session.ini'), 'r').read()
+        self.assertTrue(ini.endswith(extra))
+
     def test_bootstrap_oauth(self):
         tmp = TempDir()
         uc = usercouch.UserCouch(tmp.dir)

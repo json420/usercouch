@@ -544,21 +544,23 @@ class UserCouch:
             fcntl.flock(self.lockfile.fileno(), fcntl.LOCK_UN)
             self.lockfile.close()
 
-    def bootstrap(self, auth='basic', overrides=None):
+    def bootstrap(self, auth='basic', config=None, extra=None):
         if self.__bootstraped:
             raise Exception(
                 '{}.bootstrap() already called'.format(self.__class__.__name__)
             )
         self.__bootstraped = True
-        config = build_config(auth, overrides)
+        config = build_config(auth, config)
         socks = Sockets(config['bind_address'])
         if 'ssl' in config:
             socks.add_ssl()
         ports = socks.get_ports()
         env = build_env(auth, config, ports)
         kw = build_template_kw(auth, config, ports, self.paths)
-        session = build_session_ini(auth, kw)
-        open(self.paths.ini, 'w').write(session)
+        session_ini = build_session_ini(auth, kw)
+        if extra:
+            session_ini += extra
+        open(self.paths.ini, 'w').write(session_ini)
         self._conn = get_conn(env)
         self._headers = get_headers(env)
         socks.close()
