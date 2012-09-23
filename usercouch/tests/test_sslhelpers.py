@@ -86,6 +86,33 @@ class TestFunctions(TestCase):
         self.assertGreater(path.getsize(bar_cert), 0)
         self.assertGreater(path.getsize(foo_srl), 0)
 
+    def test_get_pubkey(self):
+        tmp = TempDir()
+
+        # Create CA
+        foo_key = tmp.join('foo.key')
+        foo_ca = tmp.join('foo.ca')
+        foo_srl = tmp.join('foo.srl')
+        sslhelpers.gen_key(foo_key)
+        foo_pubkey = sslhelpers.get_pubkey(foo_key)
+        sslhelpers.gen_ca(foo_key, '/CN=foo', foo_ca)
+
+        # Create CSR and issue cert
+        bar_key = tmp.join('bar.key')
+        bar_csr = tmp.join('bar.csr')
+        bar_cert = tmp.join('bar.cert')
+        sslhelpers.gen_key(bar_key)
+        bar_pubkey = sslhelpers.get_pubkey(bar_key)
+        sslhelpers.gen_csr(bar_key, '/CN=bar', bar_csr)
+        sslhelpers.gen_cert(bar_csr, foo_ca, foo_key, foo_srl, bar_cert)
+
+        # Now compare
+        os.remove(foo_key)
+        os.remove(bar_key)
+        self.assertEqual(sslhelpers.get_cert_pubkey(foo_ca), foo_pubkey)
+        self.assertEqual(sslhelpers.get_csr_pubkey(bar_csr), bar_pubkey)
+        self.assertEqual(sslhelpers.get_cert_pubkey(bar_cert), bar_pubkey)
+
 
 class TestPKI(TestCase):
     def test_init(self):

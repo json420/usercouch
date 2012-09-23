@@ -23,7 +23,7 @@
 Helpers for non-interactive creation of SSL certs.
 """
 
-from subprocess import check_call
+from subprocess import check_call, check_output
 from os import path
 
 
@@ -80,6 +80,29 @@ def gen_cert(csr_file, ca_file, key_file, srl_file, dst_file):
         '-CAkey', key_file,
         '-CAserial', srl_file,
         '-out', dst_file
+    ])
+
+
+def get_pubkey(key_file):
+    return check_output(['openssl', 'rsa',
+        '-pubout',
+        '-in', key_file,
+    ])  
+
+
+def get_cert_pubkey(cert_file):
+    return check_output(['openssl', 'x509',
+        '-pubkey',
+        '-noout',
+        '-in', cert_file,
+    ])
+
+
+def get_csr_pubkey(csr_file):
+    return check_output(['openssl', 'req',
+        '-pubkey',
+        '-noout',
+        '-in', csr_file,
     ])
 
 
