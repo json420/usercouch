@@ -657,7 +657,7 @@ class TestFunctions(TestCase):
                 'databases': paths.databases,
                 'views': paths.views,
                 'logfile': paths.logfile,
-                'replicator_ca_file': remote_ca,
+                'replicator': {'ca_file': remote_ca},
             }
         )
 
@@ -785,20 +785,20 @@ class TestFunctions(TestCase):
             'logfile',
             'loglevel',
             'username', 'hashed',
-            'replicator_ca_file',
         )
         kw = dict(
             (key, usercouch.random_b32())
             for key in keys
         )
+        kw['replicator'] = {
+            'ca_file': usercouch.random_b32(),
+        }
         template = usercouch.BASIC + usercouch.REPLICATOR
         self.assertEqual(
             usercouch.build_session_ini('basic', deepcopy(kw)),
             template.format(**kw)
         )
         for key in keys:
-            if key == 'replicator_ca_file':
-                continue
             bad = deepcopy(kw)
             del bad[key]
             with self.assertRaises(KeyError) as cm:

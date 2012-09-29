@@ -118,8 +118,8 @@ TEMPLATES = {
 REPLICATOR = """
 [replicator]
 verify_ssl_certificates = true
-ssl_trusted_certificates_file = {replicator_ca_file}
 ssl_certificate_max_depth = 2
+ssl_trusted_certificates_file = {replicator[ca_file]}
 """
 
 SSL = """
@@ -352,7 +352,7 @@ def build_template_kw(auth, config, ports, paths):
             if key in ssl_cfg:
                 kw[key] = ssl_cfg[key]
     if 'replicator' in config:
-        kw['replicator_ca_file'] = config['replicator']['ca_file']
+        kw['replicator'] = config['replicator']
     if auth in ('basic', 'oauth'):
         kw['username'] = config['username']
         kw['hashed'] = couch_hashed(config['password'], config['salt'])
@@ -367,7 +367,7 @@ def build_session_ini(auth, kw):
     template = TEMPLATES[auth]
     if 'ssl_port' in kw:
         template += SSL
-    if 'replicator_ca_file' in kw:
+    if 'replicator' in kw:
         template += REPLICATOR
     return template.format(**kw)
 
