@@ -229,6 +229,19 @@ def check_replicator_config(cfg):
         raise ValueError(
             "config['replicator']['ca_file'] not a file: {!r}".format(ca_file)
         )
+    if 'cert_file' in cfg:
+        if 'key_file' not in cfg:
+            raise ValueError(
+                "config['replicator']['key_file'] is required, but missing"
+            )
+        for key in ('cert_file', 'key_file'):
+            value = cfg[key]
+            if not path.isfile(value):
+                raise ValueError(
+                    "config['replicator'][{!r}] not a file: {!r}".format(
+                        key, value)
+                )
+            
 
 
 def build_config(auth, overrides=None):

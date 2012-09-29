@@ -198,6 +198,8 @@ class TestFunctions(TestCase):
     def test_check_replicator_config(self):
         tmp = TempDir()
         ca_file = tmp.touch('ca.pem')
+        cert_file = tmp.touch('cert.pem')
+        key_file = tmp.touch('key.pem')
         nope = tmp.join('nope.pem')
 
         # Test with config['replicator'] is wrong type
@@ -227,6 +229,39 @@ class TestFunctions(TestCase):
         # Test when it's all good
         self.assertIsNone(
             usercouch.check_replicator_config({'ca_file': ca_file})
+        )
+
+        # Test when cert_file is present, but key_file is missing
+        cfg = {'ca_file': ca_file, 'cert_file': 'foo'}
+        with self.assertRaises(ValueError) as cm:
+            usercouch.check_replicator_config(cfg)
+        self.assertEqual(
+            str(cm.exception),
+            "config['replicator']['key_file'] is required, but missing"
+        )
+
+        # Test when cert_file isn't a file
+        cfg = {'ca_file': ca_file, 'cert_file': nope, 'key_file': 'bar'}
+        with self.assertRaises(ValueError) as cm:
+            usercouch.check_replicator_config(cfg)
+        self.assertEqual(
+            str(cm.exception),
+            "config['replicator']['cert_file'] not a file: {!r}".format(nope)
+        )
+
+        # Test when key_file isn't a file
+        cfg = {'ca_file': ca_file, 'cert_file': cert_file, 'key_file': nope}
+        with self.assertRaises(ValueError) as cm:
+            usercouch.check_replicator_config(cfg)
+        self.assertEqual(
+            str(cm.exception),
+            "config['replicator']['key_file'] not a file: {!r}".format(nope)
+        )
+
+        # Test when it's all good, including cert_file and key_file
+        cfg = {'ca_file': ca_file, 'cert_file': cert_file, 'key_file': key_file}
+        self.assertIsNone(
+            usercouch.check_replicator_config(cfg)
         )
 
     def test_build_config(self):
