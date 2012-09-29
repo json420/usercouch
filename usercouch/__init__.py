@@ -122,6 +122,10 @@ ssl_certificate_max_depth = 2
 ssl_trusted_certificates_file = {replicator[ca_file]}
 """
 
+REPLICATOR_EXTRA = REPLICATOR + """cert_file = {replicator[cert_file]}
+key_file = {replicator[key_file]}
+"""
+
 SSL = """
 [daemons]
 httpsd = {{couch_httpd, start_link, [https]}}
@@ -241,7 +245,6 @@ def check_replicator_config(cfg):
                     "config['replicator'][{!r}] not a file: {!r}".format(
                         key, value)
                 )
-            
 
 
 def build_config(auth, overrides=None):
@@ -381,7 +384,10 @@ def build_session_ini(auth, kw):
     if 'ssl_port' in kw:
         template += SSL
     if 'replicator' in kw:
-        template += REPLICATOR
+        if 'cert_file' in kw['replicator']:
+            template += REPLICATOR_EXTRA
+        else:
+            template += REPLICATOR
     return template.format(**kw)
 
 
