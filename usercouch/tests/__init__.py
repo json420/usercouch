@@ -226,9 +226,38 @@ class TestFunctions(TestCase):
             "config['replicator']['ca_file'] not a file: {!r}".format(nope)
         )
 
+        # Test when max_depth isn't an int
+        cfg = {'ca_file': ca_file, 'max_depth': 2.0}
+        with self.assertRaises(TypeError) as cm:
+            usercouch.check_replicator_config(cfg)
+        self.assertEqual(
+            str(cm.exception),
+            "config['replicator']['max_depth'] not an int: 2.0"
+        )
+
+        # Test when max_depth is less than zero
+        cfg = {'ca_file': ca_file, 'max_depth': -1}
+        with self.assertRaises(ValueError) as cm:
+            usercouch.check_replicator_config(cfg)
+        self.assertEqual(
+            str(cm.exception),
+            "config['replicator']['max_depth'] < 0: -1"
+        )
+
         # Test when it's all good
+        cfg = {'ca_file': ca_file}
         self.assertIsNone(
-            usercouch.check_replicator_config({'ca_file': ca_file})
+            usercouch.check_replicator_config(cfg)
+        )
+        self.assertEqual(cfg,
+            {'ca_file': ca_file, 'max_depth': 1}
+        )
+        cfg = {'ca_file': ca_file, 'max_depth': 2}
+        self.assertIsNone(
+            usercouch.check_replicator_config(cfg)
+        )
+        self.assertEqual(cfg,
+            {'ca_file': ca_file, 'max_depth': 2}
         )
 
         # Test when cert_file is present, but key_file is missing
@@ -262,6 +291,29 @@ class TestFunctions(TestCase):
         cfg = {'ca_file': ca_file, 'cert_file': cert_file, 'key_file': key_file}
         self.assertIsNone(
             usercouch.check_replicator_config(cfg)
+        )
+        self.assertEqual(cfg,
+            {
+                'ca_file': ca_file,
+                'max_depth': 1,
+                'cert_file': cert_file,
+                'key_file': key_file,
+            }
+        )
+        cfg = {
+            'ca_file': ca_file, 'max_depth': 0,
+            'cert_file': cert_file, 'key_file': key_file,
+        }
+        self.assertIsNone(
+            usercouch.check_replicator_config(cfg)
+        )
+        self.assertEqual(cfg,
+            {
+                'ca_file': ca_file,
+                'max_depth': 0,
+                'cert_file': cert_file,
+                'key_file': key_file,
+            }
         )
 
     def test_build_config(self):
@@ -827,6 +879,7 @@ class TestFunctions(TestCase):
         )
         kw['replicator'] = {
             'ca_file': usercouch.random_b32(),
+            'max_depth': 2,
         }
         template = usercouch.BASIC + usercouch.REPLICATOR
         self.assertEqual(
@@ -839,7 +892,7 @@ class TestFunctions(TestCase):
             with self.assertRaises(KeyError) as cm:
                 usercouch.build_session_ini('basic', bad)
             self.assertEqual(str(cm.exception), repr(key))
-        for key in ['ca_file']:
+        for key in ['ca_file', 'max_depth']:
             bad = deepcopy(kw)
             del bad['replicator'][key]
             with self.assertRaises(KeyError) as cm:
@@ -863,6 +916,7 @@ class TestFunctions(TestCase):
         )
         kw['replicator'] = {
             'ca_file': usercouch.random_b32(),
+            'max_depth': 1,
             'cert_file': usercouch.random_b32(),
             'key_file': usercouch.random_b32(),
         }
@@ -877,7 +931,7 @@ class TestFunctions(TestCase):
             with self.assertRaises(KeyError) as cm:
                 usercouch.build_session_ini('basic', bad)
             self.assertEqual(str(cm.exception), repr(key))
-        for key in ['ca_file', 'key_file']:
+        for key in ['ca_file', 'max_depth', 'key_file']:
             bad = deepcopy(kw)
             del bad['replicator'][key]
             with self.assertRaises(KeyError) as cm:

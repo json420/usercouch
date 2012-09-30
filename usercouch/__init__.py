@@ -118,10 +118,11 @@ TEMPLATES = {
 REPLICATOR = """
 [replicator]
 verify_ssl_certificates = true
-ssl_certificate_max_depth = 2
+ssl_certificate_max_depth = {replicator[max_depth]}
 ssl_trusted_certificates_file = {replicator[ca_file]}
 """
 
+# And the replicator can use a client cert to authenticate to the remote couch:
 REPLICATOR_EXTRA = REPLICATOR + """cert_file = {replicator[cert_file]}
 key_file = {replicator[key_file]}
 """
@@ -223,6 +224,17 @@ def check_replicator_config(cfg):
         raise TypeError(
             "config['replicator'] must be a {!r}; got a {!r}: {!r}".format(
                 dict, type(cfg), cfg)
+        )
+    if 'max_depth' not in cfg:
+        cfg['max_depth'] = 1
+    max_depth = cfg['max_depth']
+    if not isinstance(max_depth, int):
+        raise TypeError(
+            "config['replicator']['max_depth'] not an int: {!r}".format(max_depth)
+        )
+    if max_depth < 0:
+        raise ValueError(
+            "config['replicator']['max_depth'] < 0: {!r}".format(max_depth)
         )
     if 'ca_file' not in cfg:
         raise ValueError(
