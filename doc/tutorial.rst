@@ -146,11 +146,14 @@ is started.  For example:
 ...     'file_compression': 'deflate_9',
 ...     'username': 'joe',
 ...     'ssl': {
-...         'key_file': '/my/couch.key',
-...         'cert_file': '/my/couch.cert',
+...         'key_file': '/my/couchdb/server.key',
+...         'cert_file': '/my/couchdb/server.cert',
 ...     },
 ...     'replicator': {
 ...         'ca_file': '/only/trust/this/remote.ca',
+...         'max_depth': 1,
+...         'key_file': '/my/couchdb/client.key',
+...         'cert_file': '/my/couchdb/client.cert',
 ...     },
 ... }
 >>> env = tmpcouch.bootstrap('basic',  config)
@@ -176,7 +179,8 @@ The available options include:
 
     * `ssl`: a dictionary containing ``'key_file'`` and ``'cert_file'``
 
-    * `replicator`: a dictionary containing ``'ca_file'``
+    * `replicator`: a dictionary containing at least ``'ca_file'``, and
+      optionally ``'max_depth'``, ``'key_file'`` and ``'cert_file'``
 
 The above mentioned random values are 120-bit, base32-encoded, 24 character
 strings generated using ``os.urandom()``.
@@ -211,17 +215,21 @@ When you call :meth:`UserCouch.bootstrap()`, the returned *env* will have an
 Security Notes
 --------------
 
-For security reasons, use of a static password is never recommended.  Instead,
-let :meth:`UserCouch.bootstrap()` generate a per-session random password for
-you.
+You'll typically configure UserCouch to only accept connections from localhost,
+so local security is the biggest concern.  Remember, any process running as any
+user can connect to your UserCouch.  Although your UserCouch will run on a
+random port, that is not a sufficient access control mechanism.
 
 The best security is achieved using ``auth='basic'`` as only the hashed value
 of the random password will be written to the CouchDB session.ini file.  Only
 the process that started the UserCouch will know the password.
 
-Using ``auth='oauth'`` is less attractive because the clear-text of the OAuth
-tokens must be written to the session.ini file.
+For security reasons, use of a static password is never recommended.  Instead,
+let :meth:`UserCouch.bootstrap()` generate a per-session random password for
+you.
 
+As far as local security, using ``auth='oauth'`` is less attractive because the
+clear-text of the OAuth tokens must be written to the session.ini file.
 
 
 The Lockfile
