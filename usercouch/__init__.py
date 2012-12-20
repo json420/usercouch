@@ -38,7 +38,7 @@ from http.client import HTTPConnection, BadStatusLine
 from urllib.parse import urlparse
 
 
-__version__ = '12.12.0'
+__version__ = '13.01.0'
 
 USERCOUCH_INI = path.join(
     path.dirname(path.abspath(__file__)), 'data', 'usercouch.ini'
