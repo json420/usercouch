@@ -25,12 +25,15 @@
 Install `usercouch`.
 """
 
+import sys
+if sys.version_info < (3, 3):
+    sys.exit('UserCouch requires Python 3.3 or newer')
+
 from distutils.core import setup
 from distutils.cmd import Command
-from unittest import TestLoader, TextTestRunner
-from doctest import DocTestSuite
 
 import usercouch
+from usercouch.tests.run import run_tests
 
 
 class Test(Command):
@@ -45,28 +48,10 @@ class Test(Command):
         pass
 
     def run(self):
-        pynames = [
-            'usercouch',
-            'usercouch.misc',
-            'usercouch.sslhelpers',
-            'usercouch.tests',
-            'usercouch.tests.test_misc',
-            'usercouch.tests.test_sslhelpers',
-        ]
-
-        # Add unit-tests:
-        loader = TestLoader()
-        suite = loader.loadTestsFromNames(pynames)
-
-        # Add doc-tests:
-        for name in pynames:
-            suite.addTest(DocTestSuite(name))
-
-        # Run the tests:
-        runner = TextTestRunner(verbosity=2)
-        result = runner.run(suite)
-        if not result.wasSuccessful():
-            raise SystemExit(2)
+        if not run_tests():
+            print('Tests FAILED!', file=sys.stderr)
+            raise SystemExit('2')
+        print('Tests passed.', file=sys.stderr)
 
 
 setup(
@@ -77,10 +62,10 @@ setup(
     author='Jason Gerard DeRose',
     author_email='jderose@novacut.com',
     license='LGPLv3+',
-    packages=['usercouch'],
+    packages=[
+        'usercouch',
+        'usercouch.tests',
+    ],
     package_data={'usercouch': ['data/usercouch.ini']},
-    cmdclass={
-        'test': Test,
-        #'build': build_with_docs,
-    },
+    cmdclass={'test': Test},
 )

@@ -37,12 +37,13 @@ from base64 import b32decode
 from http.client import HTTPConnection
 from random import SystemRandom
 
+from dbase32 import random_id, isdb32
+
 from usercouch import sslhelpers
 import usercouch
 
 
 random = SystemRandom()
-B32ALPHABET = frozenset('234567ABCDEFGHIJKLMNOPQRSTUVWXYZ')
 
 
 def test_port():
@@ -91,16 +92,6 @@ class TempDir(object):
 
 
 class TestFunctions(TestCase):
-    def test_random_b32(self):
-        _id = usercouch.random_b32()
-        self.assertIsInstance(_id, str)
-        self.assertEqual(len(_id), 24)
-        self.assertTrue(set(_id).issubset(B32ALPHABET))
-        b = b32decode(_id.encode('ascii'))
-        self.assertIsInstance(b, bytes)
-        self.assertEqual(len(b) * 8, 120)
-        self.assertNotEqual(usercouch.random_b32(), _id)
-
     def test_random_oauth(self):
         kw = usercouch.random_oauth()
         self.assertIsInstance(kw, dict)
@@ -111,7 +102,7 @@ class TestFunctions(TestCase):
         for value in kw.values():
             self.assertIsInstance(value, str)
             self.assertEqual(len(value), 24)
-            self.assertTrue(set(value).issubset(B32ALPHABET))
+            self.assertTrue(isdb32(value))
 
         new = usercouch.random_oauth()
         self.assertNotEqual(new, kw)
@@ -318,8 +309,8 @@ class TestFunctions(TestCase):
 
     def test_build_config(self):
         overrides = {
-            'bind_address': usercouch.random_b32(),
-            'loglevel': usercouch.random_b32(),
+            'bind_address': random_id(),
+            'loglevel': random_id(),
             'file_compression': 'deflate_9',
         }
 
@@ -418,11 +409,11 @@ class TestFunctions(TestCase):
         self.assertEqual(config['loglevel'], overrides['loglevel'])
         self.assertEqual(config['file_compression'], 'deflate_9')
         o2 = {
-            'bind_address': usercouch.random_b32(),
-            'loglevel': usercouch.random_b32(),
+            'bind_address': random_id(),
+            'loglevel': random_id(),
             'file_compression': 'none',
-            'username': usercouch.random_b32(),
-            'password': usercouch.random_b32(),
+            'username': random_id(),
+            'password': random_id(),
             'salt': usercouch.random_salt(),
         }
         self.assertEqual(
@@ -481,11 +472,11 @@ class TestFunctions(TestCase):
             set(['token', 'token_secret', 'consumer_key', 'consumer_secret'])
         )
         o3 = {
-            'bind_address': usercouch.random_b32(),
-            'loglevel': usercouch.random_b32(),
+            'bind_address': random_id(),
+            'loglevel': random_id(),
             'file_compression': 'none',
-            'username': usercouch.random_b32(),
-            'password': usercouch.random_b32(),
+            'username': random_id(),
+            'password': random_id(),
             'salt': usercouch.random_salt(),
             'oauth': usercouch.random_oauth(),
         }
@@ -581,8 +572,8 @@ class TestFunctions(TestCase):
 
     def test_build_env(self):
         config = {
-            'username': usercouch.random_b32(),
-            'password': usercouch.random_b32(),
+            'username': random_id(),
+            'password': random_id(),
             'oauth': usercouch.random_oauth(),
             'bind_address': '127.0.0.1',
         }
@@ -632,11 +623,11 @@ class TestFunctions(TestCase):
 
     def test_build_template_kw(self):
         config = {
-            'bind_address': usercouch.random_b32(),
-            'loglevel': usercouch.random_b32(),
-            'file_compression': usercouch.random_b32(), 
-            'username': usercouch.random_b32(),
-            'password': usercouch.random_b32(),
+            'bind_address': random_id(),
+            'loglevel': random_id(),
+            'file_compression': random_id(), 
+            'username': random_id(),
+            'password': random_id(),
             'salt': usercouch.random_salt(),
             'oauth': usercouch.random_oauth(),
         }
@@ -765,7 +756,7 @@ class TestFunctions(TestCase):
             'loglevel',
         )
         kw = dict(
-            (key, usercouch.random_b32())
+            (key, random_id())
             for key in keys
         )
         self.assertEqual(
@@ -791,7 +782,7 @@ class TestFunctions(TestCase):
             'username', 'hashed',
         )
         kw = dict(
-            (key, usercouch.random_b32())
+            (key, random_id())
             for key in keys
         )
         self.assertEqual(
@@ -818,7 +809,7 @@ class TestFunctions(TestCase):
             'token', 'token_secret', 'consumer_key', 'consumer_secret',
         )
         kw = dict(
-            (key, usercouch.random_b32())
+            (key, random_id())
             for key in keys
         )
         self.assertEqual(
@@ -845,7 +836,7 @@ class TestFunctions(TestCase):
             'ssl_port', 'cert_file', 'key_file',
         )
         kw = dict(
-            (key, usercouch.random_b32())
+            (key, random_id())
             for key in keys
         )
         template = usercouch.BASIC + usercouch.SSL
@@ -874,11 +865,11 @@ class TestFunctions(TestCase):
             'username', 'hashed',
         )
         kw = dict(
-            (key, usercouch.random_b32())
+            (key, random_id())
             for key in keys
         )
         kw['replicator'] = {
-            'ca_file': usercouch.random_b32(),
+            'ca_file': random_id(),
             'max_depth': 2,
         }
         template = usercouch.BASIC + usercouch.REPLICATOR
@@ -911,14 +902,14 @@ class TestFunctions(TestCase):
             'username', 'hashed',
         )
         kw = dict(
-            (key, usercouch.random_b32())
+            (key, random_id())
             for key in keys
         )
         kw['replicator'] = {
-            'ca_file': usercouch.random_b32(),
+            'ca_file': random_id(),
             'max_depth': 1,
-            'cert_file': usercouch.random_b32(),
-            'key_file': usercouch.random_b32(),
+            'cert_file': random_id(),
+            'key_file': random_id(),
         }
         template = usercouch.BASIC + usercouch.REPLICATOR_EXTRA
         self.assertEqual(
@@ -1338,7 +1329,7 @@ class TestUserCouch(TestCase):
         for value in env['basic'].values():
             self.assertIsInstance(value, str)
             self.assertEqual(len(value), 24)
-            self.assertTrue(set(value).issubset(B32ALPHABET))
+            self.assertTrue(isdb32(value))
 
         # check UserCouch.couchdb, make sure UserCouch.start() was called
         self.assertIsInstance(uc.couchdb, subprocess.Popen)
@@ -1353,7 +1344,7 @@ class TestUserCouch(TestCase):
         )
 
         # Test with extra
-        extra = usercouch.random_b32()
+        extra = random_id()
         tmp = TempDir()
         uc = usercouch.UserCouch(tmp.dir)
         env = uc.bootstrap(extra=extra)
@@ -1384,7 +1375,7 @@ class TestUserCouch(TestCase):
         for value in env['basic'].values():
             self.assertIsInstance(value, str)
             self.assertEqual(len(value), 24)
-            self.assertTrue(set(value).issubset(B32ALPHABET))
+            self.assertTrue(isdb32(value))
         self.assertIsInstance(env['oauth'], dict)
         self.assertEqual(
             set(env['oauth']),
@@ -1393,7 +1384,7 @@ class TestUserCouch(TestCase):
         for value in env['oauth'].values():
             self.assertIsInstance(value, str)
             self.assertEqual(len(value), 24)
-            self.assertTrue(set(value).issubset(B32ALPHABET))
+            self.assertTrue(isdb32(value))
 
         # check UserCouch.couchdb, make sure UserCouch.start() was called
         self.assertIsInstance(uc.couchdb, subprocess.Popen)
@@ -1411,8 +1402,8 @@ class TestUserCouch(TestCase):
         overrides = {
             'loglevel': 'debug',
             'bind_address': '::1',
-            'username': usercouch.random_b32(),
-            'password': usercouch.random_b32(),
+            'username': random_id(),
+            'password': random_id(),
             'salt': usercouch.random_salt(),
         }
         tmp = TempDir()
@@ -1452,8 +1443,8 @@ class TestUserCouch(TestCase):
         overrides = {
             'loglevel': 'debug',
             'bind_address': '::1',
-            'username': usercouch.random_b32(),
-            'password': usercouch.random_b32(),
+            'username': random_id(),
+            'password': random_id(),
             'salt': usercouch.random_salt(),
             'oauth': usercouch.random_oauth(),
         }
@@ -1500,8 +1491,8 @@ class TestUserCouch(TestCase):
         tmp = TempDir()
 
         # Create CA, machine cert:
-        user_id = usercouch.random_b32()
-        machine_id = usercouch.random_b32()
+        user_id = random_id()
+        machine_id = random_id()
         pki = sslhelpers.PKI(tmp.dir)
         pki.create_server_pki(user_id, machine_id)
         ssl_config = pki.get_server_config()
@@ -1530,7 +1521,7 @@ class TestUserCouch(TestCase):
         for value in env['basic'].values():
             self.assertIsInstance(value, str)
             self.assertEqual(len(value), 24)
-            self.assertTrue(set(value).issubset(B32ALPHABET))
+            self.assertTrue(isdb32(value))
 
         # check env['x_env_ssl']
         env2 = env['x_env_ssl']
