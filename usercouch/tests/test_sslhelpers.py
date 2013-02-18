@@ -27,9 +27,9 @@ from unittest import TestCase
 import os
 from os import path
 
-from usercouch import random_b32
-from usercouch import sslhelpers
+from dbase32 import random_id
 
+from usercouch import sslhelpers
 from . import TempDir
 
 
@@ -133,7 +133,7 @@ class TestPKI(TestCase):
 
     def test_get_ca(self):
         tmp = TempDir()
-        ca_id = random_b32()
+        ca_id = random_id()
         pki = sslhelpers.PKI(tmp.dir)
         ca = pki.get_ca(ca_id)
         self.assertIsInstance(ca, sslhelpers.CA)
@@ -143,8 +143,8 @@ class TestPKI(TestCase):
 
     def test_get_cert(self):
         tmp = TempDir()
-        ca_id = random_b32()
-        cert_id = random_b32()
+        ca_id = random_id()
+        cert_id = random_id()
         pki = sslhelpers.PKI(tmp.dir)
         cert = pki.get_cert(ca_id, cert_id)
         self.assertIsInstance(cert, sslhelpers.Cert)
@@ -156,8 +156,8 @@ class TestPKI(TestCase):
 
     def test_load_server_pki(self):
         tmp = TempDir()
-        ca_id = random_b32()
-        cert_id = random_b32()
+        ca_id = random_id()
+        cert_id = random_id()
         pki = sslhelpers.PKI(tmp.dir)
         self.assertIsNone(pki.load_server_pki(ca_id, cert_id))
 
@@ -178,8 +178,8 @@ class TestPKI(TestCase):
 
     def test_load_client_pki(self):
         tmp = TempDir()
-        ca_id = random_b32()
-        cert_id = random_b32()
+        ca_id = random_id()
+        cert_id = random_id()
         pki = sslhelpers.PKI(tmp.dir)
         self.assertIsNone(pki.load_client_pki(ca_id, cert_id))
 
@@ -200,8 +200,8 @@ class TestPKI(TestCase):
 
     def test_create_server_pki(self):
         tmp = TempDir()
-        ca_id = random_b32()
-        cert_id = random_b32()
+        ca_id = random_id()
+        cert_id = random_id()
         pki = sslhelpers.PKI(tmp.dir)
         self.assertIsNone(pki.create_server_pki(ca_id, cert_id))
 
@@ -222,8 +222,8 @@ class TestPKI(TestCase):
 
     def test_create_client_pki(self):
         tmp = TempDir()
-        ca_id = random_b32()
-        cert_id = random_b32()
+        ca_id = random_id()
+        cert_id = random_id()
         pki = sslhelpers.PKI(tmp.dir)
         self.assertIsNone(pki.create_client_pki(ca_id, cert_id))
 
@@ -244,7 +244,7 @@ class TestPKI(TestCase):
 
     def test_load_flat_server_cert(self):
         tmp = TempDir()
-        _id = random_b32()
+        _id = random_id()
         pki = sslhelpers.PKI(tmp.dir)
         self.assertIsNone(pki.load_flat_server_cert(_id))
 
@@ -261,7 +261,7 @@ class TestPKI(TestCase):
 
     def test_load_flat_client_cert(self):
         tmp = TempDir()
-        _id = random_b32()
+        _id = random_id()
         pki = sslhelpers.PKI(tmp.dir)
         self.assertIsNone(pki.load_flat_client_cert(_id))
 
@@ -278,7 +278,7 @@ class TestPKI(TestCase):
 
     def test_create_flat_server_cert(self):
         tmp = TempDir()
-        _id = random_b32()
+        _id = random_id()
         pki = sslhelpers.PKI(tmp.dir)
         self.assertIsNone(pki.create_flat_server_cert(_id))
 
@@ -295,7 +295,7 @@ class TestPKI(TestCase):
 
     def test_create_flat_client_cert(self):
         tmp = TempDir()
-        _id = random_b32()
+        _id = random_id()
         pki = sslhelpers.PKI(tmp.dir)
         self.assertIsNone(pki.create_flat_client_cert(_id))
 
@@ -321,8 +321,8 @@ class TestPKI(TestCase):
             'You must first call PKI.load_server_pki()'
         )
 
-        ca_id = random_b32()
-        cert_id = random_b32()
+        ca_id = random_id()
+        cert_id = random_id()
         server_cert = sslhelpers.Cert(tmp.dir, ca_id, cert_id)
         pki.server_cert = server_cert
         self.assertEqual(pki.get_server_config(),
@@ -333,7 +333,7 @@ class TestPKI(TestCase):
         )
 
         # Flat server PKI should override server_cert
-        server = sslhelpers.FlatCert(tmp.dir, random_b32())
+        server = sslhelpers.FlatCert(tmp.dir, random_id())
         pki.server = server
         self.assertEqual(pki.get_server_config(),
             {
@@ -343,7 +343,7 @@ class TestPKI(TestCase):
         )
         pki.server = None
 
-        ca_id = random_b32()
+        ca_id = random_id()
         client_ca = sslhelpers.CA(tmp.dir, ca_id)
         pki.client_ca = client_ca
         self.assertEqual(pki.get_server_config(),
@@ -356,7 +356,7 @@ class TestPKI(TestCase):
         )
 
         # Flat client PKI should override client_ca
-        client = sslhelpers.FlatCert(tmp.dir, random_b32())
+        client = sslhelpers.FlatCert(tmp.dir, random_id())
         pki.client = client
         self.assertEqual(pki.get_server_config(),
             {
@@ -381,7 +381,7 @@ class TestPKI(TestCase):
         # Test with only flat PKI:
         tmp = TempDir()
         pki = sslhelpers.PKI(tmp.dir)
-        server = sslhelpers.FlatCert(tmp.dir, random_b32())
+        server = sslhelpers.FlatCert(tmp.dir, random_id())
         pki.server = server
         self.assertEqual(pki.get_server_config(),
             {
@@ -390,7 +390,7 @@ class TestPKI(TestCase):
             }
         )
 
-        client = sslhelpers.FlatCert(tmp.dir, random_b32())
+        client = sslhelpers.FlatCert(tmp.dir, random_id())
         pki.client = client
         self.assertEqual(pki.get_server_config(),
             {
@@ -412,7 +412,7 @@ class TestPKI(TestCase):
             'You must first call PKI.load_server_pki()'
         )
 
-        ca_id = random_b32()
+        ca_id = random_id()
         server_ca = sslhelpers.CA(tmp.dir, ca_id)
         pki.server_ca = server_ca
         self.assertEqual(pki.get_client_config(),
@@ -423,7 +423,7 @@ class TestPKI(TestCase):
         )
 
         # Flat server PKI should override server_ca
-        server = sslhelpers.FlatCert(tmp.dir, random_b32())
+        server = sslhelpers.FlatCert(tmp.dir, random_id())
         pki.server = server
         self.assertEqual(pki.get_client_config(),
             {
@@ -433,8 +433,8 @@ class TestPKI(TestCase):
         )
         pki.server = None
 
-        ca_id = random_b32()
-        cert_id = random_b32()
+        ca_id = random_id()
+        cert_id = random_id()
         client_cert = sslhelpers.Cert(tmp.dir, ca_id, cert_id)
         pki.client_cert = client_cert
         self.assertEqual(pki.get_client_config(),
@@ -447,7 +447,7 @@ class TestPKI(TestCase):
         )
 
         # Flat client PKI should override client_cert
-        client = sslhelpers.FlatCert(tmp.dir, random_b32())
+        client = sslhelpers.FlatCert(tmp.dir, random_id())
         pki.client = client
         self.assertEqual(pki.get_client_config(),
             {
@@ -472,7 +472,7 @@ class TestPKI(TestCase):
         # Test with only flat PKI:
         tmp = TempDir()
         pki = sslhelpers.PKI(tmp.dir)
-        server = sslhelpers.FlatCert(tmp.dir, random_b32())
+        server = sslhelpers.FlatCert(tmp.dir, random_id())
         pki.server = server
         self.assertEqual(pki.get_client_config(),
             {
@@ -481,7 +481,7 @@ class TestPKI(TestCase):
             }
         )
 
-        client = sslhelpers.FlatCert(tmp.dir, random_b32())
+        client = sslhelpers.FlatCert(tmp.dir, random_id())
         pki.client = client
         self.assertEqual(pki.get_client_config(),
             {
@@ -496,7 +496,7 @@ class TestPKI(TestCase):
 class TestBase(TestCase):
     def test_init(self):
         tmp = TempDir()
-        _id = random_b32()
+        _id = random_id()
         inst = sslhelpers.Base(tmp.dir, _id)
         self.assertEqual(inst.ssldir, tmp.dir)
         self.assertEqual(inst.id, _id)
@@ -514,7 +514,7 @@ class TestBase(TestCase):
 class TestCA(TestCase):
     def test_init(self):
         tmp = TempDir()
-        ca_id = random_b32()
+        ca_id = random_id()
         ca = sslhelpers.CA(tmp.dir, ca_id)
         self.assertEqual(ca.ssldir, tmp.dir)
         self.assertEqual(ca.id, ca_id)
@@ -532,7 +532,7 @@ class TestCA(TestCase):
 
     def test_exists(self):
         tmp = TempDir()
-        ca_id = random_b32()
+        ca_id = random_id()
         ca = sslhelpers.CA(tmp.dir, ca_id)
         self.assertIs(ca.exists(), False)
         open(ca.ca_file, 'wb').close()
@@ -540,7 +540,7 @@ class TestCA(TestCase):
 
     def test_create(self):
         tmp = TempDir()
-        ca_id = random_b32()
+        ca_id = random_id()
         ca = sslhelpers.CA(tmp.dir, ca_id)
         self.assertFalse(path.isfile(ca.key_file))
         self.assertFalse(path.isfile(ca.ca_file))
@@ -560,7 +560,7 @@ class TestCA(TestCase):
 
     def test_raw_issue(self):
         tmp = TempDir()
-        ca_id = random_b32()
+        ca_id = random_id()
         ca = sslhelpers.CA(tmp.dir, ca_id)
         key_file = tmp.join('key.pem')
         csr_file = tmp.join('csr.pem')
@@ -574,8 +574,8 @@ class TestCA(TestCase):
 
     def test_issue(self):
         tmp = TempDir()
-        ca_id = random_b32()
-        cert_id = random_b32()
+        ca_id = random_id()
+        cert_id = random_id()
         ca = sslhelpers.CA(tmp.dir, ca_id)
         cert = sslhelpers.Cert(tmp.dir, ca_id, cert_id)
 
@@ -596,8 +596,8 @@ class TestCA(TestCase):
 
     def test_get_cert(self):
         tmp = TempDir()
-        ca_id = random_b32()
-        cert_id = random_b32()
+        ca_id = random_id()
+        cert_id = random_id()
         _id = ca_id + '-' + cert_id
         ca = sslhelpers.CA(tmp.dir, ca_id)
         cert = ca.get_cert(cert_id)
@@ -611,7 +611,7 @@ class TestCA(TestCase):
 
     def test_get_config(self):
         tmp = TempDir()
-        ca_id = random_b32()
+        ca_id = random_id()
         ca = sslhelpers.CA(tmp.dir, ca_id)
         self.assertEqual(
             ca.get_config(),
@@ -625,7 +625,7 @@ class TestCA(TestCase):
 class TestFlatCert(TestCase):
     def test_init(self):
         tmp = TempDir()
-        _id = random_b32()
+        _id = random_id()
         cert = sslhelpers.FlatCert(tmp.dir, _id)
         self.assertIsInstance(cert, sslhelpers.CA)
         self.assertIs(cert.ssldir, tmp.dir)
@@ -638,7 +638,7 @@ class TestFlatCert(TestCase):
 
     def test_get_server_config(self):
         tmp = TempDir()
-        _id = random_b32()
+        _id = random_id()
         cert = sslhelpers.FlatCert(tmp.dir, _id)
         self.assertEqual(
             cert.get_server_config(),
@@ -650,7 +650,7 @@ class TestFlatCert(TestCase):
 
     def test_get_client_config(self):
         tmp = TempDir()
-        _id = random_b32()
+        _id = random_id()
         cert = sslhelpers.FlatCert(tmp.dir, _id)
         self.assertEqual(
             cert.get_client_config(),
@@ -664,8 +664,8 @@ class TestFlatCert(TestCase):
 class TestCert(TestCase):
     def test_init(self):
         tmp = TempDir()
-        ca_id = random_b32()
-        cert_id = random_b32()
+        ca_id = random_id()
+        cert_id = random_id()
         _id = ca_id + '-' + cert_id
         cert = sslhelpers.Cert(tmp.dir, ca_id, cert_id)
         self.assertIs(cert.ca_id, ca_id)
@@ -686,8 +686,8 @@ class TestCert(TestCase):
 
     def test_exists(self):
         tmp = TempDir()
-        ca_id = random_b32()
-        cert_id = random_b32()
+        ca_id = random_id()
+        cert_id = random_id()
         cert = sslhelpers.Cert(tmp.dir, ca_id, cert_id)
         self.assertIs(cert.exists(), False)
         open(cert.cert_file, 'wb').close()
@@ -695,8 +695,8 @@ class TestCert(TestCase):
 
     def test_create(self):
         tmp = TempDir()
-        ca_id = random_b32()
-        cert_id = random_b32()
+        ca_id = random_id()
+        cert_id = random_id()
         cert = sslhelpers.Cert(tmp.dir, ca_id, cert_id)
         self.assertFalse(path.isfile(cert.cert_file))
         self.assertFalse(path.isfile(cert.csr_file))
@@ -727,8 +727,8 @@ class TestCert(TestCase):
 
     def test_get_config(self):
         tmp = TempDir()
-        ca_id = random_b32()
-        cert_id = random_b32()
+        ca_id = random_id()
+        cert_id = random_id()
         _id = ca_id + '-' + cert_id
         cert = sslhelpers.Cert(tmp.dir, ca_id, cert_id)
         self.assertEqual(

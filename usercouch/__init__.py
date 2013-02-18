@@ -37,6 +37,7 @@ import json
 from http.client import HTTPConnection, BadStatusLine
 from urllib.parse import urlparse
 
+from dbase32 import random_id
 
 __version__ = '13.02.0'
 
@@ -151,21 +152,12 @@ verify_fun = ???
 ########################################################################
 # Functions for building CouchDB session.ini file, Microfiber-style env:
 
-def random_b32(numbytes=15):
-    """
-    Return a 120-bit base32-encoded random string.
-
-    The `str` will be 24-characters long, URL and filesystem safe.
-    """
-    return b32encode(os.urandom(numbytes)).decode('utf-8')
-
-
 def random_oauth():
     """
     Return a `dict` containing random OAuth 1a tokens.
     """
     return dict(
-        (k, random_b32())
+        (k, random_id())
         for k in ('consumer_key', 'consumer_secret', 'token', 'token_secret')
     )
 
@@ -275,9 +267,9 @@ def build_config(auth, overrides=None):
         check_replicator_config(config['replicator'])
     if auth in ('basic', 'oauth'):
         if 'username' not in config:
-            config['username'] = random_b32()
+            config['username'] = random_id()
         if 'password' not in config:
-            config['password'] = random_b32()
+            config['password'] = random_id()
         if 'salt' not in config:
             config['salt'] = random_salt()
     if auth == 'oauth':
