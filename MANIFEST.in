@@ -1,3 +1,2 @@
 include COPYING COPYING.LESSER
-include usercouch/tests/*
 include doc/*
