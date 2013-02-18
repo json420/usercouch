@@ -22,9 +22,9 @@
 """
 Run the `usercouch` unit tests.
 
-From the command line, run like this:
+From the command line, run like this::
 
-    python3 -m usercouch.tests.run
+    $ python3 -m usercouch.tests.run
 """
 
 import sys
