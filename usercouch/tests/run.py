@@ -57,15 +57,15 @@ def run_tests():
     # Run the tests:
     runner = TextTestRunner(verbosity=2)
     result = runner.run(suite)
+    success =  result.wasSuccessful()
     print(
         'usercouch: {!r}'.format(path.abspath(usercouch.__file__)),
         file=sys.stderr
     )
+    print('-' * 70, file=sys.stderr)
     return result.wasSuccessful()
 
 
 if __name__ == '__main__':
     if not run_tests():
-        print('Tests FAILED!', file=sys.stderr)
         raise SystemExit('2')
-    print('Tests passed.', file=sys.stderr)

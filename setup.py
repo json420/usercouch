@@ -27,7 +27,7 @@ Install `usercouch`.
 
 import sys
 if sys.version_info < (3, 3):
-    sys.exit('UserCouch requires Python 3.3 or newer')
+    sys.exit('ERROR: UserCouch requires Python 3.3 or newer')
 
 from distutils.core import setup
 from distutils.cmd import Command
@@ -49,9 +49,7 @@ class Test(Command):
 
     def run(self):
         if not run_tests():
-            print('Tests FAILED!', file=sys.stderr)
             raise SystemExit('2')
-        print('Tests passed.', file=sys.stderr)
 
 
 setup(
