@@ -57,7 +57,6 @@ def run_tests():
     # Run the tests:
     runner = TextTestRunner(verbosity=2)
     result = runner.run(suite)
-    success =  result.wasSuccessful()
     print(
         'usercouch: {!r}'.format(path.abspath(usercouch.__file__)),
         file=sys.stderr
