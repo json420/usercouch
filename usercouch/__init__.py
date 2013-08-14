@@ -79,6 +79,7 @@ bind_address = {bind_address}
 port = {port}
 
 [couchdb]
+uuid = {uuid}
 database_dir = {databases}
 view_index_dir = {views}
 file_compression = {file_compression}

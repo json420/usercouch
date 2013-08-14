@@ -785,6 +785,7 @@ class TestFunctions(TestCase):
             'databases',
             'views',
             'file_compression',
+            'uuid',
             'logfile',
             'loglevel',
         )
@@ -810,6 +811,7 @@ class TestFunctions(TestCase):
             'databases',
             'views',
             'file_compression',
+            'uuid',
             'logfile',
             'loglevel',
             'username', 'hashed',
@@ -836,6 +838,7 @@ class TestFunctions(TestCase):
             'databases',
             'views',
             'file_compression',
+            'uuid',
             'logfile',
             'loglevel',
             'username', 'hashed',
@@ -863,6 +866,7 @@ class TestFunctions(TestCase):
             'databases',
             'views',
             'file_compression',
+            'uuid',
             'logfile',
             'loglevel',
             'username', 'hashed',
@@ -893,6 +897,7 @@ class TestFunctions(TestCase):
             'databases',
             'views',
             'file_compression',
+            'uuid',
             'logfile',
             'loglevel',
             'username', 'hashed',
@@ -930,6 +935,7 @@ class TestFunctions(TestCase):
             'databases',
             'views',
             'file_compression',
+            'uuid',
             'logfile',
             'loglevel',
             'username', 'hashed',
@@ -1437,6 +1443,7 @@ class TestUserCouch(TestCase):
             'bind_address': '::1',
             'username': random_id(),
             'password': random_id(),
+            'uuid': usercouch.random_salt(),
             'salt': usercouch.random_salt(),
         }
         tmp = TempDir()
@@ -1455,6 +1462,7 @@ class TestUserCouch(TestCase):
         )
         kw = {
             'bind_address': overrides['bind_address'],
+            'uuid': overrides['uuid'],
             'port': env['port'],
             'databases': uc.paths.databases,
             'views': uc.paths.views,
@@ -1478,6 +1486,7 @@ class TestUserCouch(TestCase):
             'bind_address': '::1',
             'username': random_id(),
             'password': random_id(),
+            'uuid': usercouch.random_salt(),
             'salt': usercouch.random_salt(),
             'oauth': usercouch.random_oauth(),
         }
@@ -1498,6 +1507,7 @@ class TestUserCouch(TestCase):
         self.assertEqual(env['oauth'], overrides['oauth'])
         kw = {
             'bind_address': overrides['bind_address'],
+            'uuid': overrides['uuid'],
             'port': env['port'],
             'databases': uc.paths.databases,
             'views': uc.paths.views,
