@@ -257,6 +257,8 @@ def build_config(auth, overrides=None):
     config = dict(DEFAULT_CONFIG)
     if overrides:
         config.update(overrides)
+    if 'uuid' not in config:
+        config['uuid'] = random_salt()
     if config['file_compression'] not in FILE_COMPRESSION:
         raise ValueError("invalid config['file_compression']: {!r}".format(
                 config['file_compression'])

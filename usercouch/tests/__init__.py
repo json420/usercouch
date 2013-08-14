@@ -327,6 +327,7 @@ class TestFunctions(TestCase):
             'bind_address': random_id(),
             'loglevel': random_id(),
             'file_compression': 'deflate_9',
+            'uuid': usercouch.random_salt(),
         }
 
         # Test with bad auth
@@ -374,7 +375,7 @@ class TestFunctions(TestCase):
         config = usercouch.build_config('open')
         self.assertIsInstance(config, dict)
         self.assertEqual(set(config),
-            set(['bind_address', 'loglevel', 'file_compression'])
+            set(['bind_address', 'loglevel', 'file_compression', 'uuid'])
         )
         self.assertEqual(config['bind_address'], '127.0.0.1')
         self.assertEqual(config['loglevel'], 'notice')
@@ -387,6 +388,7 @@ class TestFunctions(TestCase):
                 'bind_address': overrides['bind_address'],
                 'loglevel': overrides['loglevel'],
                 'file_compression': 'deflate_9',
+                'uuid': overrides['uuid'],
             }
         )
 
@@ -398,6 +400,7 @@ class TestFunctions(TestCase):
                 'bind_address',
                 'loglevel',
                 'file_compression',
+                'uuid',
                 'username',
                 'password',
                 'salt',
@@ -415,6 +418,7 @@ class TestFunctions(TestCase):
                 'bind_address',
                 'loglevel',
                 'file_compression',
+                'uuid',
                 'username',
                 'password',
                 'salt',
@@ -423,10 +427,12 @@ class TestFunctions(TestCase):
         self.assertEqual(config['bind_address'], overrides['bind_address'])
         self.assertEqual(config['loglevel'], overrides['loglevel'])
         self.assertEqual(config['file_compression'], 'deflate_9')
+        self.assertEqual(config['uuid'], overrides['uuid'])
         o2 = {
             'bind_address': random_id(),
             'loglevel': random_id(),
             'file_compression': 'none',
+            'uuid': usercouch.random_salt(),
             'username': random_id(),
             'password': random_id(),
             'salt': usercouch.random_salt(),
@@ -437,6 +443,7 @@ class TestFunctions(TestCase):
                 'bind_address': o2['bind_address'],
                 'loglevel': o2['loglevel'],
                 'file_compression': 'none',
+                'uuid': o2['uuid'],
                 'username': o2['username'],
                 'password': o2['password'],
                 'salt': o2['salt'],
@@ -451,6 +458,7 @@ class TestFunctions(TestCase):
                 'bind_address',
                 'loglevel',
                 'file_compression',
+                'uuid',
                 'username',
                 'password',
                 'salt',
@@ -473,6 +481,7 @@ class TestFunctions(TestCase):
                 'bind_address',
                 'loglevel',
                 'file_compression',
+                'uuid',
                 'username',
                 'password',
                 'salt',
@@ -482,6 +491,7 @@ class TestFunctions(TestCase):
         self.assertEqual(config['bind_address'], overrides['bind_address'])
         self.assertEqual(config['loglevel'], overrides['loglevel'])
         self.assertEqual(config['file_compression'], 'deflate_9')
+        self.assertEqual(config['uuid'], overrides['uuid'])
         self.assertIsInstance(config['oauth'], dict)
         self.assertEqual(set(config['oauth']),
             set(['token', 'token_secret', 'consumer_key', 'consumer_secret'])
@@ -490,6 +500,7 @@ class TestFunctions(TestCase):
             'bind_address': random_id(),
             'loglevel': random_id(),
             'file_compression': 'none',
+            'uuid': usercouch.random_salt(),
             'username': random_id(),
             'password': random_id(),
             'salt': usercouch.random_salt(),
@@ -501,6 +512,7 @@ class TestFunctions(TestCase):
                 'bind_address': o3['bind_address'],
                 'loglevel': o3['loglevel'],
                 'file_compression': 'none',
+                'uuid': o3['uuid'],
                 'username': o3['username'],
                 'password': o3['password'],
                 'salt': o3['salt'],
