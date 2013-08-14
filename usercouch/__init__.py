@@ -363,6 +363,7 @@ def build_template_kw(auth, config, ports, paths):
         'bind_address': config['bind_address'],
         'loglevel': config['loglevel'],
         'file_compression': config['file_compression'],
+        'uuid': config['uuid'],
         'databases': paths.databases,
         'views': paths.views,
         'logfile': paths.logfile,
