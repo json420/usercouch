@@ -649,7 +649,7 @@ class UserCouch:
             (response, data) = self._request('GET', '/')
             self._welcome = json.loads(data.decode('utf-8'))
             return True
-        except socket.error:
+        except (socket.error, BadStatusLine):
             return False
 
     def check(self):
