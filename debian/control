@@ -6,7 +6,7 @@ Build-Depends: debhelper (>= 9),
     python3-all (>= 3.3),
     python3-sphinx,
     python3-dbase32 (>= 0.6),
-    couchdb-bin (>= 1.4.0),
+    couchdb-bin (>= 1.5.0),
     openssl,
 Standards-Version: 3.9.4
 X-Python3-Version: >= 3.3
@@ -16,7 +16,7 @@ Package: python3-usercouch
 Architecture: all
 Depends: ${python3:Depends}, ${misc:Depends},
     python3-dbase32 (>= 0.6),
-    couchdb-bin (>= 1.4.0),
+    couchdb-bin (>= 1.5.0),
     openssl,
 Suggests: python3-microfiber, python3-usercouch-doc
 Description: starts per-user CouchDB instances for fun, profit, unit testing
