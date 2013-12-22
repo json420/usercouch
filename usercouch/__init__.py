@@ -39,7 +39,7 @@ from urllib.parse import urlparse
 
 from dbase32 import random_id
 
-__version__ = '13.12.0'
+__version__ = '14.01.0'
 
 USERCOUCH_INI = path.join(
     path.dirname(path.abspath(__file__)), 'data', 'usercouch.ini'
