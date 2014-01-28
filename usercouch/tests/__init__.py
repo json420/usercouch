@@ -34,10 +34,10 @@ import subprocess
 import time
 from copy import deepcopy
 from base64 import b32decode
-from http.client import HTTPConnection
 from random import SystemRandom
 
 from dbase32 import random_id, isdb32
+from degu.client import Client
 
 from usercouch import sslhelpers
 import usercouch
@@ -1194,7 +1194,7 @@ class TestHTTPFunctions(TestCase):
         basic = {'username': 'Aladdin', 'password': 'open sesame'}
         self.assertEqual(
             usercouch.basic_auth_header(basic),
-            {'Authorization': 'Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ=='}
+            {'authorization': 'Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ=='}
         )
 
     def test_get_conn(self):
@@ -1202,19 +1202,19 @@ class TestHTTPFunctions(TestCase):
         url = 'http://localhost:5634/'
         env = {'url': url}
         conn = usercouch.get_conn(env)
-        self.assertIsInstance(conn, HTTPConnection)
+        self.assertIsInstance(conn, Client)
 
     def test_get_headers(self):
         env = {}
         self.assertEqual(usercouch.get_headers(env),
-            {'Accept': 'application/json'}
+            {'accept': 'application/json'}
         )
 
         env = {'basic': {'username': 'Aladdin', 'password': 'open sesame'}}
         self.assertEqual(usercouch.get_headers(env),
             {
-                'Accept': 'application/json',
-                'Authorization': 'Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ==',
+                'accept': 'application/json',
+                'authorization': 'Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ==',
             }
         )
 
@@ -1322,7 +1322,7 @@ class TestUserCouch(TestCase):
         self.assertFalse(path.exists(uc.paths.ini))
         env = uc.bootstrap('open')
         self.assertTrue(path.isfile(uc.paths.ini))
-        self.assertEqual(uc._headers, {'Accept': 'application/json'})
+        self.assertEqual(uc._headers, {'accept': 'application/json'})
 
         # check env
         self.assertIsInstance(env, dict)
@@ -1351,7 +1351,7 @@ class TestUserCouch(TestCase):
         env = uc.bootstrap()
         self.assertTrue(path.isfile(uc.paths.ini))
         self.assertEqual(uc._headers, usercouch.get_headers(env))
-        self.assertEqual(set(uc._headers), set(['Accept', 'Authorization']))
+        self.assertEqual(set(uc._headers), set(['accept', 'authorization']))
 
         # check env
         self.assertIsInstance(env, dict)
@@ -1397,7 +1397,7 @@ class TestUserCouch(TestCase):
         env = uc.bootstrap(auth='oauth')
         self.assertTrue(path.isfile(uc.paths.ini))
         self.assertEqual(uc._headers, usercouch.get_headers(env))
-        self.assertEqual(set(uc._headers), set(['Accept', 'Authorization']))
+        self.assertEqual(set(uc._headers), set(['accept', 'authorization']))
 
         # check env
         self.assertIsInstance(env, dict)
@@ -1547,7 +1547,7 @@ class TestUserCouch(TestCase):
         env = uc.bootstrap('basic', overrides)
         self.assertTrue(path.isfile(uc.paths.ini))
         self.assertEqual(uc._headers, usercouch.get_headers(env))
-        self.assertEqual(set(uc._headers), set(['Accept', 'Authorization']))
+        self.assertEqual(set(uc._headers), set(['accept', 'authorization']))
 
         # check env
         self.assertIsInstance(env, dict)

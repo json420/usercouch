@@ -34,10 +34,12 @@ from subprocess import Popen
 from hashlib import sha1, md5
 from base64 import b32encode, b64encode
 import json
-from http.client import HTTPConnection, BadStatusLine
 from urllib.parse import urlparse
 
 from dbase32 import random_id
+from degu.client import Client
+from degu.base import EmptyLineError
+
 
 __version__ = '14.01.0'
 
@@ -515,18 +517,18 @@ class HTTPError(Exception):
 def basic_auth_header(basic):
     b = '{username}:{password}'.format(**basic).encode('utf-8')
     b64 = b64encode(b).decode('utf-8')
-    return {'Authorization': 'Basic ' + b64}
+    return {'authorization': 'Basic ' + b64}
 
 
 def get_conn(env):
     t = urlparse(env['url'])
     assert t.scheme == 'http'
     assert t.netloc
-    return HTTPConnection(t.netloc)
+    return Client(t.hostname, t.port)
 
 
 def get_headers(env):
-    headers = {'Accept': 'application/json'}
+    headers = {'accept': 'application/json'}
     if 'basic' in env:
         headers.update(basic_auth_header(env['basic']))
     return headers
@@ -623,17 +625,16 @@ class UserCouch:
     def _request(self, method, path):
         for retry in range(2):
             try:
-                self._conn.request(method, path, None, self._headers)
-                response = self._conn.getresponse()
-                data = response.read()
+                response = self._conn.request(method, path, self._headers)
+                data = (response.body.read() if response.body else b'')
                 break
-            except BadStatusLine as e:
+            except (OSError, EmptyLineError):
                 self._conn.close()
                 if retry == 1:
-                    raise e
-            except Exception as e:
+                    raise
+            except Exception:
                 self._conn.close()
-                raise e
+                raise
         if response.status >= 400:
             self._conn.close()
             raise HTTPError(response, method, path)
@@ -649,7 +650,7 @@ class UserCouch:
             (response, data) = self._request('GET', '/')
             self._welcome = json.loads(data.decode('utf-8'))
             return True
-        except (socket.error, BadStatusLine):
+        except (OSError, EmptyLineError):
             return False
 
     def check(self):
