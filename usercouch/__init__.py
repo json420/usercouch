@@ -41,7 +41,7 @@ from degu.client import Client
 from degu.base import EmptyLineError
 
 
-__version__ = '14.01.0'
+__version__ = '14.02.0'
 
 USERCOUCH_INI = path.join(
     path.dirname(path.abspath(__file__)), 'data', 'usercouch.ini'
