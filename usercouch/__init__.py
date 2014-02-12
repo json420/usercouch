@@ -37,8 +37,7 @@ import json
 from urllib.parse import urlparse
 
 from dbase32 import random_id
-from degu.client import Client
-from degu.base import EmptyLineError
+from degu.client import create_client
 
 
 __version__ = '14.02.0'
@@ -520,13 +519,6 @@ def basic_auth_header(basic):
     return {'authorization': 'Basic ' + b64}
 
 
-def get_conn(env):
-    t = urlparse(env['url'])
-    assert t.scheme == 'http'
-    assert t.netloc
-    return Client(t.hostname, t.port)
-
-
 def get_headers(env):
     headers = {'accept': 'application/json'}
     if 'basic' in env:
@@ -590,7 +582,7 @@ class UserCouch:
         if extra:
             session_ini += extra
         open(self.paths.ini, 'w').write(session_ini)
-        self._conn = get_conn(env)
+        self._client = create_client(env['url'])
         self._headers = get_headers(env)
         socks.close()
         self.start()
@@ -623,20 +615,12 @@ class UserCouch:
         return True
 
     def _request(self, method, path):
-        for retry in range(2):
-            try:
-                response = self._conn.request(method, path, self._headers)
-                data = (response.body.read() if response.body else b'')
-                break
-            except (OSError, EmptyLineError):
-                self._conn.close()
-                if retry == 1:
-                    raise
-            except Exception:
-                self._conn.close()
-                raise
+        try:
+            response = self._client.request(method, path, self._headers)
+            data = (response.body.read() if response.body else b'')
+        finally:
+            self._client.close()   
         if response.status >= 400:
-            self._conn.close()
             raise HTTPError(response, method, path)
         return (response, data)
 
@@ -650,7 +634,7 @@ class UserCouch:
             (response, data) = self._request('GET', '/')
             self._welcome = json.loads(data.decode('utf-8'))
             return True
-        except (OSError, EmptyLineError):
+        except OSError:
             return False
 
     def check(self):
