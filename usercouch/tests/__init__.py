@@ -1197,13 +1197,6 @@ class TestHTTPFunctions(TestCase):
             {'authorization': 'Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ=='}
         )
 
-    def test_get_conn(self):
-        tmp = TempDir()
-        url = 'http://localhost:5634/'
-        env = {'url': url}
-        conn = usercouch.get_conn(env)
-        self.assertIsInstance(conn, Client)
-
     def test_get_headers(self):
         env = {}
         self.assertEqual(usercouch.get_headers(env),
