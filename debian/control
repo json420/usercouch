@@ -6,7 +6,7 @@ Build-Depends: debhelper (>= 9),
     python3-all (>= 3.3),
     python3-sphinx,
     python3-dbase32 (>= 0.6),
-    python3-degu,
+    python3-degu (>= 0.2),
     couchdb-bin (>= 1.5.0),
     openssl,
 Standards-Version: 3.9.4
@@ -17,7 +17,7 @@ Package: python3-usercouch
 Architecture: all
 Depends: ${python3:Depends}, ${misc:Depends},
     python3-dbase32 (>= 0.6),
-    python3-degu,
+    python3-degu (>= 0.2),
     couchdb-bin (>= 1.5.0),
     openssl,
 Suggests: python3-microfiber, python3-usercouch-doc
