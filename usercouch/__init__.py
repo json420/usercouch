@@ -616,7 +616,7 @@ class UserCouch:
 
     def _request(self, method, path):
         try:
-            response = self._client.request(method, path, self._headers)
+            response = self._client.request(method, path, self._headers.copy())
             data = (response.body.read() if response.body else b'')
         finally:
             self._client.close()   
