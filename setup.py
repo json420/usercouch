@@ -26,8 +26,8 @@ Install `usercouch`.
 """
 
 import sys
-if sys.version_info < (3, 3):
-    sys.exit('ERROR: UserCouch requires Python 3.3 or newer')
+if sys.version_info < (3, 4):
+    sys.exit('ERROR: UserCouch requires Python 3.4 or newer')
 
 from distutils.core import setup
 from distutils.cmd import Command
