@@ -31,13 +31,11 @@ import io
 import tempfile
 import shutil
 import subprocess
-import time
 from copy import deepcopy
-from base64 import b32decode
+
 from random import SystemRandom
 
 from dbase32 import random_id, isdb32
-from degu.client import Client
 
 from usercouch import sslhelpers
 import usercouch
@@ -1277,7 +1275,7 @@ class TestUserCouch(TestCase):
 
         # Make sure `a` has the lock
         with self.assertRaises(usercouch.LockError) as cm:
-            b = usercouch.UserCouch(tmp.dir)
+            usercouch.UserCouch(tmp.dir)
         self.assertEqual(cm.exception.lockfile, lockfile)
 
         # Test releasing by directly calling UserCouch.__del__()
@@ -1288,7 +1286,7 @@ class TestUserCouch(TestCase):
 
         # Make sure `b` has the lock:
         with self.assertRaises(usercouch.LockError) as cm:
-            c = usercouch.UserCouch(tmp.dir)
+            usercouch.UserCouch(tmp.dir)
         self.assertEqual(cm.exception.lockfile, lockfile)
 
         # Test releasing by dereferencing:
@@ -1298,8 +1296,10 @@ class TestUserCouch(TestCase):
 
         # Make sure `c` has the lock:
         with self.assertRaises(usercouch.LockError) as cm:
-            d = usercouch.UserCouch(tmp.dir)
+            usercouch.UserCouch(tmp.dir)
         self.assertEqual(cm.exception.lockfile, lockfile)
+
+        del c
 
     def test_repr(self):
         tmp = TempDir()

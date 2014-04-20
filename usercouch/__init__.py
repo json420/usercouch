@@ -32,9 +32,8 @@ import time
 from copy import deepcopy
 from subprocess import Popen
 from hashlib import sha1, md5
-from base64 import b32encode, b64encode
+from base64 import b64encode
 import json
-from urllib.parse import urlparse
 
 from dbase32 import random_id
 from degu.client import create_client

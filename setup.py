@@ -29,6 +29,9 @@ import sys
 if sys.version_info < (3, 4):
     sys.exit('ERROR: UserCouch requires Python 3.4 or newer')
 
+import os
+from os import path
+import subprocess
 from distutils.core import setup
 from distutils.cmd import Command
 
@@ -36,20 +39,67 @@ import usercouch
 from usercouch.tests.run import run_tests
 
 
-class Test(Command):
-    description = 'run unit tests and doc tests'
+TREE = path.dirname(path.abspath(__file__))
 
-    user_options = []
+
+def run_under_same_interpreter(opname, script, args):
+    print('\n** running: {}...'.format(script), file=sys.stderr)
+    if not os.access(script, os.R_OK | os.X_OK):
+        print('ERROR: cannot read and execute: {!r}'.format(script),
+            file=sys.stderr
+        )
+        print('Consider running `setup.py test --skip-{}`'.format(opname),
+            file=sys.stderr
+        )
+        sys.exit(3)
+    cmd = [sys.executable, script] + args
+    print('check_call:', cmd, file=sys.stderr)
+    subprocess.check_call(cmd)
+    print('** PASSED: {}\n'.format(script), file=sys.stderr)
+
+
+def run_pyflakes3():
+    script = '/usr/bin/pyflakes3'
+    names = [
+        'usercouch',
+        'setup.py',
+    ]
+    args = [path.join(TREE, name) for name in names]
+    run_under_same_interpreter('flakes', script, args)
+
+
+def run_sphinx_doctest():
+    # FIXME:
+    return
+    script = '/usr/share/sphinx/scripts/python3/sphinx-build'
+    doc = path.join(TREE, 'doc')
+    doctest = path.join(TREE, 'doc', '_build', 'doctest')
+    args = ['-EW', '-b', 'doctest', doc, doctest]
+    run_under_same_interpreter('sphinx', script, args)
+
+
+class Test(Command):
+    description = 'run unit tests and doctests'
+
+    user_options = [
+        ('skip-flakes', None, 'do not run pyflakes static checks'),
+        ('skip-sphinx', None, 'do not run Sphinx doctests'),
+    ]
 
     def initialize_options(self):
-        pass
+        self.skip_sphinx = 0
+        self.skip_flakes = 0
 
     def finalize_options(self):
         pass
 
     def run(self):
+        if not self.skip_flakes:
+            run_pyflakes3()
         if not run_tests():
-            raise SystemExit('2')
+            sys.exit(2)
+        if not self.skip_sphinx:
+            run_sphinx_doctest()
 
 
 setup(
