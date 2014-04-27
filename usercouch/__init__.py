@@ -39,7 +39,7 @@ from dbase32 import random_id
 from degu.client import create_client
 
 
-__version__ = '14.04.0'
+__version__ = '14.05.0'
 
 USERCOUCH_INI = path.join(
     path.dirname(path.abspath(__file__)), 'data', 'usercouch.ini'
