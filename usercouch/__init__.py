@@ -614,11 +614,12 @@ class UserCouch:
         return True
 
     def _request(self, method, path):
+        conn = self._client.connect()
         try:
-            response = self._client.request(method, path, self._headers.copy())
+            response = conn.request(method, path, self._headers.copy())
             data = (response.body.read() if response.body else b'')
         finally:
-            self._client.close()   
+            conn.close()   
         if response.status >= 400:
             raise HTTPError(response, method, path)
         return (response, data)
