@@ -22,7 +22,8 @@ packages are available for Ubuntu in the `Novacut Stable Releases PPA`_ and the
 If you have questions or need help getting started with UserCouch, please stop
 by the `#novacut`_ IRC channel on freenode.
 
-UserCouch is licensed `LGPLv3+`_.
+UserCouch is licensed `LGPLv3+`_, requires `Python 3.4`_ or newer, and depends
+upon `Degu`_ and `Dbase32`_.
 
 
 Contents:
@@ -39,11 +40,12 @@ Contents:
 .. _`UserCouch`: https://launchpad.net/usercouch
 .. _`CouchDB`: http://couchdb.apache.org/
 .. _`Microfiber`: https://launchpad.net/microfiber
-.. _`LGPLv3+`: http://www.gnu.org/licenses/lgpl-3.0.html
-
-
 .. _`Novacut`: https://wiki.ubuntu.com/Novacut
 .. _`Novacut Stable Releases PPA`: https://launchpad.net/~novacut/+archive/stable
 .. _`Novacut Daily Builds PPA`: https://launchpad.net/~novacut/+archive/daily
 .. _`#novacut`: http://webchat.freenode.net/?channels=novacut
+.. _`LGPLv3+`: https://www.gnu.org/licenses/lgpl-3.0.html
+.. _`Python 3.4`: https://docs.python.org/3.4/
+.. _`Degu`: https://launchpad.net/degu
+.. _`Dbase32`: https://launchpad.net/dbase32
 
