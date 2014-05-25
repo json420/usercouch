@@ -1,5 +1,5 @@
-:mod:`usercouch` API Reference
-==============================
+:mod:`usercouch` --- core API
+=============================
 
 .. py:module:: usercouch
     :synopsis: Start per-user CouchDB instances for fun, profit, unit testing

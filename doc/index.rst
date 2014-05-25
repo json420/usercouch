@@ -39,7 +39,7 @@ Contents:
     install
     tutorial
     usercouch
-    usercouch_misc
+    usercouch.misc
 
 
 

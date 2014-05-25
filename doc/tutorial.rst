@@ -7,8 +7,8 @@ To create a :class:`UserCouch` instance, you must supply the *basedir*
 directory in which all the `CouchDB`_ data will be stored.  For example:
 
 >>> import tempfile
->>> mytmpdir = tempfile.mkdtemp()
 >>> from usercouch import UserCouch
+>>> mytmpdir = tempfile.mkdtemp()
 >>> mycouch = UserCouch(mytmpdir)
 
 Then  call :meth:`UserCouch.bootstrap()` to create the one-time configuration
@@ -222,7 +222,7 @@ When you call :meth:`UserCouch.bootstrap()`, the returned *env* will have an
 
 
 
-Security Notes
+Security notes
 --------------
 
 You'll typically configure UserCouch to only accept connections from localhost,

@@ -1,5 +1,5 @@
-:mod:`usercouch.misc` API Reference
-===================================
+:mod:`usercouch.misc` --- Test fixtures
+=======================================
 
 .. py:module:: usercouch.misc
     :synopsis: Misc helpers for unit testing
