@@ -9,17 +9,18 @@ import usercouch
 
 # Project info
 project = 'UserCouch'
-copyright = '2012, Novacut Inc'
-version = usercouch.__version__[:5]
+copyright = '2014, Novacut Inc'
+version = usercouch.__version__
 release = usercouch.__version__
 
 
 # General config
-needs_sphinx = '1.1'
+needs_sphinx = '1.2'
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.doctest',
     'sphinx.ext.coverage',
+    'sphinx.ext.viewcode',
 ]
 templates_path = ['_templates']
 source_suffix = '.rst'
