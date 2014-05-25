@@ -69,8 +69,6 @@ def run_pyflakes3():
 
 
 def run_sphinx_doctest():
-    # FIXME:
-    return
     script = '/usr/share/sphinx/scripts/python3/sphinx-build'
     doc = path.join(TREE, 'doc')
     doctest = path.join(TREE, 'doc', '_build', 'doctest')
