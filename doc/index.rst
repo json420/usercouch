@@ -12,8 +12,13 @@ with `Microfiber`_, for example:
 >>> db = Database('mydb', env)
 >>> db.put(None)  # Create the database
 {'ok': True}
->>> db.post({'_id': 'mydoc'})  # Create a document
-{'rev': '1-967a00dff5e02add41819138abb3284d', 'ok': True, 'id': 'mydoc'}
+>>> db.post({'_id': 'mydoc'}) == {  # Create a document
+...     'id': 'mydoc',
+...     'rev': '1-967a00dff5e02add41819138abb3284d',
+...     'ok': True,
+... }
+True
+
 
 UserCouch is being developed as part of the `Novacut`_ project.  UserCouch
 packages are available for Ubuntu in the `Novacut Stable Releases PPA`_ and the

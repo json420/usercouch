@@ -66,7 +66,10 @@ Exceptions
 
     For example:
 
-    >>> mycouch = UserCouch('/home/jderose/.usercouch')
+    >>> import tempfile
+    >>> from usercouch import UserCouch
+    >>> mytmpdir = tempfile.mkdtemp()
+    >>> mycouch = UserCouch(mytmpdir)
     >>> env = mycouch.bootstrap()
 
     .. attribute:: basedir
@@ -121,24 +124,14 @@ Exceptions
 Helper functions
 ----------------
 
-.. function:: random_b32(numbytes=15)
-
-    Return a random 120-bit base32-encoded random string.
-
-    The ``str`` will be 24-characters long, URL and file-system safe.  For
-    example:
-
-    >>> random_b32()
-    '6NOLCDV3EQCPJDL43STIZIHN'
-
-
 .. function:: random_oauth()
 
     Return a ``dict`` containing random OAuth 1a tokens.
     
     For example:
 
-    >>> random_oauth()
+    >>> from usercouch import random_oauth
+    >>> random_oauth()  #doctest: +SKIP
     {
         'consumer_key': 'YXOIWEJOQW4VRGNNEGT6SQYN',
         'consumer_secret': '6KFO4Y4OZQT3YGJ4ZUYOR5I2',
@@ -152,8 +145,9 @@ Helper functions
     Return a 128-bit hex-encoded random salt for use by :func:`couch_hashed()`.
 
     For example:
-    
-    >>> random_salt()
+
+    >>> from usercouch import random_salt
+    >>> random_salt()  #doctest: +SKIP
     'da52c844db4b8bd88ebb96d72542457a'
 
 
@@ -164,6 +158,7 @@ Helper functions
     This returns a CouchDB-style hashed password to be used in the session.ini
     file.  For example:
 
+    >>> from usercouch import couch_hashed
     >>> couch_hashed('secret', 'da52c844db4b8bd88ebb96d72542457a')
     '-hashed-ddf425840fd7f81cc45d9e9f5aa484d1f60964a9,da52c844db4b8bd88ebb96d72542457a'
 

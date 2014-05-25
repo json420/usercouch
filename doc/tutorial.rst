@@ -1,13 +1,15 @@
-UserCouch Tutorial
-==================
+Tutorial
+========
 
 .. py:currentmodule:: usercouch
 
 To create a :class:`UserCouch` instance, you must supply the *basedir*
 directory in which all the `CouchDB`_ data will be stored.  For example:
 
+>>> import tempfile
+>>> mytmpdir = tempfile.mkdtemp()
 >>> from usercouch import UserCouch
->>> mycouch = UserCouch('/home/jderose/.usercouch')
+>>> mycouch = UserCouch(mytmpdir)
 
 Then  call :meth:`UserCouch.bootstrap()` to create the one-time configuration
 and start CouchDB:
@@ -18,25 +20,33 @@ The returned *env* will be a ``dict`` with an extensible environment
 following the same conventions as `Microfiber`_.
 
 Because this is a per-user CouchDB instance, a random port is chosen when you
-call :meth:`UserCouch.bootstrap()`, and *env* will contain this port:
+call :meth:`UserCouch.bootstrap()`, and *env* will contain this port, which will
+be something like:
 
->>> env['port']
+>>> env['port']  #doctest: +SKIP
 53206
 
 The *env* also contains the HTTP URL of the CouchDB instance:
 
->>> env['url']
-'http://localhost:53206/'
+>>> env['url']  #doctest: +SKIP
+'http://127.0.0.1:53206/'
 
 By default, :meth:`UserCouch.bootstrap()` will configure CouchDB for basic
-HTTP auth, using a random username and password each time:
+HTTP auth, using a random username and password each time, which will be
+something like:
 
->>> env['basic']
+>>> env['basic']  #doctest: +SKIP
 {'username': '72UT4WBTH3HFGT4S5OMYXGWA', 'password': 'WP5DUTBRQRYXFYKGZQ4MPDHB'}
 
 Normally the CouchDB process will be automatically killed for you when the
 :class:`UserCouch` instance is garbage collected.  However, in certain
-circumstances, you may need to manually call :meth:`UserCouch.kill()`.
+circumstances, you may need to manually call :meth:`UserCouch.kill()`, which
+will return ``True`` if the CouchDB instance was running:
+
+>>> mycouch.kill()
+True
+>>> import shutil
+>>> shutil.rmtree(mytmpdir)
 
 
 
@@ -95,40 +105,40 @@ Bootstrap *auth* Options
 The :meth:`UserCouch.bootstrap()` *auth* kwarg can be ``'open'``, ``'basic'``,
 or ``'oauth'``.  As noted above, it defaults to ``'basic'``.
 
-If you use ``auth='open'``, you'll get an *env* similar to this:
+If you use ``auth='open'``, you'll get an *env* similar to this::
 
->>> {
-...     'port': 41505,
-...     'url': 'http://localhost:41505/',
-... }
+    {
+        'port': 41505,
+        'url': 'http://localhost:41505/',
+    }
 
-If you use ``auth='basic'``, you'll get an *env* similar to this:
+If you use ``auth='basic'``, you'll get an *env* similar to this::
 
->>> {
-...     'port': 57910,
-...     'url': 'http://localhost:57910/',
-...     'basic': {
-...         'username': 'BKBTG7MX5Z6CTWHBOBXOX63S',
-...         'password': 'YGQQRSDMIF6GTZ6JMETWPUUE',
-...     },
-... }
+    {
+        'port': 57910,
+        'url': 'http://localhost:57910/',
+        'basic': {
+            'username': 'BKBTG7MX5Z6CTWHBOBXOX63S',
+            'password': 'YGQQRSDMIF6GTZ6JMETWPUUE',
+        },
+    }
 
-If you use ``auth='oauth'``, you'll get an *env* similar to this:
+If you use ``auth='oauth'``, you'll get an *env* similar to this::
 
->>> {
-...     'port': 56618
-...     'url': 'http://localhost:56618/', 
-...     'basic': {
-...         'username': 'MAO5VQIKCJWS7NGGMV2IYC7S',
-...         'password': 'A7RDFDAMUFFFBP72VWSGK5QD',
-...     },
-...     'oauth': {
-...         'consumer_key': 'MDWS6LVY4N7TSBKCNW4UWMVW',
-...         'consumer_secret': 'DA2TGMAUTRASC67ZZPVJAXYY',
-...         'token': 'PU7WWZNC3RJDX3CAOW3Q6TZW',
-...         'token_secret': 'H7XPTS2QHKYFQ4Z35NSKF3FR',
-...     },
-... }
+    {
+        'port': 56618
+        'url': 'http://localhost:56618/', 
+        'basic': {
+            'username': 'MAO5VQIKCJWS7NGGMV2IYC7S',
+            'password': 'A7RDFDAMUFFFBP72VWSGK5QD',
+        },
+        'oauth': {
+            'consumer_key': 'MDWS6LVY4N7TSBKCNW4UWMVW',
+            'consumer_secret': 'DA2TGMAUTRASC67ZZPVJAXYY',
+            'token': 'PU7WWZNC3RJDX3CAOW3Q6TZW',
+            'token_secret': 'H7XPTS2QHKYFQ4Z35NSKF3FR',
+        },
+    }
 
 
 
@@ -156,7 +166,7 @@ is started.  For example:
 ...         'cert_file': '/my/couchdb/client.cert',
 ...     },
 ... }
->>> env = tmpcouch.bootstrap('basic',  config)
+>>> env = tmpcouch.bootstrap('basic',  config)  #doctest: +SKIP
 
 The available options include:
 
@@ -191,24 +201,24 @@ cause additional sections of the session.ini file to be written.
 If you provide *ssl*, CouchDB will be configured for SSL support and will be
 listening on two different random ports (one with SSL, the other without).
 When you call :meth:`UserCouch.bootstrap()`, the returned *env* will have an
-``env['x_env_ssl']`` sub-dictionary like this:
+``env['x_env_ssl']`` sub-dictionary like this::
 
->>> {
-...     'basic': {
-...         'password': 'F5KTCQAIKTFBOW7TKRRUUNMT',
-...         'username': 'BJPIMDUNVDULIJHECBFCZHDQ'
-...     },
-...     'port': 56355,
-...     'url': 'http://127.0.0.1:56355/',
-...     'x_env_ssl': {
-...         'basic': {
-...             'password': 'F5KTCQAIKTFBOW7TKRRUUNMT',
-...             'username': 'BJPIMDUNVDULIJHECBFCZHDQ'
-...         },
-...         'port': 42647,
-...         'url': 'https://127.0.0.1:42647/'
-...     }
-... }
+    {
+        'basic': {
+            'password': 'F5KTCQAIKTFBOW7TKRRUUNMT',
+            'username': 'BJPIMDUNVDULIJHECBFCZHDQ'
+        },
+        'port': 56355,
+        'url': 'http://127.0.0.1:56355/',
+        'x_env_ssl': {
+            'basic': {
+                'password': 'F5KTCQAIKTFBOW7TKRRUUNMT',
+                'username': 'BJPIMDUNVDULIJHECBFCZHDQ'
+            },
+            'port': 42647,
+            'url': 'https://127.0.0.1:42647/'
+        }
+    }
 
 
 
@@ -232,6 +242,7 @@ As far as local security, using ``auth='oauth'`` is less attractive because the
 clear-text of the OAuth tokens must be written to the session.ini file.
 
 
+
 The Lockfile
 ------------
 
@@ -242,10 +253,13 @@ lockfile is used.
 
 If the lock cannot be aquired, a :exc:`LockError` is raised:
 
->>> mycouch2 = UserCouch('/home/jderose/.usercouch')
+>>> tmpdir = tempfile.mkdtemp()
+>>> couch1 = UserCouch(tmpdir)
+>>> couch2 = UserCouch(tmpdir)
 Traceback (most recent call last):
   ...
 usercouch.LockError: cannot acquire exclusive lock on '/home/jderose/.usercouch/lockfile'
+>>> shutil.rmtree(tmpdir)
 
 Note that it's perfectly fine for multiple :class:`UserCouch` instances to be running
 simultaneously as long as each uses its own *basedir*.
