@@ -141,6 +141,47 @@ class TestFunctions(TestCase):
             '-hashed-791a7d0f893bfbf6311d36081f797fe166cee072,' + salt
         )
 
+    def test_couch_pbkdf2(self):
+        # First, test with some test vectors from:
+        # https://issues.apache.org/jira/secure/attachment/12492631/0001-Integrate-PBKDF2.patch
+        self.assertEqual(
+            usercouch.couch_pbkdf2('password', 'salt', 1),
+            '-pbkdf2-0c60c80f961f0e71f3a9b524af6012062fe037a6,salt,1'
+        )
+        self.assertEqual(
+            usercouch.couch_pbkdf2('password', 'salt', 2),
+            '-pbkdf2-ea6c014dc72d6f8ccd1ed92ace1d41f0d8de8957,salt,2'
+        )
+        self.assertEqual(
+            usercouch.couch_pbkdf2('password', 'salt', 4096),
+            '-pbkdf2-4b007901b765489abead49d926f721d065a429c1,salt,4096'
+        )
+
+        # Now test with a static random password from `dbase32.random_id()` and
+        # a static random salt from `usercouch.random_salt()`:
+        password = '6HOCKU4SJVOQ9NUWUFWRJMBR'
+        salt = 'b1b9b53b17197bd9bfd844fa63aeb0cf'
+        self.assertEqual(
+            usercouch.couch_pbkdf2(password, salt),
+            '-pbkdf2-c5f51155cf3f551e74f1ec02cab56b72d35a961e,b1b9b53b17197bd9bfd844fa63aeb0cf,10'
+        )
+        self.assertEqual(
+            usercouch.couch_pbkdf2(password, salt, 10),
+            '-pbkdf2-c5f51155cf3f551e74f1ec02cab56b72d35a961e,b1b9b53b17197bd9bfd844fa63aeb0cf,10'
+        )
+        self.assertEqual(
+            usercouch.couch_pbkdf2(password, salt, rounds=10),
+            '-pbkdf2-c5f51155cf3f551e74f1ec02cab56b72d35a961e,b1b9b53b17197bd9bfd844fa63aeb0cf,10'
+        )
+        self.assertEqual(
+            usercouch.couch_pbkdf2(password, salt, 1),
+            '-pbkdf2-541f089af5fb1d7d915f23ef30dc7a398c9d4bb0,b1b9b53b17197bd9bfd844fa63aeb0cf,1'
+        )
+        self.assertEqual(
+            usercouch.couch_pbkdf2(password, salt, rounds=34969),
+            '-pbkdf2-5d3fd075f690417ceb1da18e82d8965319860391,b1b9b53b17197bd9bfd844fa63aeb0cf,34969'
+        )
+
     def test_check_ssl_config(self):
         tmp = TempDir()
         ca = tmp.touch('ca.pem')
@@ -695,7 +736,7 @@ class TestFunctions(TestCase):
                 'views': paths.views,
                 'logfile': paths.logfile,
                 'username': config['username'],
-                'hashed': usercouch.couch_hashed(
+                'hashed': usercouch.couch_pbkdf2(
                     config['password'], config['salt']
                 ),
             }
@@ -714,7 +755,7 @@ class TestFunctions(TestCase):
                 'views': paths.views,
                 'logfile': paths.logfile,
                 'username': config['username'],
-                'hashed': usercouch.couch_hashed(
+                'hashed': usercouch.couch_pbkdf2(
                     config['password'], config['salt']
                 ),
                 'token': config['oauth']['token'],
@@ -1464,7 +1505,7 @@ class TestUserCouch(TestCase):
             'loglevel': overrides['loglevel'],
 
             'username': overrides['username'],
-            'hashed': usercouch.couch_hashed(
+            'hashed': usercouch.couch_pbkdf2(
                 overrides['password'], overrides['salt']
             ),
         }
@@ -1509,7 +1550,7 @@ class TestUserCouch(TestCase):
             'loglevel': overrides['loglevel'],
 
             'username': overrides['username'],
-            'hashed': usercouch.couch_hashed(
+            'hashed': usercouch.couch_pbkdf2(
                 overrides['password'], overrides['salt']
             ),
 
@@ -1598,7 +1639,9 @@ class TestUserCouch(TestCase):
         self.assertTrue(
             set(uc._welcome).issubset(['couchdb', 'uuid', 'vendor', 'version'])
         )
-        self.assertIn(uc._welcome['version'], ('1.4.0', '1.5.0'))
+        self.assertIn(uc._welcome['version'],
+            ('1.4.0', '1.5.0', '1.5.1', '1.6.0')
+        )
         self.assertIsInstance(uc._welcome['uuid'], str)
         self.assertEqual(len(uc._welcome['uuid']), 32)
         self.assertTrue(

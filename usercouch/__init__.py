@@ -31,7 +31,8 @@ import fcntl
 import time
 from copy import deepcopy
 from subprocess import Popen
-from hashlib import sha1, md5
+from hashlib import sha1, pbkdf2_hmac
+import binascii
 from base64 import b64encode
 import json
 
@@ -163,11 +164,15 @@ def random_oauth():
     )
 
 
+def tohex(data):
+    return binascii.hexlify(data).decode()
+
+
 def random_salt():
     """
     Return a 128-bit hex-encoded random salt for use  by `couch_hashed()`.
     """
-    return md5(os.urandom(16)).hexdigest()
+    return tohex(os.urandom(16))
 
 
 def couch_hashed(password, salt):
@@ -188,6 +193,32 @@ def couch_hashed(password, salt):
     data = (password + salt).encode('utf-8')
     hexdigest = sha1(data).hexdigest()
     return '-hashed-{},{}'.format(hexdigest, salt)
+
+
+def couch_pbkdf2(password, salt, rounds=10):
+    """
+    Hash *password* using *salt* with PKCS#5 password-based key derivation.
+
+    This returns a CouchDB-style pbkdf2 hashed password to be use in the
+    session.ini file.  For example:
+
+    >>> couch_pbkdf2('password', 'salt', 1)
+    '-pbkdf2-0c60c80f961f0e71f3a9b524af6012062fe037a6,salt,1'
+
+    Typically `UserCouch` is used with a per-session random password, so this
+    function means that the clear-text of the password is only stored in
+    memory, is never written to disk.
+
+    .. note:
+
+        As of CouchDB 1.6.0, it seems we can no longer start CouchDB using a
+        ``'-hashed-<digest>,<salt>'`` style hashed password as produced by
+        `couch_hashed()`.
+    """
+    assert isinstance(password, str)
+    assert isinstance(salt, str)
+    digest = pbkdf2_hmac('sha1', password.encode(), salt.encode(), rounds)
+    return '-pbkdf2-{},{},{}'.format(tohex(digest), salt, rounds)
 
 
 def check_ssl_config(ssl_config):
@@ -379,7 +410,7 @@ def build_template_kw(auth, config, ports, paths):
         kw['replicator'] = config['replicator']
     if auth in ('basic', 'oauth'):
         kw['username'] = config['username']
-        kw['hashed'] = couch_hashed(config['password'], config['salt'])
+        kw['hashed'] = couch_pbkdf2(config['password'], config['salt'])
     if auth == 'oauth':
         kw.update(config['oauth'])
     return kw
