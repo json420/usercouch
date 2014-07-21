@@ -149,11 +149,23 @@ class TestFunctions(TestCase):
             '-pbkdf2-0c60c80f961f0e71f3a9b524af6012062fe037a6,salt,1'
         )
         self.assertEqual(
+            usercouch.couch_pbkdf2('password', 'salt', rounds=1),
+            '-pbkdf2-0c60c80f961f0e71f3a9b524af6012062fe037a6,salt,1'
+        )
+        self.assertEqual(
             usercouch.couch_pbkdf2('password', 'salt', 2),
             '-pbkdf2-ea6c014dc72d6f8ccd1ed92ace1d41f0d8de8957,salt,2'
         )
         self.assertEqual(
+            usercouch.couch_pbkdf2('password', 'salt', rounds=2),
+            '-pbkdf2-ea6c014dc72d6f8ccd1ed92ace1d41f0d8de8957,salt,2'
+        )
+        self.assertEqual(
             usercouch.couch_pbkdf2('password', 'salt', 4096),
+            '-pbkdf2-4b007901b765489abead49d926f721d065a429c1,salt,4096'
+        )
+        self.assertEqual(
+            usercouch.couch_pbkdf2('password', 'salt', rounds=4096),
             '-pbkdf2-4b007901b765489abead49d926f721d065a429c1,salt,4096'
         )
 
@@ -176,6 +188,14 @@ class TestFunctions(TestCase):
         self.assertEqual(
             usercouch.couch_pbkdf2(password, salt, 1),
             '-pbkdf2-541f089af5fb1d7d915f23ef30dc7a398c9d4bb0,b1b9b53b17197bd9bfd844fa63aeb0cf,1'
+        )
+        self.assertEqual(
+            usercouch.couch_pbkdf2(password, salt, rounds=1),
+            '-pbkdf2-541f089af5fb1d7d915f23ef30dc7a398c9d4bb0,b1b9b53b17197bd9bfd844fa63aeb0cf,1'
+        )
+        self.assertEqual(
+            usercouch.couch_pbkdf2(password, salt, 34969),
+            '-pbkdf2-5d3fd075f690417ceb1da18e82d8965319860391,b1b9b53b17197bd9bfd844fa63aeb0cf,34969'
         )
         self.assertEqual(
             usercouch.couch_pbkdf2(password, salt, rounds=34969),
