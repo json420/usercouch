@@ -647,7 +647,7 @@ class UserCouch:
     def _request(self, method, path):
         conn = self._client.connect()
         try:
-            response = conn.request(method, path, self._headers.copy())
+            response = conn.request(method, path, self._headers.copy(), None)
             data = (response.body.read() if response.body else b'')
         finally:
             conn.close()   
