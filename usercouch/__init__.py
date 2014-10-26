@@ -37,7 +37,7 @@ from base64 import b64encode
 import json
 
 from dbase32 import random_id
-from degu.client import create_client
+from degu.client import Client
 
 
 __version__ = '14.10.0'
@@ -370,6 +370,7 @@ def build_env(auth, config, ports):
     port = ports['port']
     env = {
         'port': ports['port'],
+        'address': (bind_address, port),
         'url': build_url('http', bind_address, port),
     }
     if auth in ('basic', 'oauth'):
@@ -612,7 +613,7 @@ class UserCouch:
         if extra:
             session_ini += extra
         open(self.paths.ini, 'w').write(session_ini)
-        self._client = create_client(env['url'])
+        self._client = Client(env['address'])
         self._headers = get_headers(env)
         socks.close()
         self.start()
