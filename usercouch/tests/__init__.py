@@ -676,6 +676,7 @@ class TestFunctions(TestCase):
             usercouch.build_env('open', deepcopy(config), ports),
             {
                 'port': port,
+                'address': ('127.0.0.1', port),
                 'url': 'http://127.0.0.1:{}/'.format(port),
             }
         )
@@ -685,6 +686,7 @@ class TestFunctions(TestCase):
             usercouch.build_env('basic', deepcopy(config), ports),
             {
                 'port': port,
+                'address': ('127.0.0.1', port),
                 'url': 'http://127.0.0.1:{}/'.format(port),
                 'basic': {
                     'username': config['username'],
@@ -698,6 +700,7 @@ class TestFunctions(TestCase):
             usercouch.build_env('oauth', deepcopy(config), ports),
             {
                 'port': port,
+                'address': ('127.0.0.1', port),
                 'url': 'http://127.0.0.1:{}/'.format(port),
                 'basic': {
                     'username': config['username'],
@@ -1380,7 +1383,7 @@ class TestUserCouch(TestCase):
 
         # check env
         self.assertIsInstance(env, dict)
-        self.assertEqual(set(env), set(['port', 'url']))
+        self.assertEqual(set(env), {'port', 'address', 'url'})
         port = env['port']
         self.assertIsInstance(port, int)
         self.assertGreater(port, 1024)
@@ -1409,7 +1412,7 @@ class TestUserCouch(TestCase):
 
         # check env
         self.assertIsInstance(env, dict)
-        self.assertEqual(set(env), set(['port', 'url', 'basic']))
+        self.assertEqual(set(env), {'port', 'address', 'url', 'basic'})
         port = env['port']
         self.assertIsInstance(port, int)
         self.assertGreater(port, 1024)
@@ -1455,7 +1458,7 @@ class TestUserCouch(TestCase):
 
         # check env
         self.assertIsInstance(env, dict)
-        self.assertEqual(set(env), set(['port', 'url', 'basic', 'oauth']))
+        self.assertEqual(set(env), {'port', 'address', 'url', 'basic', 'oauth'})
         port = env['port']
         self.assertIsInstance(port, int)
         self.assertGreater(port, 1024)
@@ -1504,9 +1507,7 @@ class TestUserCouch(TestCase):
         uc = usercouch.UserCouch(tmp.dir)
         env = uc.bootstrap('basic', deepcopy(overrides))
         self.assertIsInstance(env, dict)
-        self.assertEqual(set(env),
-            set(['port', 'url', 'basic'])
-        )
+        self.assertEqual(set(env), {'port', 'address', 'url', 'basic'})
         self.assertIsInstance(env['port'], int)
         self.assertEqual(env['url'],
             'http://[::1]:{}/'.format(env['port'])
@@ -1548,9 +1549,7 @@ class TestUserCouch(TestCase):
         uc = usercouch.UserCouch(tmp.dir)
         env = uc.bootstrap('oauth', deepcopy(overrides))
         self.assertIsInstance(env, dict)
-        self.assertEqual(set(env),
-            set(['port', 'url', 'basic', 'oauth'])
-        )
+        self.assertEqual(set(env), {'port', 'address', 'url', 'basic', 'oauth'})
         self.assertIsInstance(env['port'], int)
         self.assertEqual(env['url'],
             'http://[::1]:{}/'.format(env['port'])
@@ -1605,7 +1604,9 @@ class TestUserCouch(TestCase):
 
         # check env
         self.assertIsInstance(env, dict)
-        self.assertEqual(set(env), set(['port', 'url', 'basic', 'x_env_ssl']))
+        self.assertEqual(set(env),
+            {'port', 'address', 'url', 'basic', 'x_env_ssl'}
+        )
         port = env['port']
         self.assertIsInstance(port, int)
         self.assertGreater(port, 1024)
@@ -1623,7 +1624,7 @@ class TestUserCouch(TestCase):
         # check env['x_env_ssl']
         env2 = env['x_env_ssl']
         self.assertIsInstance(env2, dict)
-        self.assertEqual(set(env2), set(['port', 'url', 'basic']))
+        self.assertEqual(set(env2), {'port', 'address', 'url', 'basic'})
         ssl_port = env2['port']
         self.assertIsInstance(ssl_port, int)
         self.assertGreater(ssl_port, 1024)
