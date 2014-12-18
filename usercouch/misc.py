@@ -26,6 +26,7 @@
 from unittest import TestCase
 import tempfile
 import shutil
+import os
 from os import path
 
 from dbase32 import random_id
@@ -64,6 +65,8 @@ class CouchTestCase(TestCase):
     bind_address = '127.0.0.1'
 
     def setUp(self):
+        if os.environ.get('SKIP_USERCOUCH_TEST_CASES') == 'true':
+            self.skipTest('SKIP_USERCOUCH_TEST_CASES=true')
         self.tmpcouch = TempCouch()
         self.env = self.tmpcouch.bootstrap(self.auth,
             {'bind_address': self.bind_address}
@@ -72,4 +75,4 @@ class CouchTestCase(TestCase):
     def tearDown(self):
         self.tmpcouch = None
         self.env = None
-        
+
