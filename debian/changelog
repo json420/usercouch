@@ -1,5 +1,5 @@
-usercouch (14.11.0~daily) utopic; urgency=low
+usercouch (14.12.0~alpha) trusty; urgency=low
 
   * Upstream pre-release
 
- -- Jason Gerard DeRose <jderose@novacut.com>  Wed, 05 Nov 2014 17:12:40 -0700
+ -- Jason Gerard DeRose <jderose@novacut.com>  Thu, 18 Dec 2014 13:46:19 -0700
