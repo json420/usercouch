@@ -94,6 +94,12 @@ The typical :class:`CouchTestCase` pattern looks like this:
 Because a new :class:`TempCouch` is created by ``setUp()`` prior to running
 each test method, both the ``test_bar()`` and ``test_baz()`` tests will pass.
 
+You can skip all :class:`CouchTestCase` based test cases by setting a
+``'SKIP_USERCOUCH_TEST_CASES'`` environment variable to ``'true'``.
+
+For example, something like this on the commandline::
+
+    SKIP_USERCOUCH_TEST_CASES=true python3 run-my-tests.py
 
 
 Bootstrap *auth* Options

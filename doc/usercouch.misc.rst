@@ -23,6 +23,16 @@ to use good CouchDB unit testing idioms.
 If subclasses need to provide their own ``setUp()`` or ``tearDown()`` methods,
 be sure to call the super methods.
 
+As your CouchDB unit tests can be rather long-running, you can set an
+environment variable that will cause all :class:`CouchTestCase` based test-cases
+to be skipped.
+
+For example, when running your own tests, you can do something like this on
+the command line::
+
+    SKIP_USERCOUCH_TEST_CASES=true ./setup.py test
+
+
 .. class:: CouchTestCase
 
     Base-class for CouchDB using unit tests.
