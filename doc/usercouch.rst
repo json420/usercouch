@@ -221,9 +221,10 @@ Exceptions
         `Microfiber`_ conventions.
 
         .. warning::
-
             For security reasons, only the default *auth* value of ``'basic'``
-            is recommended.  Unless explicitly provided,
+            is recommended.  You should also let UserCouch generated a random
+            120-bit session password for you rather than providing it in the
+            *config*. See :ref:`security-notes` for details.
 
     .. method:: start()
 
@@ -284,6 +285,10 @@ Helper functions
 .. function:: couch_hashed(password, salt)
 
     Hash *password* using *salt*.
+
+    .. note::
+        For compatibility with CouchDB 1.6, UserCouch itself no longer uses this
+        function, instead uses :func:`couch_pbkdf2()`.
 
     This returns a CouchDB-style SHA-1 hashed password to be used in the
     ``session.ini`` file.  For example:

@@ -188,7 +188,9 @@ The available options include:
 
     * `username`: CouchDB admin username; default is a random username
 
-    * `password`: CouchDB admin password; default is a random password
+    * `password`: CouchDB admin password; default is a random 120-bit password;
+       avoid using this unless you absolutely need it and have carefully thought
+       through the security implications!
 
     * `oauth`: a dictionary containing OAuth 1.0a tokens; by default random
       tokens are created
@@ -228,24 +230,29 @@ When you call :meth:`UserCouch.bootstrap()`, the returned *env* will have an
 
 
 
+.. _security-notes:
+
 Security notes
 --------------
 
 You'll typically configure UserCouch to only accept connections from localhost,
 so local security is the biggest concern.  Remember, any process running as any
 user can connect to your UserCouch.  Although your UserCouch will run on a
-random port, that is not a sufficient access control mechanism.
+random port, that is *not* a sufficient access control mechanism.
 
-The best security is achieved using ``auth='basic'`` as only the hashed value
+The best security is achieved using ``auth='basic'`` (the default) when calling
+:meth:`UserCouch.bootstrap()`.  In this case, only the PBKDF2 SHA-1 hashed value
 of the random password will be written to the CouchDB session.ini file.  Only
 the process that started the UserCouch will know the password.
 
-For security reasons, use of a static password is never recommended.  Instead,
-let :meth:`UserCouch.bootstrap()` generate a per-session random password for
-you.
+For security reasons, use of a static password is not recommended.  Instead, let
+:meth:`UserCouch.bootstrap()` generate a per-session 120-bit random password
+for you.
 
-As far as local security, using ``auth='oauth'`` is less attractive because the
-clear-text of the OAuth tokens must be written to the session.ini file.
+For obvious reasons, ``auth='open'`` is never recommended.
+
+Likewise, ``auth='oauth'`` is not recommended because the clear-text of the
+OAuth tokens (be they random or not) must be written to the session.ini file.
 
 
 
