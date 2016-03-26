@@ -9,7 +9,7 @@ import usercouch
 
 # Project info
 project = 'UserCouch'
-copyright = '2014, Novacut Inc'
+copyright = '2011-2016, Novacut Inc'
 version = usercouch.__version__
 release = usercouch.__version__
 

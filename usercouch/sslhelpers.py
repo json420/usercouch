@@ -1,5 +1,5 @@
 # usercouch: Starts per-user CouchDB instances for fun and unit testing
-# Copyright (C) 2012 Novacut Inc
+# Copyright (C) 2011-2016 Novacut Inc
 #
 # This file is part of `usercouch`.
 #
