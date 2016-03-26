@@ -8,8 +8,8 @@
 .. note:: Breaking changes in 16.03!
 
     Starting with UserCouch 16.03, the ``usercouch.ini`` file shipped in the
-    :mod:`usercouch` package disables changing the CouchDB configuration via
-    the CouchDB REST API (which CouchDB itself enables by default)::
+    :mod:`usercouch` Python package disables changing the CouchDB configuration
+    via the CouchDB REST API (which CouchDB itself enables by default)::
 
         [httpd]
         config_whitelist = [] ; Don't allow any config changes through REST API
@@ -99,7 +99,7 @@
             `Dmedia`_ DBus API to retrieve the session password, Dmedia has long
             prevented remote systems (on the local network or otherwise) from
             accessing the configuration API via reverse-proxy through the Dmedia
-            REST API.  This is true even if the Dmedia TSL authentication were
+            REST API.  This is true even if the Dmedia TLS authentication were
             to fail.
 
 
@@ -112,7 +112,7 @@ Constants
 
     As of UserCouch 16.03, the CouchDB configuration API is disabled by default.
     UserCouch consumers that previously relied on the configuration API can
-    re-enable it by providing this constant as the *extra* keyword argument when
+    re-enable it by providing this constant in the *extra* keyword argument when
     calling :meth:`UserCouch.bootstrap()`.
 
     This constant has the following value::
