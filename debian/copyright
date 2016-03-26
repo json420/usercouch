@@ -1,25 +1,24 @@
-Debianized by Jason Gerard DeRose <jderose@novacut.com>  2011-09-27
+Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: UserCouch
+Upstream-Contact: Jason Gerard DeRose <jderose@novacut.com>
+Source: https://launchpad.net/usercouch/+download
 
-Upstream authors:
-
-| Jason Gerard DeRose <jderose@novacut.com>
-
-Copyright and license:
-
-| Copyright (C) 2011 Novacut Inc
-|
-| `usercouch` is free software: you can redistribute it and/or modify it under
-| the terms of the GNU Lesser General Public License as published by the Free
-| Software Foundation, either version 3 of the License, or (at your option) any
-| later version.
-|
-| `usercouch` is distributed in the hope that it will be useful, but WITHOUT ANY
-| WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
-| A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
-| details.
-|
-| You should have received a copy of the GNU Lesser General Public License along
-| with `usercouch`.  If not, see <http://www.gnu.org/licenses/>.
-
-
+Files: *
+Copyright: Copyright (C) 2011-2016 Novacut Inc
+License: LGPL-3+
+ UserCouch is free software: you can redistribute it and/or modify it under the
+ terms of the GNU Lesser General Public License as published by the Free
+ Software Foundation, either version 3 of the License, or (at your option) any
+ later version.
+ .
+ UserCouch is distributed in the hope that it will be useful, but WITHOUT ANY
+ WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
+ details.
+ .
+ You should have received a copy of the GNU Lesser General Public License along
+ with  UserCouch.  If not, see <http://www.gnu.org/licenses/>.
+ .
+ On Debian systems, the full text of the GNU Lesser General Public License
+ version 3 can be found in the file `/usr/share/common-licenses/LGPL-3'.
 
