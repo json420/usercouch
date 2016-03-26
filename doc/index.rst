@@ -30,6 +30,10 @@ by the `#novacut`_ IRC channel on freenode.
 UserCouch is licensed `LGPLv3+`_, requires `Python 3.4`_ or newer, and depends
 upon `Degu`_ and `Dbase32`_.
 
+.. note::
+    As of UserCouch 16.03, the CouchDB configuration API is disabled by default.
+    See :doc:`usercouch` for details.
+
 
 Contents:
 
@@ -46,7 +50,7 @@ Contents:
 .. _`UserCouch`: https://launchpad.net/usercouch
 .. _`CouchDB`: http://couchdb.apache.org/
 .. _`Microfiber`: https://launchpad.net/microfiber
-.. _`Novacut`: https://wiki.ubuntu.com/Novacut
+.. _`Novacut`: https://launchpad.net/novacut
 .. _`Novacut Stable Releases PPA`: https://launchpad.net/~novacut/+archive/stable
 .. _`Novacut Daily Builds PPA`: https://launchpad.net/~novacut/+archive/daily
 .. _`#novacut`: http://webchat.freenode.net/?channels=novacut
