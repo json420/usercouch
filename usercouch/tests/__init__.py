@@ -32,10 +32,12 @@ import tempfile
 import shutil
 import subprocess
 from copy import deepcopy
+import json
 
 from random import SystemRandom
 
 from dbase32 import random_id, isdb32
+from degu.client import Client
 
 from usercouch import sslhelpers
 import usercouch
@@ -62,6 +64,11 @@ class TempDir(object):
 
     def join(self, *parts):
         return path.join(self.dir, *parts)
+
+    def mkdir(self, *parts):
+        d = self.join(*parts)
+        os.mkdir(d)
+        return d
 
     def makedirs(self, *parts):
         d = self.join(*parts)
@@ -1731,3 +1738,37 @@ class TestUserCouch(TestCase):
         uc.couchdb.wait()
         uc.couchdb = None
         self.assertFalse(uc.crash())
+
+    def test_security(self):
+        """
+        Make sure _config whitelist is empty by default.
+        """
+        tmp = TempDir()
+        uri = '/_config/httpd_global_handlers/_intree'
+        handler = '{couch_httpd_misc_handlers, handle_utils_dir_req, "/foo/bar"}'
+        body = json.dumps(handler).encode()
+
+        # Make sure config can't be set:
+        uc = usercouch.UserCouch(tmp.dir)
+        env = uc.bootstrap()
+        client = Client(env['address'])
+        conn = client.connect()
+        headers = usercouch.get_headers(env)
+        r = conn.put(uri, headers, body)
+        self.assertEqual(r.status, 400)
+        self.assertEqual(r.reason, 'Bad Request')
+        conn.close()
+        uc.__del__()
+
+        # But also make sure you can override it with extra
+        uc = usercouch.UserCouch(tmp.dir)
+        env = uc.bootstrap(extra=usercouch.ALLOW_CONFIG)
+        client = Client(env['address'])
+        conn = client.connect()
+        headers = usercouch.get_headers(env)
+        r = conn.put(uri, headers, body)
+        self.assertEqual(r.status, 200)
+        self.assertEqual(r.reason, 'OK')
+        conn.close()
+        uc.__del__()
+

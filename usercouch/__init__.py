@@ -150,6 +150,11 @@ cacert_file = {ca_file}
 verify_fun = ???
 """
 
+ALLOW_CONFIG = """
+[httpd]
+config_whitelist =
+"""
+
 
 ########################################################################
 # Functions for building CouchDB session.ini file, Microfiber-style env:
@@ -685,3 +690,4 @@ class UserCouch:
             return False
         self.couchdb.terminate()
         return True
+
