@@ -623,8 +623,11 @@ class UserCouch:
         if extra:
             session_ini += extra
         open(self.paths.ini, 'w').write(session_ini)
-        self._client = Client(env['address'])
-        self._headers = get_headers(env)
+        self._client = Client(env['address'],
+            host=None,
+            authorization=env.get('basic_authorization'),
+        )
+        self._client.set_base_header('accept', 'application/json')
         socks.close()
         self.start()
         return env
@@ -658,7 +661,7 @@ class UserCouch:
     def _request(self, method, path):
         conn = self._client.connect()
         try:
-            response = conn.request(method, path, self._headers.copy(), None)
+            response = conn.request(method, path, {}, None)
             data = (response.body.read() if response.body else b'')
         finally:
             conn.close()   

@@ -1388,7 +1388,9 @@ class TestUserCouch(TestCase):
         self.assertFalse(path.exists(uc.paths.ini))
         env = uc.bootstrap('open')
         self.assertTrue(path.isfile(uc.paths.ini))
-        self.assertEqual(uc._headers, {'accept': 'application/json'})
+        self.assertEqual(uc._client.base_headers, (
+            ('accept', 'application/json'),
+        ))
 
         # check env
         self.assertIsInstance(env, dict)
@@ -1416,8 +1418,10 @@ class TestUserCouch(TestCase):
         self.assertFalse(path.exists(uc.paths.ini))
         env = uc.bootstrap()
         self.assertTrue(path.isfile(uc.paths.ini))
-        self.assertEqual(uc._headers, usercouch.get_headers(env))
-        self.assertEqual(set(uc._headers), set(['accept', 'authorization']))
+        self.assertEqual(uc._client.base_headers, (
+            ('accept', 'application/json'),
+            ('authorization', env['basic_authorization']),
+        ))
 
         # check env
         self.assertIsInstance(env, dict)
@@ -1468,8 +1472,10 @@ class TestUserCouch(TestCase):
         self.assertFalse(path.exists(uc.paths.ini))
         env = uc.bootstrap(auth='oauth')
         self.assertTrue(path.isfile(uc.paths.ini))
-        self.assertEqual(uc._headers, usercouch.get_headers(env))
-        self.assertEqual(set(uc._headers), set(['accept', 'authorization']))
+        self.assertEqual(uc._client.base_headers, (
+            ('accept', 'application/json'),
+            ('authorization', env['basic_authorization']),
+        ))
 
         # check env
         self.assertIsInstance(env, dict)
@@ -1632,8 +1638,10 @@ class TestUserCouch(TestCase):
         self.assertFalse(path.exists(uc.paths.ini))
         env = uc.bootstrap('basic', overrides)
         self.assertTrue(path.isfile(uc.paths.ini))
-        self.assertEqual(uc._headers, usercouch.get_headers(env))
-        self.assertEqual(set(uc._headers), set(['accept', 'authorization']))
+        self.assertEqual(uc._client.base_headers, (
+            ('accept', 'application/json'),
+            ('authorization', env['basic_authorization']),
+        ))
 
         # check env
         self.assertIsInstance(env, dict)
