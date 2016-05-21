@@ -104,7 +104,7 @@ class SelfTest1(CouchTestCase):
         self.assertEqual(self.bind_address, '127.0.0.1')
         self.assertIsInstance(self.tmpcouch, TempCouch)
         self.assertEqual(set(self.env),
-            {'port', 'address', 'url', 'basic_authorization', 'basic'}
+            {'port', 'address', 'url', 'authorization', 'basic'}
         )
         self.assertTrue(self.env['url'].startswith('http://127.0.0.1:'))
 
@@ -116,7 +116,7 @@ class SelfTest2(CouchTestCase):
         self.assertEqual(self.auth, 'basic')
         self.assertIsInstance(self.tmpcouch, TempCouch)
         self.assertEqual(set(self.env),
-            {'port', 'address', 'url', 'basic_authorization', 'basic'}
+            {'port', 'address', 'url', 'authorization', 'basic'}
         )
         self.assertTrue(self.env['url'].startswith('http://[::1]:'))
 
@@ -138,7 +138,7 @@ class SelfTest4(CouchTestCase):
         self.assertEqual(self.bind_address, '127.0.0.1')
         self.assertIsInstance(self.tmpcouch, TempCouch)
         self.assertEqual(set(self.env),
-            {'port', 'address', 'url', 'basic_authorization', 'basic', 'oauth'}
+            {'port', 'address', 'url', 'authorization', 'basic', 'oauth'}
         )
         self.assertTrue(self.env['url'].startswith('http://127.0.0.1:'))
 

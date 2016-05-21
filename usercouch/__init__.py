@@ -389,7 +389,7 @@ def build_env(auth, config, ports):
             'username': config['username'],
             'password': config['password'],
         }
-        env['basic_authorization'] = _basic_authorization(env['basic'])
+        env['authorization'] = _basic_authorization(env['basic'])
     if auth == 'oauth':
         env['oauth'] = config['oauth']
     if 'ssl_port' in ports:
@@ -625,7 +625,7 @@ class UserCouch:
         open(self.paths.ini, 'w').write(session_ini)
         self._client = Client(env['address'],
             host=None,
-            authorization=env.get('basic_authorization'),
+            authorization=env.get('authorization'),
         )
         self._client.set_base_header('accept', 'application/json')
         socks.close()

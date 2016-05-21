@@ -699,7 +699,7 @@ class TestFunctions(TestCase):
                     'username': config['username'],
                     'password': config['password'],
                 },
-                'basic_authorization': usercouch._basic_authorization(config),
+                'authorization': usercouch._basic_authorization(config),
             }
         )
 
@@ -714,7 +714,7 @@ class TestFunctions(TestCase):
                     'username': config['username'],
                     'password': config['password'],
                 },
-                'basic_authorization': usercouch._basic_authorization(config),
+                'authorization': usercouch._basic_authorization(config),
                 'oauth': config['oauth'],
             }
         )
@@ -1420,13 +1420,13 @@ class TestUserCouch(TestCase):
         self.assertTrue(path.isfile(uc.paths.ini))
         self.assertEqual(uc._client.base_headers, (
             ('accept', 'application/json'),
-            ('authorization', env['basic_authorization']),
+            ('authorization', env['authorization']),
         ))
 
         # check env
         self.assertIsInstance(env, dict)
         self.assertEqual(set(env),
-            {'port', 'address', 'url', 'basic', 'basic_authorization'}
+            {'port', 'address', 'url', 'basic', 'authorization'}
         )
         port = env['port']
         self.assertIsInstance(port, int)
@@ -1441,8 +1441,8 @@ class TestUserCouch(TestCase):
             self.assertIsInstance(value, str)
             self.assertEqual(len(value), 24)
             self.assertTrue(isdb32(value))
-        self.assertIsInstance(env['basic_authorization'], str)
-        self.assertEqual(env['basic_authorization'],
+        self.assertIsInstance(env['authorization'], str)
+        self.assertEqual(env['authorization'],
             usercouch._basic_authorization(env['basic'])
         )
 
@@ -1474,13 +1474,13 @@ class TestUserCouch(TestCase):
         self.assertTrue(path.isfile(uc.paths.ini))
         self.assertEqual(uc._client.base_headers, (
             ('accept', 'application/json'),
-            ('authorization', env['basic_authorization']),
+            ('authorization', env['authorization']),
         ))
 
         # check env
         self.assertIsInstance(env, dict)
         self.assertEqual(set(env),
-            {'port', 'address', 'url', 'basic', 'basic_authorization', 'oauth'}
+            {'port', 'address', 'url', 'basic', 'authorization', 'oauth'}
         )
         port = env['port']
         self.assertIsInstance(port, int)
@@ -1496,8 +1496,8 @@ class TestUserCouch(TestCase):
             self.assertEqual(len(value), 24)
             self.assertTrue(isdb32(value))
         self.assertIsInstance(env['oauth'], dict)
-        self.assertIsInstance(env['basic_authorization'], str)
-        self.assertEqual(env['basic_authorization'],
+        self.assertIsInstance(env['authorization'], str)
+        self.assertEqual(env['authorization'],
             usercouch._basic_authorization(env['basic'])
         )
         self.assertEqual(
@@ -1535,7 +1535,7 @@ class TestUserCouch(TestCase):
         env = uc.bootstrap('basic', deepcopy(overrides))
         self.assertIsInstance(env, dict)
         self.assertEqual(set(env),
-            {'port', 'address', 'url', 'basic', 'basic_authorization'}
+            {'port', 'address', 'url', 'basic', 'authorization'}
         )
         self.assertIsInstance(env['port'], int)
         self.assertEqual(env['url'],
@@ -1544,8 +1544,8 @@ class TestUserCouch(TestCase):
         self.assertEqual(env['basic'],
             dict((k, overrides[k]) for k in ('username', 'password'))
         )
-        self.assertIsInstance(env['basic_authorization'], str)
-        self.assertEqual(env['basic_authorization'],
+        self.assertIsInstance(env['authorization'], str)
+        self.assertEqual(env['authorization'],
             usercouch._basic_authorization(overrides)
         )
         kw = {
@@ -1583,7 +1583,7 @@ class TestUserCouch(TestCase):
         env = uc.bootstrap('oauth', deepcopy(overrides))
         self.assertIsInstance(env, dict)
         self.assertEqual(set(env),
-            {'port', 'address', 'url', 'basic', 'basic_authorization', 'oauth'}
+            {'port', 'address', 'url', 'basic', 'authorization', 'oauth'}
         )
         self.assertIsInstance(env['port'], int)
         self.assertEqual(env['url'],
@@ -1592,8 +1592,8 @@ class TestUserCouch(TestCase):
         self.assertEqual(env['basic'],
             dict((k, overrides[k]) for k in ('username', 'password'))
         )
-        self.assertIsInstance(env['basic_authorization'], str)
-        self.assertEqual(env['basic_authorization'],
+        self.assertIsInstance(env['authorization'], str)
+        self.assertEqual(env['authorization'],
             usercouch._basic_authorization(overrides)
         )
         self.assertEqual(env['oauth'], overrides['oauth'])
@@ -1640,13 +1640,13 @@ class TestUserCouch(TestCase):
         self.assertTrue(path.isfile(uc.paths.ini))
         self.assertEqual(uc._client.base_headers, (
             ('accept', 'application/json'),
-            ('authorization', env['basic_authorization']),
+            ('authorization', env['authorization']),
         ))
 
         # check env
         self.assertIsInstance(env, dict)
         self.assertEqual(set(env),
-            {'port', 'address', 'url', 'basic_authorization', 'basic', 'x_env_ssl'}
+            {'port', 'address', 'url', 'authorization', 'basic', 'x_env_ssl'}
         )
         port = env['port']
         self.assertIsInstance(port, int)
@@ -1661,8 +1661,8 @@ class TestUserCouch(TestCase):
             self.assertIsInstance(value, str)
             self.assertEqual(len(value), 24)
             self.assertTrue(isdb32(value))
-        self.assertIsInstance(env['basic_authorization'], str)
-        self.assertEqual(env['basic_authorization'],
+        self.assertIsInstance(env['authorization'], str)
+        self.assertEqual(env['authorization'],
             usercouch._basic_authorization(env['basic'])
         )
 
@@ -1670,7 +1670,7 @@ class TestUserCouch(TestCase):
         env2 = env['x_env_ssl']
         self.assertIsInstance(env2, dict)
         self.assertEqual(set(env2),
-            {'port', 'address', 'url', 'basic_authorization', 'basic'}
+            {'port', 'address', 'url', 'authorization', 'basic'}
         )
         ssl_port = env2['port']
         self.assertIsInstance(ssl_port, int)
