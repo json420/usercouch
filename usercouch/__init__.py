@@ -368,6 +368,12 @@ def build_url(scheme, bind_address, port):
     return ''.join([scheme, '://', netloc, '/'])
 
 
+def _basic_authorization(basic):
+    b = '{username}:{password}'.format(**basic).encode()
+    b64 = b64encode(b).decode()
+    return 'Basic ' + b64
+
+
 def build_env(auth, config, ports):
     if auth not in TEMPLATES:
         raise ValueError('invalid auth: {!r}'.format(auth))
@@ -383,6 +389,7 @@ def build_env(auth, config, ports):
             'username': config['username'],
             'password': config['password'],
         }
+        env['basic_authorization'] = _basic_authorization(env['basic'])
     if auth == 'oauth':
         env['oauth'] = config['oauth']
     if 'ssl_port' in ports:
@@ -550,9 +557,7 @@ class HTTPError(Exception):
 
 
 def basic_auth_header(basic):
-    b = '{username}:{password}'.format(**basic).encode('utf-8')
-    b64 = b64encode(b).decode('utf-8')
-    return {'authorization': 'Basic ' + b64}
+    return {'authorization': _basic_authorization(basic)}
 
 
 def get_headers(env):
