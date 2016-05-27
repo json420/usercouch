@@ -123,17 +123,20 @@ If you use ``auth='basic'``, you'll get an *env* similar to this::
     {
         'port': 57910,
         'url': 'http://localhost:57910/',
+        'authorization': 'Basic QktCVEc3TVg1WjZDVFdIQk9CWE9YNjNTOllHUVFSU0RNSUY2R1RaNkpNRVRXUFVVRQ==',
         'basic': {
             'username': 'BKBTG7MX5Z6CTWHBOBXOX63S',
             'password': 'YGQQRSDMIF6GTZ6JMETWPUUE',
         },
     }
 
+
 If you use ``auth='oauth'``, you'll get an *env* similar to this::
 
     {
-        'port': 56618
-        'url': 'http://localhost:56618/', 
+        'port': 56618,
+        'url': 'http://localhost:56618/',
+        'authorization': 'Basic TUFPNVZRSUtDSldTN05HR01WMklZQzdTOkE3UkRGREFNVUZGRkJQNzJWV1NHSzVRRA==',
         'basic': {
             'username': 'MAO5VQIKCJWS7NGGMV2IYC7S',
             'password': 'A7RDFDAMUFFFBP72VWSGK5QD',
@@ -145,6 +148,12 @@ If you use ``auth='oauth'``, you'll get an *env* similar to this::
             'token_secret': 'H7XPTS2QHKYFQ4Z35NSKF3FR',
         },
     }
+
+.. versionchanged:: 16.05
+
+    When using ``auth='basic'`` or ``auth='oauth'``, the *env* returned by
+    :meth:`UserCouch.bootstrap()` now includes a pre-built HTTP (Basic)
+    Authorization header value in ``env['authorization']``.
 
 
 
@@ -212,19 +221,21 @@ When you call :meth:`UserCouch.bootstrap()`, the returned *env* will have an
 ``env['x_env_ssl']`` sub-dictionary like this::
 
     {
+        'port': 56355,
+        'url': 'http://127.0.0.1:56355/',
+        'authorization': 'Basic QkpQSU1EVU5WRFVMSUpIRUNCRkNaSERROkY1S1RDUUFJS1RGQk9XN1RLUlJVVU5NVA==',
         'basic': {
             'password': 'F5KTCQAIKTFBOW7TKRRUUNMT',
             'username': 'BJPIMDUNVDULIJHECBFCZHDQ'
         },
-        'port': 56355,
-        'url': 'http://127.0.0.1:56355/',
         'x_env_ssl': {
+            'port': 42647,
+            'url': 'https://127.0.0.1:42647/',
+            'authorization': 'Basic QkpQSU1EVU5WRFVMSUpIRUNCRkNaSERROkY1S1RDUUFJS1RGQk9XN1RLUlJVVU5NVA==',
             'basic': {
                 'password': 'F5KTCQAIKTFBOW7TKRRUUNMT',
                 'username': 'BJPIMDUNVDULIJHECBFCZHDQ'
             },
-            'port': 42647,
-            'url': 'https://127.0.0.1:42647/'
         }
     }
 
