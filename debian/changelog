@@ -1,5 +1,5 @@
-usercouch (16.05.0) xenial; urgency=low
+usercouch (17.09.0~alpha) artful; urgency=low
 
-  * Upstream release
+  * Pre-release
 
- -- Jason Gerard DeRose <jderose@novacut.com>  Thu, 26 May 2016 21:31:56 -0600
+ -- Jason Gerard DeRose <jderose@novacut.com>  Thu, 28 Sep 2017 09:56:10 -0600
