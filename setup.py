@@ -80,11 +80,13 @@ class Test(Command):
     description = 'run unit tests and doctests'
 
     user_options = [
+        ('skip-all', None, 'skip all tests'),
         ('skip-flakes', None, 'do not run pyflakes static checks'),
         ('skip-sphinx', None, 'do not run Sphinx doctests'),
     ]
 
     def initialize_options(self):
+        self.skip_all = 0
         self.skip_sphinx = 0
         self.skip_flakes = 0
 
@@ -92,6 +94,8 @@ class Test(Command):
         pass
 
     def run(self):
+        if self.skip_all:
+            sys.exit(0)
         if not self.skip_flakes:
             run_pyflakes3()
         if not run_tests():
