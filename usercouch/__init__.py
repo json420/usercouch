@@ -35,6 +35,7 @@ from hashlib import sha1, pbkdf2_hmac
 import binascii
 from base64 import b64encode
 import json
+from collections import namedtuple
 
 from dbase32 import random_id
 from degu.client import Client
@@ -42,6 +43,7 @@ from degu.client import Client
 
 __version__ = '17.09.0'
 
+StartData = namedtuple('StartData', 'erts app')
 USERCOUCH_INI = path.join(
     path.dirname(path.abspath(__file__)), 'data', 'usercouch.ini'
 )
@@ -158,6 +160,44 @@ verify_fun = ???
 ALLOW_CONFIG = """
 [httpd]
 config_whitelist =
+"""
+
+VM_ARGS = """
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy of
+# the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+# License for the specific language governing permissions and limitations under
+# the License.
+
+# Each node in the system must have a unique name.  A name can be short
+# (specified using -sname) or it can by fully qualified (-name).  There can be
+# no communication between nodes running with the -sname flag and those running 
+# with the -name flag.
+-name {uuid}@localhost
+
+# All nodes must share the same magic cookie for distributed Erlang to work.
+# Comment out this line if you synchronized the cookies by other means (using
+# the ~/.erlang.cookie file, for example).
+-setcookie monster
+
+# Tell kernel and SASL not to log anything
+-kernel error_logger silent
+-sasl sasl_error_logger false
+
+# Use kernel poll functionality if supported by emulator
++K true
+
+# Start a pool of asynchronous IO threads
++A 16
+
+# Comment this line out to enable the interactive Erlang shell on startup
++Bd -noinput
 """
 
 
@@ -448,6 +488,10 @@ def build_session_ini(auth, kw):
     return template.format(**kw)
 
 
+def build_vm_args(kw):
+    return VM_ARGS.format(**kw)
+
+
 def bind_socket(bind_address):
     """
     Bind a socket to *bind_address* and a random port.
@@ -500,12 +544,51 @@ class Sockets:
 
 def get_cmd(session_ini):
     return [
-        '/opt/couchdb/bin/couchdb',
-        #'-couch_ini', '/etc/couchdb/default.ini',
-        #'-couch_ini', USERCOUCH_INI,
-        '-couch_ini', session_ini,
+        '/usr/bin/couchdb',
+        '-n',  # reset configuration file chain (including system default)
+        '-a', '/etc/couchdb/default.ini',
+        '-a', USERCOUCH_INI,
+        '-a', session_ini,
     ]
 
+
+def read_start_data(prefix='/opt/couchdb'):
+    filename = path.join(prefix, 'releases', 'start_erl.data')
+    with open(filename, 'r') as fp:
+        content = fp.read(4096)
+        print(repr(content))
+        items = content.split()
+        assert len(items) == 2
+        return StartData(*items)
+
+
+def build_environ(sd, prefix='/opt/couchdb'):
+    assert isinstance(sd, StartData)
+    return {
+        'ROOTDIR': prefix,
+        'BINDIR': path.join(prefix, 'erts-' + sd.erts, 'bin'),
+        'EMU': 'beam',
+        'PROGNAME': 'couchdb'
+    }
+
+
+def build_command(paths, sd, environ):
+    appdir = path.join(environ['ROOTDIR'], 'releases', sd.app)
+    return [
+        path.join(environ['BINDIR'], 'erlexec'),
+        '-boot', path.join(appdir, 'couchdb'),
+        '-args_file', paths.vm_args,
+        '-config', path.join(appdir, 'sys.config'),
+        '-couch_ini', paths.ini,
+    ]
+
+
+def start_couchdb(paths, prefix='/opt/couchdb'):
+    sd = read_start_data(prefix)
+    environ = dict(os.environ)
+    environ.update(build_environ(sd, prefix))
+    command = build_command(paths, sd, environ)
+    return Popen(command, env=environ)
 
 
 #######################
@@ -534,10 +617,20 @@ class Paths:
     Just a namespace for the various files and directories in *basedir*.
     """
 
-    __slots__ = ('ini', 'databases', 'views', 'dump', 'ssl', 'log', 'logfile')
+    __slots__ = (
+        'ini',
+        'vm_args',
+        'databases',
+        'views',
+        'dump',
+        'ssl',
+        'log',
+        'logfile',
+    )
 
     def __init__(self, basedir):
         self.ini = path.join(basedir, 'session.ini')
+        self.vm_args = path.join(basedir, 'vm.args')
         self.databases = mkdir(basedir, 'databases')
         self.views = mkdir(basedir, 'views')
         self.dump = mkdir(basedir, 'dump')
@@ -627,6 +720,7 @@ class UserCouch:
         if extra:
             session_ini += extra
         open(self.paths.ini, 'w').write(session_ini)
+        open(self.paths.vm_args, 'w').write(build_vm_args(kw))
         self._client = Client(env['address'],
             host=None,
             authorization=env.get('authorization'),
@@ -644,7 +738,8 @@ class UserCouch:
             )
         if self.couchdb is not None:
             return False
-        self.couchdb = Popen(self.cmd)
+        assert False
+        self.couchdb = start_couchdb(self.paths)
         # We give CouchDB ~67 seconds to start:
         t = 0.1
         for i in range(23):

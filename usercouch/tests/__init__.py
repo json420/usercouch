@@ -1039,6 +1039,12 @@ class TestFunctions(TestCase):
                 usercouch.build_session_ini('basic', bad)
             self.assertEqual(str(cm.exception), repr(key))
 
+    def test_build_vm_args(self):
+        kw = {'uuid': random_id()} 
+        result = usercouch.build_vm_args(kw)
+        self.assertIs(type(result), str)
+        self.assertEqual(result, usercouch.VM_ARGS.format(**kw))
+
     def test_bind_socket(self):
         sock = usercouch.bind_socket('127.0.0.1')
         self.assertIsInstance(sock, socket.socket)
@@ -1087,6 +1093,67 @@ class TestFunctions(TestCase):
                 '-a', '/etc/couchdb/default.ini',
                 '-a', usercouch.USERCOUCH_INI,
                 '-a', ini,
+            ]
+        )
+
+    def test_read_start_data(self):
+        tmp = TempDir()
+        filename = tmp.join('releases', 'start_erl.data')
+        with self.assertRaises(FileNotFoundError) as cm:
+            usercouch.read_start_data(prefix=tmp.dir)
+        self.assertEqual(str(cm.exception),
+            '[Errno 2] No such file or directory: {!r}'.format(filename)
+        )
+
+        tmp.mkdir('releases')
+        with self.assertRaises(FileNotFoundError) as cm:
+            usercouch.read_start_data(prefix=tmp.dir)
+        self.assertEqual(str(cm.exception),
+            '[Errno 2] No such file or directory: {!r}'.format(filename)
+        )
+
+        erts = random_id()
+        app = random_id()
+        self.assertNotEqual(erts, app)
+        line = '{} {}\n'.format(erts, app)
+        tmp.write(line.encode(), 'releases', 'start_erl.data')
+        sd = usercouch.read_start_data(prefix=tmp.dir)
+        self.assertIs(type(sd), usercouch.StartData)
+        self.assertEqual(sd.erts, erts)
+        self.assertEqual(sd.app, app)
+
+    def test_build_environ(self):
+        sd = usercouch.StartData('9.0.4', '2.1.0')
+        self.assertEqual(usercouch.build_environ(sd),
+            {
+                'ROOTDIR': '/opt/couchdb',
+                'BINDIR': '/opt/couchdb/erts-9.0.4/bin',
+                'EMU': 'beam',
+                'PROGNAME': 'couchdb',
+            }
+        )
+        tmp = TempDir()
+        self.assertEqual(usercouch.build_environ(sd, prefix=tmp.dir),
+            {
+                'ROOTDIR': tmp.dir,
+                'BINDIR': tmp.join('erts-9.0.4', 'bin'),
+                'EMU': 'beam',
+                'PROGNAME': 'couchdb',
+            }
+        )
+
+    def test_build_command(self):
+        tmp = TempDir()
+        paths = usercouch.Paths(tmp.dir)
+        sd = usercouch.StartData('9.0.4', '2.1.0')
+        environ = usercouch.build_environ(sd)
+        self.assertEqual(usercouch.build_command(paths, sd, environ),
+            [
+                '/opt/couchdb/erts-9.0.4/bin/erlexec',
+                '-boot', '/opt/couchdb/releases/2.1.0/couchdb',
+                '-args_file', paths.vm_args,
+                '-config', '/opt/couchdb/releases/2.1.0/sys.config',
+                '-couch_ini', paths.ini,
             ]
         )
 
@@ -1203,6 +1270,7 @@ class TestPaths(TestCase):
         tmp = TempDir()
         paths = usercouch.Paths(tmp.dir)
         self.assertEqual(paths.ini, tmp.join('session.ini'))
+        self.assertEqual(paths.vm_args, tmp.join('vm.args'))
         self.assertEqual(paths.databases, tmp.join('databases'))
         self.assertEqual(paths.views, tmp.join('views'))
         self.assertEqual(paths.dump, tmp.join('dump'))
@@ -1223,6 +1291,7 @@ class TestPaths(TestCase):
         tmp.touch('log', 'couchdb.log')
         paths = usercouch.Paths(tmp.dir)
         self.assertEqual(paths.ini, tmp.join('session.ini'))
+        self.assertEqual(paths.vm_args, tmp.join('vm.args'))
         self.assertEqual(paths.databases, tmp.join('databases'))
         self.assertEqual(paths.views, tmp.join('views'))
         self.assertEqual(paths.dump, tmp.join('dump'))
