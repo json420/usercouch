@@ -75,7 +75,7 @@ DEFAULT_CONFIG = (
     ('file_compression', 'snappy'),
 )
 
-OPEN = """[httpd]
+OPEN = """[chttpd]
 bind_address = {bind_address}
 port = {port}
 
@@ -84,10 +84,15 @@ uuid = {uuid}
 database_dir = {databases}
 view_index_dir = {views}
 file_compression = {file_compression}
+delayed_commits = true
+uri_file =
 
 [log]
 file = {logfile}
 level = {loglevel}
+
+[cluster]
+n = 1
 """
 
 BASIC = OPEN + """
@@ -495,11 +500,10 @@ class Sockets:
 
 def get_cmd(session_ini):
     return [
-        '/usr/bin/couchdb',
-        '-n',  # reset configuration file chain (including system default)
-        '-a', '/etc/couchdb/default.ini',
-        '-a', USERCOUCH_INI,
-        '-a', session_ini,
+        '/opt/couchdb/bin/couchdb',
+        #'-couch_ini', '/etc/couchdb/default.ini',
+        #'-couch_ini', USERCOUCH_INI,
+        '-couch_ini', session_ini,
     ]
 
 
@@ -647,6 +651,8 @@ class UserCouch:
             time.sleep(t)
             t *= 1.25
             if self.isalive():
+                self._request('PUT', '/_users')
+                self._request('PUT', '/_replicator')
                 return True
         raise Exception('could not start CouchDB')
 
