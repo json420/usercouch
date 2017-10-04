@@ -81,6 +81,9 @@ OPEN = """[chttpd]
 bind_address = {bind_address}
 port = {port}
 
+[httpd]
+config_whitelist = []
+
 [couchdb]
 uuid = {uuid}
 database_dir = {databases}
@@ -711,6 +714,8 @@ class UserCouch:
             )
         self.__bootstraped = True
         config = build_config(auth, config)
+        self.uuid = config['uuid']
+        self.node = self.uuid + '%40localhost'
         socks = Sockets(config['bind_address'])
         if 'ssl' in config:
             socks.add_ssl()
