@@ -98,6 +98,9 @@ file = {logfile}
 level = {loglevel}
 
 [cluster]
+q = 1
+r = 1
+w = 1
 n = 1
 """
 
