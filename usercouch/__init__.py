@@ -560,7 +560,6 @@ def read_start_data(prefix='/opt/couchdb'):
     filename = path.join(prefix, 'releases', 'start_erl.data')
     with open(filename, 'r') as fp:
         content = fp.read(4096)
-        print(repr(content))
         items = content.split()
         assert len(items) == 2
         return StartData(*items)
