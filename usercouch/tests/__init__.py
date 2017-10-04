@@ -1774,20 +1774,24 @@ class TestUserCouch(TestCase):
         uc.bootstrap()
         self.assertIsInstance(uc._welcome, dict)
         self.assertTrue(
-            set(uc._welcome).issubset(['couchdb', 'uuid', 'vendor', 'version'])
+            set(uc._welcome).issubset(
+                ['couchdb', 'uuid', 'vendor', 'version', 'features']
+            )
         )
         self.assertIn(uc._welcome['version'],
-            ('1.4.0', '1.5.0', '1.5.1', '1.6.0')
+            ('1.4.0', '1.5.0', '1.5.1', '1.6.0', '1.6.1', '2.0.0', '2.1.0')
         )
-        self.assertIsInstance(uc._welcome['uuid'], str)
-        self.assertEqual(len(uc._welcome['uuid']), 32)
-        self.assertTrue(
-            set(uc._welcome['uuid']).issubset('0123456789abcdef')
-        )
-        self.assertIsInstance(uc._welcome['vendor'], dict)
-        self.assertEqual(set(uc._welcome['vendor']), 
-            set(['name', 'version'])
-        )
+        if 'uuid' in uc._welcome:
+            self.assertIsInstance(uc._welcome['uuid'], str)
+            self.assertEqual(len(uc._welcome['uuid']), 32)
+            self.assertTrue(
+                set(uc._welcome['uuid']).issubset('0123456789abcdef')
+            )
+        if 'vendor' in uc._welcome:
+            self.assertIsInstance(uc._welcome['vendor'], dict)
+            self.assertEqual(set(uc._welcome['vendor']), 
+                set(['name', 'version'])
+            )
 
         self.assertFalse(uc.start())
         self.assertTrue(uc.kill())

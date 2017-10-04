@@ -88,6 +88,7 @@ view_index_dir = {views}
 file_compression = {file_compression}
 delayed_commits = true
 uri_file =
+default_security = admin_only
 
 [log]
 file = {logfile}
@@ -738,7 +739,6 @@ class UserCouch:
             )
         if self.couchdb is not None:
             return False
-        assert False
         self.couchdb = start_couchdb(self.paths)
         # We give CouchDB ~67 seconds to start:
         t = 0.1
@@ -748,6 +748,7 @@ class UserCouch:
             if self.isalive():
                 self._request('PUT', '/_users')
                 self._request('PUT', '/_replicator')
+                self._request('PUT', '/_global_changes')
                 return True
         raise Exception('could not start CouchDB')
 
