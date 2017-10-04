@@ -1822,6 +1822,7 @@ class TestUserCouch(TestCase):
         uc.bootstrap()
         self.assertTrue(uc.isalive())
         uc.couchdb.terminate()
+        uc.couchdb.wait()
         self.assertFalse(uc.isalive())
 
     def test_check(self):
@@ -1838,6 +1839,7 @@ class TestUserCouch(TestCase):
         uc.bootstrap()
         self.assertFalse(uc.check())
         uc.couchdb.terminate()
+        uc.couchdb.wait()
         self.assertTrue(uc.check())
 
     def test_crash(self):
@@ -1847,8 +1849,8 @@ class TestUserCouch(TestCase):
         uc.bootstrap()
         self.assertTrue(uc.isalive())
         self.assertTrue(uc.crash())
-        self.assertFalse(uc.isalive())
         uc.couchdb.wait()
+        self.assertFalse(uc.isalive())
         uc.couchdb = None
         self.assertFalse(uc.crash())
 
