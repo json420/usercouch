@@ -1251,14 +1251,44 @@ class TestSockets(TestCase):
         socks = usercouch.Sockets('127.0.0.1')
         self.assertEqual(socks.bind_address, '127.0.0.1')
         self.assertIsInstance(socks.socks, dict)
-        self.assertEqual(set(socks.socks), set(['port']))
+
+        if usercouch.couch_version.couchdb2:
+            self.assertEqual(set(socks.socks), {'port',  'chttpd_port'})
+            self.assertIsInstance(socks.socks['chttpd_port'], socket.socket)
+        else:
+            self.assertEqual(set(socks.socks), {'port'})
         self.assertIsInstance(socks.socks['port'], socket.socket)
+
+    def test_add_port(self):
+        socks = usercouch.Sockets('127.0.0.1')
+        self.assertIsNone(socks.add_port('foobar'))
+        self.assertIsInstance(socks.socks, dict)
+        if usercouch.couch_version.couchdb2:
+            self.assertEqual(set(socks.socks), {'port', 'foobar', 'chttpd_port'})
+            self.assertIsInstance(socks.socks['chttpd_port'], socket.socket)
+            self.assertIsNot(
+                socks.socks['chttpd_port'],
+                socks.socks['foobar']
+            )
+        else:
+            self.assertEqual(set(socks.socks), {'port', 'foobar'})
+        self.assertIsInstance(socks.socks['port'], socket.socket)
+        self.assertIsInstance(socks.socks['foobar'], socket.socket)
+        self.assertIsNot(socks.socks['port'], socks.socks['foobar'])
 
     def test_add_ssl(self):
         socks = usercouch.Sockets('127.0.0.1')
         self.assertIsNone(socks.add_ssl())
         self.assertIsInstance(socks.socks, dict)
-        self.assertEqual(set(socks.socks), set(['port', 'ssl_port']))
+        if usercouch.couch_version.couchdb2:
+            self.assertEqual(set(socks.socks), {'port', 'ssl_port', 'chttpd_port'})
+            self.assertIsInstance(socks.socks['chttpd_port'], socket.socket)
+            self.assertIsNot(
+                socks.socks['chttpd_port'],
+                socks.socks['ssl_port']
+            )
+        else:
+            self.assertEqual(set(socks.socks), {'port', 'ssl_port'})
         self.assertIsInstance(socks.socks['port'], socket.socket)
         self.assertIsInstance(socks.socks['ssl_port'], socket.socket)
         self.assertIsNot(socks.socks['port'], socks.socks['ssl_port'])
@@ -1266,33 +1296,53 @@ class TestSockets(TestCase):
     def test_get_ports(self):
         socks = usercouch.Sockets('127.0.0.1')
         port = socks.socks['port'].getsockname()[1]
-        self.assertEqual(socks.get_ports(),
-            {'port': port}
-        )
+        if usercouch.couch_version.couchdb2:
+            chttpd_port = socks.socks['chttpd_port'].getsockname()[1]
+            self.assertEqual(socks.get_ports(),
+                {'port': port, 'chttpd_port': chttpd_port}
+            )
+        else:
+            self.assertEqual(socks.get_ports(),
+                {'port': port}
+            )
 
         socks = usercouch.Sockets('127.0.0.1')
-        socks.add_ssl()
         port = socks.socks['port'].getsockname()[1]
+        self.assertIsNone(socks.add_ssl())
         ssl_port = socks.socks['ssl_port'].getsockname()[1]
-        self.assertEqual(socks.get_ports(),
-            {'port': port, 'ssl_port': ssl_port}
-        )
+        if usercouch.couch_version.couchdb2:
+            chttpd_port = socks.socks['chttpd_port'].getsockname()[1]
+            self.assertEqual(socks.get_ports(),
+                {'port': port, 'ssl_port': ssl_port, 'chttpd_port': chttpd_port}
+            )
+        else:
+            self.assertEqual(socks.get_ports(),
+                {'port': port, 'ssl_port': ssl_port}
+            )
 
     def test_close(self):
         socks = usercouch.Sockets('127.0.0.1')
-        for sock in socks.socks.values():
-            self.assertFalse(sock._closed)
+        pairs = tuple(socks.socks.items())
+        keys = frozenset(p[0] for p in pairs)
+        self.assertTrue(keys.issuperset(['port']))
+        self.assertTrue(keys.issubset(['port', 'chttpd_port']))
+        for (k, v) in pairs:
+            self.assertIs(v._closed, False)
         self.assertIsNone(socks.close())
-        for sock in socks.socks.values():
-            self.assertTrue(sock._closed)
+        for (k, v) in pairs:
+            self.assertIs(v._closed, True)
 
         socks = usercouch.Sockets('127.0.0.1')
-        socks.add_ssl()
-        for sock in socks.socks.values():
-            self.assertFalse(sock._closed)
+        self.assertIsNone(socks.add_ssl())
+        pairs = tuple(socks.socks.items())
+        keys = frozenset(p[0] for p in pairs)
+        self.assertTrue(keys.issuperset(['port', 'ssl_port']))
+        self.assertTrue(keys.issubset(['port', 'ssl_port', 'chttpd_port']))
+        for (k, v) in pairs:
+            self.assertIs(v._closed, False)
         self.assertIsNone(socks.close())
-        for sock in socks.socks.values():
-            self.assertTrue(sock._closed)
+        for (k, v) in pairs:
+            self.assertIs(v._closed, True)
 
 
 class TestPathFunctions(TestCase):

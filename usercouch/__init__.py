@@ -557,15 +557,25 @@ def bind_socket(bind_address):
 
 class Sockets:
     """
-    A helper class to make it easy to deal with one or two random ports.
+    Helper class to make it easy to deal with one or more random ports.
     """
+
+    __slots__ = ('bind_address', 'socks')
 
     def __init__(self, bind_address):
         self.bind_address = bind_address
-        self.socks = {'port': bind_socket(bind_address)}
+        self.socks = {}
+        self.add_port('port')
+        if couch_version.couchdb2:
+            self.add_port('chttpd_port')
+
+    def add_port(self, name):
+        assert isinstance(name, str)
+        assert name not in self.socks
+        self.socks[name] = bind_socket(self.bind_address)
 
     def add_ssl(self):
-        self.socks['ssl_port'] = bind_socket(self.bind_address)
+        self.add_port('ssl_port')
 
     def get_ports(self):
         return dict(
