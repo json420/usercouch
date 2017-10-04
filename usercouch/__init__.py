@@ -43,6 +43,35 @@ from degu.client import Client
 
 __version__ = '17.09.0'
 
+
+def _check_for_couchdb2(rootdir):
+    couch2 = path.join(rootdir, 'opt', 'couchdb', 'bin', 'couchdb')
+    if path.isfile(couch2):
+        return True
+    couch1 = path.join(rootdir, 'usr', 'bin', 'couchdb')
+    if path.isfile(couch1):
+        return False
+    raise RuntimeError(
+        'No CouchDB? Checked:\n{!r}\n{!r}'.format(couch2, couch1)
+    )
+
+
+class CouchVersion:
+    __slots__ = ('rootdir', '_couchdb2')
+
+    def __init__(self, rootdir='/'):
+        self.rootdir = rootdir
+        self._couchdb2 = None
+
+    @property
+    def couchdb2(self):
+        if self._couchdb2 is None:
+            self._couchdb2 = _check_for_couchdb2(self.rootdir)
+        assert type(self._couchdb2) is bool
+        return self._couchdb2
+
+
+couch_version = CouchVersion()
 StartData = namedtuple('StartData', 'erts app')
 USERCOUCH_INI = path.join(
     path.dirname(path.abspath(__file__)), 'data', 'usercouch.ini'

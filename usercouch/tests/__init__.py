@@ -80,13 +80,13 @@ class TempDir(object):
     def touch(self, *parts):
         self.makedirs(*parts[:-1])
         f = self.join(*parts)
-        open(f, 'wb').close()
+        open(f, 'xb').close()
         return f
 
     def write(self, data, *parts):
         self.makedirs(*parts[:-1])
         f = self.join(*parts)
-        open(f, 'wb').write(data)
+        open(f, 'xb').write(data)
         return f
 
     def copy(self, src, *parts):
@@ -110,8 +110,37 @@ class TestConstants(TestCase):
         self.assertTrue(r >= 0)
         self.assertEqual(str(r), rev)
 
+    def test_couch_version(self):
+        self.assertIs(type(usercouch.couch_version), usercouch.CouchVersion)
+        self.assertEqual(usercouch.couch_version.rootdir, '/')
+        self.assertIn(usercouch.couch_version._couchdb2, (None, True, False))
+
 
 class TestFunctions(TestCase):
+    def test_check_for_couchdb2(self):
+        p1 = ('usr', 'bin', 'couchdb')
+        p2 = ('opt', 'couchdb', 'bin', 'couchdb')
+        tmp = TempDir()
+        couch1 = tmp.join(*p1)
+        couch2 = tmp.join(*p2)
+        with self.assertRaises(RuntimeError) as cm:
+            usercouch._check_for_couchdb2(tmp.dir)
+        self.assertEqual(str(cm.exception),
+            'No CouchDB? Checked:\n{!r}\n{!r}'.format(couch2, couch1)
+        )
+        tmp.touch(*p1)
+        self.assertIs(usercouch._check_for_couchdb2(tmp.dir), False)
+        tmp.touch(*p2)
+        self.assertIs(usercouch._check_for_couchdb2(tmp.dir), True)
+        os.remove(couch1)
+        self.assertIs(usercouch._check_for_couchdb2(tmp.dir), True)
+        os.remove(couch2)
+        with self.assertRaises(RuntimeError) as cm:
+            usercouch._check_for_couchdb2(tmp.dir)
+        self.assertEqual(str(cm.exception),
+            'No CouchDB? Checked:\n{!r}\n{!r}'.format(couch2, couch1)
+        )
+
     def test_random_oauth(self):
         kw = usercouch.random_oauth()
         self.assertIsInstance(kw, dict)
@@ -1156,6 +1185,65 @@ class TestFunctions(TestCase):
                 '-couch_ini', paths.ini,
             ]
         )
+
+
+class TestCouchVersion(TestCase):
+    def test_init(self):
+        cv = usercouch.CouchVersion()
+        self.assertEqual(cv.rootdir, '/')
+        self.assertIsNone(cv._couchdb2)
+
+        rootdir = '/tmp/' + random_id()
+        cv = usercouch.CouchVersion(rootdir)
+        self.assertIs(cv.rootdir, rootdir)
+        self.assertIsNone(cv._couchdb2)
+
+    def test_couchdb2(self):
+        tmp = TempDir()
+        cv = usercouch.CouchVersion(tmp.dir)
+        p1 = ('usr', 'bin', 'couchdb')
+        p2 = ('opt', 'couchdb', 'bin', 'couchdb')
+        couch1 = tmp.join(*p1)
+        couch2 = tmp.join(*p2)
+
+        with self.assertRaises(RuntimeError) as cm:
+            cv.couchdb2
+        self.assertEqual(str(cm.exception),
+            'No CouchDB? Checked:\n{!r}\n{!r}'.format(couch2, couch1)
+        )
+        self.assertIsNone(cv._couchdb2)
+
+        tmp.touch(*p1)
+        self.assertIs(cv.couchdb2, False)
+        self.assertIs(cv._couchdb2, False)
+
+        tmp.touch(*p2)
+        self.assertIs(cv.couchdb2, False)
+        self.assertIs(cv._couchdb2, False)
+
+        cv._couchdb2 = None
+        self.assertIs(cv.couchdb2, True)
+        self.assertIs(cv._couchdb2, True)
+
+        os.remove(couch1)
+        self.assertIs(cv.couchdb2, True)
+        self.assertIs(cv._couchdb2, True)
+
+        cv._couchdb2 = None
+        self.assertIs(cv.couchdb2, True)
+        self.assertIs(cv._couchdb2, True)
+
+        os.remove(couch2)
+        self.assertIs(cv.couchdb2, True)
+        self.assertIs(cv._couchdb2, True)
+
+        cv._couchdb2 = None
+        with self.assertRaises(RuntimeError) as cm:
+            cv.couchdb2
+        self.assertEqual(str(cm.exception),
+            'No CouchDB? Checked:\n{!r}\n{!r}'.format(couch2, couch1)
+        )
+        self.assertIsNone(cv._couchdb2)
 
 
 class TestSockets(TestCase):
