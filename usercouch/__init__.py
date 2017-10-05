@@ -148,7 +148,7 @@ check_interval = 300 ; 5 minutes (5 * 60)
 min_file_size = 1048576 ; 1 MiB
 
 [compactions]
-_default = [{db_fragmentation, "60%"}, {view_fragmentation, "60%"}]
+_default = [{{db_fragmentation, "60%"}}, {{view_fragmentation, "60%"}}]
 
 [replicator]
 socket_options = [{{recbuf, 262144}}, {{sndbuf, 262144}}, {{nodelay, true}}]
