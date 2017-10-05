@@ -141,6 +141,35 @@ class TestFunctions(TestCase):
             'No CouchDB? Checked:\n{!r}\n{!r}'.format(couch2, couch1)
         )
 
+    def test_check_auth(self):
+        all_versions = frozenset([1, 2])
+        all_auths = frozenset(['open', 'basic', 'oauth'])
+        self.assertEqual(set(usercouch.VERSION_TEMPLATE), all_versions)
+        for version in all_versions:
+            templates = usercouch.VERSION_TEMPLATE[version]
+            self.assertEqual(set(templates), all_auths)
+            for auth in all_auths:
+                self.assertIs(
+                    usercouch.check_auth(version, auth),
+                    templates[auth]
+                )
+                bad_auths = [auth.upper(), (auth * 2)]
+                for l in 'abcdefghijklmnopqrstuvwxyz':
+                    bad_auths.append(l + auth)
+                    bad_auths.append(auth + l)
+                for bad in bad_auths:
+                    with self.assertRaises(ValueError) as cm:
+                        usercouch.check_auth(version, bad)
+                    self.assertEqual(str(cm.exception),
+                        'invalid auth: {!r}'.format(bad)
+                    )
+
+    def test_get_template(self):
+        self.assertEqual(
+            usercouch.get_template(1, 'open'),
+            '\n'.join(usercouch.VERSION_TEMPLATE[1]['open'])
+        )
+
     def test_random_oauth(self):
         kw = usercouch.random_oauth()
         self.assertIsInstance(kw, dict)
