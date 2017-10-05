@@ -764,7 +764,8 @@ class UserCouch:
         if extra:
             session_ini += extra
         open(self.paths.ini, 'w').write(session_ini)
-        open(self.paths.vm_args, 'w').write(build_vm_args(kw))
+        if couch_version.couchdb2:
+            open(self.paths.vm_args, 'w').write(build_vm_args(kw))
         self._client = Client(env['address'],
             host=None,
             authorization=env.get('authorization'),
