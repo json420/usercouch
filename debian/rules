@@ -18,6 +18,6 @@ override_dh_auto_build:
 # FIXME: Temporarily skip tests till CouchDB is working on Artful:
 override_dh_auto_test:
 	set -ex; for python in $(shell py3versions -r); do \
-		$$python setup.py test --skip-all; \
+		$$python setup.py test; \
 	done
 
