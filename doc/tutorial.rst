@@ -66,6 +66,10 @@ The first is the :class:`TempCouch` class, which you can use like this:
 >>> from usercouch.misc import TempCouch
 >>> tmpcouch = TempCouch()
 >>> env = tmpcouch.bootstrap()
+>>> # Run tests using env...
+...
+>>> tmpcouch.kill()
+True 
 
 :class:`TempCouch` is a :class:`usercouch.UserCouch` subclass that creates a
 one-time temporary directory to be used as the *basedir*.  When the

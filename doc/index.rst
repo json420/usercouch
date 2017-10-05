@@ -18,6 +18,8 @@ with `Microfiber`_, for example:
 ...     'ok': True,
 ... }
 True
+>>> tmpcouch.kill()
+True
 
 
 UserCouch is being developed as part of the `Novacut`_ project.  UserCouch
