@@ -625,10 +625,14 @@ def build_command(paths, sd, environ):
 
 
 def start_couchdb(paths, prefix='/opt/couchdb'):
-    sd = read_start_data(prefix)
-    environ = dict(os.environ)
-    environ.update(build_environ(sd, prefix))
-    command = build_command(paths, sd, environ)
+    if couch_version.couchdb2:
+        sd = read_start_data(prefix)
+        environ = dict(os.environ)
+        environ.update(build_environ(sd, prefix))
+        command = build_command(paths, sd, environ)
+    else:
+        command = get_cmd(paths.ini)
+        environ = None
     return Popen(command, env=environ)
 
 
@@ -751,8 +755,6 @@ class UserCouch:
             )
         self.__bootstraped = True
         config = build_config(auth, config)
-        self.uuid = config['uuid']
-        self.node = self.uuid + '%40localhost'
         socks = Sockets(config['bind_address'])
         if 'ssl' in config:
             socks.add_ssl()
@@ -788,9 +790,10 @@ class UserCouch:
             time.sleep(t)
             t *= 1.25
             if self.isalive():
-                self._request('PUT', '/_users')
-                self._request('PUT', '/_replicator')
-                self._request('PUT', '/_global_changes')
+                if couch_version.couchdb2:
+                    self._request('PUT', '/_users')
+                    self._request('PUT', '/_replicator')
+                    self._request('PUT', '/_global_changes')
                 return True
         raise Exception('could not start CouchDB')
 
