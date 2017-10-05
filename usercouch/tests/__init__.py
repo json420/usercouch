@@ -2001,9 +2001,10 @@ class TestUserCouch(TestCase):
                 overrides['password'], overrides['salt']
             ),
         }
+        version = (2 if usercouch.couch_version.couchdb2 else 1)
         self.assertEqual(
             open(uc.paths.ini, 'r').read(),
-            usercouch.BASIC.format(**kw)
+            usercouch.get_template(version, 'basic').format(**kw)
         )
 
     def test_bootstrap_override_oauth(self):
@@ -2055,9 +2056,10 @@ class TestUserCouch(TestCase):
             'consumer_key': overrides['oauth']['consumer_key'],
             'consumer_secret': overrides['oauth']['consumer_secret'],
         }
+        version = (2 if usercouch.couch_version.couchdb2 else 1)
         self.assertEqual(
             open(uc.paths.ini, 'r').read(),
-            usercouch.OAUTH.format(**kw)
+            usercouch.get_template(version, 'oauth').format(**kw)
         )
 
     def test_bootstrap_ssl(self):

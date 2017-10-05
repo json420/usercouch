@@ -207,9 +207,6 @@ def get_template(version, auth):
     return ''.join(parts)
 
 
-# version = (2 if couch_version.couchdb2 else 1)
-
-
 # Wether or not this couch is using SSL, we can make the replicator
 # only trust remote couches with certs signed by a specific CA
 REPLICATOR = """
