@@ -73,10 +73,6 @@ class CouchVersion:
 
 couch_version = CouchVersion()
 StartData = namedtuple('StartData', 'erts app')
-USERCOUCH_INI = path.join(
-    path.dirname(path.abspath(__file__)), 'data', 'usercouch.ini'
-)
-assert path.isfile(USERCOUCH_INI)
 
 # Allowed values for `file_compression`:
 FILE_COMPRESSION = (
@@ -625,7 +621,6 @@ def get_cmd(session_ini):
         '/usr/bin/couchdb',
         '-n',  # reset configuration file chain (including system default)
         '-a', '/etc/couchdb/default.ini',
-        '-a', USERCOUCH_INI,
         '-a', session_ini,
     ]
 

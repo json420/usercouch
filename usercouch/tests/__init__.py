@@ -1120,7 +1120,6 @@ class TestFunctions(TestCase):
                 '/usr/bin/couchdb',
                 '-n',
                 '-a', '/etc/couchdb/default.ini',
-                '-a', usercouch.USERCOUCH_INI,
                 '-a', ini,
             ]
         )
