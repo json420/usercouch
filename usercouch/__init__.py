@@ -260,7 +260,7 @@ VERSION_TEMPLATE = {
     1: {
         'open': (OPEN_COMMON,),
         'basic': (OPEN_COMMON, BASIC_COMMON),
-        'oauth': (),
+        'oauth': (OPEN_COMMON, BASIC_COMMON, OAUTH_COMMON),
     },
     2: {
         'open': (),
@@ -637,10 +637,8 @@ def build_template_kw(auth, config, ports, paths):
     return kw
 
 
-def build_session_ini(auth, kw):
-    if auth not in TEMPLATES:
-        raise ValueError('invalid auth: {!r}'.format(auth))
-    template = TEMPLATES[auth]
+def build_session_ini(version, auth, kw):
+    template = get_template(version, auth)
     if 'ssl_port' in kw:
         template += SSL
     if 'replicator' in kw:
@@ -890,7 +888,8 @@ class UserCouch:
         ports = socks.get_ports()
         env = build_env(auth, config, ports)
         kw = build_template_kw(auth, config, ports, self.paths)
-        session_ini = build_session_ini(auth, kw)
+        version = (2 if couch_version.couchdb2 else 1)
+        session_ini = build_session_ini(version, auth, kw)
         if extra:
             session_ini += extra
         open(self.paths.ini, 'w').write(session_ini)
