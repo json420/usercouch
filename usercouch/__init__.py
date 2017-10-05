@@ -114,26 +114,10 @@ uri_file =
 [httpd]
 bind_address = {bind_address}
 port = {port}
-socket_options = [{{recbuf, 262144}}, {{sndbuf, 262144}}, {{nodelay, true}}]
-config_whitelist = [] ; Don't allow any config changes through REST API
 
 [log]
 file = {logfile}
 level = {loglevel}
-
-[daemons]
-stats_aggregator =
-stats_collector =
-os_daemons =
-external_manager =
-
-[httpd_global_handlers]
-_apps = {{couch_httpd_misc_handlers, handle_utils_dir_req, "/usr/share/couchdb/apps"}}
-_stats =
-
-[stats]
-rate =
-samples =
 
 [database_compaction]
 doc_buffer_size = 4194304 ; 4 MiB
@@ -145,12 +129,26 @@ min_file_size = 1048576 ; 1 MiB
 
 [compactions]
 _default = [{{db_fragmentation, "60%"}}, {{view_fragmentation, "60%"}}]
+"""
 
+OPEN_1 = """
 [replicator]
 socket_options = [{{recbuf, 262144}}, {{sndbuf, 262144}}, {{nodelay, true}}]
 max_replication_retry_count = 20 ; default is 10
 worker_batch_size = 250 ; default is 500
 http_connections = 10 ; default is 20 (we want more connection reuse)
+"""
+
+OPEN_2 = """
+[chttpd]
+bind_address = {bind_address}
+port = {chttpd_port}
+
+[cluster]
+q = 1
+r = 1
+w = 1
+n = 1
 """
 
 BASIC = """
@@ -172,25 +170,11 @@ OAUTH = """
 {consumer_key} = {consumer_secret}
 """
 
-OPEN_2 = """
-[chttpd]
-bind_address = {bind_address}
-port = {chttpd_port}
-socket_options = [{{recbuf, 262144}}, {{sndbuf, 262144}}, {{nodelay, true}}]
-config_whitelist = [] ; Don't allow any config changes through REST API
-
-[cluster]
-q = 1
-r = 1
-w = 1
-n = 1
-"""
-
 VERSION_TEMPLATE = {
     1: {
-        'open': (OPEN,),
-        'basic': (OPEN, BASIC),
-        'oauth': (OPEN, BASIC, OAUTH),
+        'open': (OPEN, OPEN_1),
+        'basic': (OPEN, OPEN_1, BASIC),
+        'oauth': (OPEN, OPEN_1, BASIC, OAUTH),
     },
     2: {
         'open': (OPEN, OPEN_2),
@@ -513,10 +497,12 @@ def build_env(auth, config, ports):
     bind_address = config['bind_address']
     port = ports['port']
     env = {
-        'port': ports['port'],
+        'port': port,
         'address': (bind_address, port),
         'url': build_url('http', bind_address, port),
     }
+    if 'chttpd_port' in ports:
+        env['chttpd_address'] = (bind_address, ports['chttpd_port'])
     if auth in ('basic', 'oauth'):
         env['basic'] = {
             'username': config['username'],
@@ -843,10 +829,6 @@ class UserCouch:
             time.sleep(t)
             t *= 1.25
             if self.isalive():
-                if couch_version.couchdb2:
-                    self._request('PUT', '/_users')
-                    self._request('PUT', '/_replicator')
-                    self._request('PUT', '/_global_changes')
                 return True
         raise Exception('could not start CouchDB')
 
