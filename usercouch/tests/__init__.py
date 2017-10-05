@@ -906,6 +906,7 @@ class TestFunctions(TestCase):
         )
 
     def test_build_session_ini(self):
+        #### CouchDB 1.x ####
         # Test with bad auth
         with self.assertRaises(ValueError) as cm:
             usercouch.build_session_ini(1, 'magic', {})
@@ -1099,6 +1100,202 @@ class TestFunctions(TestCase):
             del bad['replicator'][key]
             with self.assertRaises(KeyError) as cm:
                 usercouch.build_session_ini(1, 'basic', bad)
+            self.assertEqual(str(cm.exception), repr(key))
+
+        #### CouchDB 2.x ####
+        # Test with bad auth
+        with self.assertRaises(ValueError) as cm:
+            usercouch.build_session_ini(2, 'magic', {})
+        self.assertEqual(str(cm.exception), "invalid auth: 'magic'")
+
+        # Test with auth='open'
+        keys = (
+            'bind_address',
+            'port',
+            'databases',
+            'views',
+            'file_compression',
+            'uuid',
+            'logfile',
+            'loglevel',
+        )
+        kw = dict(
+            (key, random_id())
+            for key in keys
+        )
+        self.assertEqual(
+            usercouch.build_session_ini(2, 'open', deepcopy(kw)),
+            usercouch.OPEN.format(**kw)
+        )
+        for key in keys:
+            bad = deepcopy(kw)
+            del bad[key]
+            with self.assertRaises(KeyError) as cm:
+                usercouch.build_session_ini(2, 'open', bad)
+            self.assertEqual(str(cm.exception), repr(key))
+
+        # Test with auth='basic'
+        keys = (
+            'bind_address',
+            'port',
+            'databases',
+            'views',
+            'file_compression',
+            'uuid',
+            'logfile',
+            'loglevel',
+            'username', 'hashed',
+        )
+        kw = dict(
+            (key, random_id())
+            for key in keys
+        )
+        self.assertEqual(
+            usercouch.build_session_ini(2, 'basic', deepcopy(kw)),
+            usercouch.BASIC.format(**kw)
+        )
+        for key in keys:
+            bad = deepcopy(kw)
+            del bad[key]
+            with self.assertRaises(KeyError) as cm:
+                usercouch.build_session_ini(2, 'basic', bad)
+            self.assertEqual(str(cm.exception), repr(key))
+
+        # Test with auth='oauth'
+        keys = (
+            'bind_address',
+            'port',
+            'databases',
+            'views',
+            'file_compression',
+            'uuid',
+            'logfile',
+            'loglevel',
+            'username', 'hashed',
+            'token', 'token_secret', 'consumer_key', 'consumer_secret',
+        )
+        kw = dict(
+            (key, random_id())
+            for key in keys
+        )
+        self.assertEqual(
+            usercouch.build_session_ini(2, 'oauth', deepcopy(kw)),
+            usercouch.OAUTH.format(**kw)
+        )
+        for key in keys:
+            bad = deepcopy(kw)
+            del bad[key]
+            with self.assertRaises(KeyError) as cm:
+                usercouch.build_session_ini(2, 'oauth', bad)
+            self.assertEqual(str(cm.exception), repr(key))
+
+        # Test with auth='basic' and SSL
+        keys = (
+            'bind_address',
+            'port',
+            'databases',
+            'views',
+            'file_compression',
+            'uuid',
+            'logfile',
+            'loglevel',
+            'username', 'hashed',
+            'ssl_port', 'cert_file', 'key_file',
+        )
+        kw = dict(
+            (key, random_id())
+            for key in keys
+        )
+        template = usercouch.BASIC + usercouch.SSL
+        self.assertEqual(
+            usercouch.build_session_ini(2, 'basic', deepcopy(kw)),
+            template.format(**kw)
+        )
+        for key in keys:
+            if key == 'ssl_port':
+                continue
+            bad = deepcopy(kw)
+            del bad[key]
+            with self.assertRaises(KeyError) as cm:
+                usercouch.build_session_ini(2, 'basic', bad)
+            self.assertEqual(str(cm.exception), repr(key))
+
+        # Test with auth='basic' and kw['replicator']
+        keys = (
+            'bind_address',
+            'port',
+            'databases',
+            'views',
+            'file_compression',
+            'uuid',
+            'logfile',
+            'loglevel',
+            'username', 'hashed',
+        )
+        kw = dict(
+            (key, random_id())
+            for key in keys
+        )
+        kw['replicator'] = {
+            'ca_file': random_id(),
+            'max_depth': 2,
+        }
+        template = usercouch.BASIC + usercouch.REPLICATOR
+        self.assertEqual(
+            usercouch.build_session_ini(2, 'basic', deepcopy(kw)),
+            template.format(**kw)
+        )
+        for key in keys:
+            bad = deepcopy(kw)
+            del bad[key]
+            with self.assertRaises(KeyError) as cm:
+                usercouch.build_session_ini(2, 'basic', bad)
+            self.assertEqual(str(cm.exception), repr(key))
+        for key in ['ca_file', 'max_depth']:
+            bad = deepcopy(kw)
+            del bad['replicator'][key]
+            with self.assertRaises(KeyError) as cm:
+                usercouch.build_session_ini(2, 'basic', bad)
+            self.assertEqual(str(cm.exception), repr(key))
+
+        # Test with auth='basic' and kw['replicator'], with 'cert_file'
+        keys = (
+            'bind_address',
+            'port',
+            'databases',
+            'views',
+            'file_compression',
+            'uuid',
+            'logfile',
+            'loglevel',
+            'username', 'hashed',
+        )
+        kw = dict(
+            (key, random_id())
+            for key in keys
+        )
+        kw['replicator'] = {
+            'ca_file': random_id(),
+            'max_depth': 1,
+            'cert_file': random_id(),
+            'key_file': random_id(),
+        }
+        template = usercouch.BASIC + usercouch.REPLICATOR_EXTRA
+        self.assertEqual(
+            usercouch.build_session_ini(2, 'basic', deepcopy(kw)),
+            template.format(**kw)
+        )
+        for key in keys:
+            bad = deepcopy(kw)
+            del bad[key]
+            with self.assertRaises(KeyError) as cm:
+                usercouch.build_session_ini(2, 'basic', bad)
+            self.assertEqual(str(cm.exception), repr(key))
+        for key in ['ca_file', 'max_depth', 'key_file']:
+            bad = deepcopy(kw)
+            del bad['replicator'][key]
+            with self.assertRaises(KeyError) as cm:
+                usercouch.build_session_ini(2, 'basic', bad)
             self.assertEqual(str(cm.exception), repr(key))
 
     def test_build_vm_args(self):

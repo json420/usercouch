@@ -263,9 +263,9 @@ VERSION_TEMPLATE = {
         'oauth': (OPEN_COMMON, BASIC_COMMON, OAUTH_COMMON),
     },
     2: {
-        'open': (),
-        'basic': (),
-        'oauth': (),
+        'open': (OPEN_COMMON,),
+        'basic': (OPEN_COMMON, BASIC_COMMON),
+        'oauth': (OPEN_COMMON, BASIC_COMMON, OAUTH_COMMON),
     },
 }
 
