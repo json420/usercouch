@@ -106,26 +106,22 @@ DEFAULT_CONFIG = (
     ('file_compression', 'snappy'),
 )
 
-OPEN = """[chttpd]
+OPEN = """[httpd]
 bind_address = {bind_address}
 port = {port}
-
-[httpd]
-config_whitelist = []
 
 [couchdb]
 uuid = {uuid}
 database_dir = {databases}
 view_index_dir = {views}
 file_compression = {file_compression}
-delayed_commits = true
-uri_file =
-default_security = admin_only
 
 [log]
 file = {logfile}
 level = {loglevel}
+"""
 
+COUCHDB2 = """
 [cluster]
 q = 1
 r = 1
