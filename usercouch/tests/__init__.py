@@ -1541,7 +1541,7 @@ class TestUserCouch(TestCase):
         self.assertFalse(uc.lockfile.closed)
         self.assertIsInstance(uc.paths, usercouch.Paths)
         self.assertEqual(uc.paths.ini, tmp.join('good', 'session.ini'))
-        self.assertEqual(uc.cmd, usercouch.get_cmd(uc.paths.ini))
+        self.assertFalse(hasattr(uc, 'cmd'))
 
     def test_lockfile(self):
         tmp = TempDir()

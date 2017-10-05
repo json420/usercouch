@@ -736,7 +736,6 @@ class UserCouch:
         except IOError:
             raise LockError(self.lockfile.name)
         self.paths = Paths(self.basedir)
-        self.cmd = get_cmd(self.paths.ini)
         self.__bootstraped = False
 
     def __repr__(self):
@@ -786,7 +785,7 @@ class UserCouch:
         self.couchdb = start_couchdb(self.paths)
         # We give CouchDB ~67 seconds to start:
         t = 0.1
-        for i in range(23):
+        for i in range(5):
             time.sleep(t)
             t *= 1.25
             if self.isalive():
