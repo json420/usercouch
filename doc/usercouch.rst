@@ -74,6 +74,8 @@
     >>> from usercouch.misc import TempCouch
     >>> couch = TempCouch()
     >>> env = couch.bootstrap(extra=usercouch.ALLOW_CONFIG)
+    >>> couch.kill()
+    True
 
     In evaluated the potential security impact of the configuration API being
     enabled by default prior to UserCouch 16.03, there are a few things to keep
@@ -196,6 +198,8 @@ Exceptions
     >>> mytmpdir = tempfile.mkdtemp()
     >>> mycouch = UserCouch(mytmpdir)
     >>> env = mycouch.bootstrap()
+    >>> mycouch.kill()
+    True
 
     .. attribute:: basedir
 
