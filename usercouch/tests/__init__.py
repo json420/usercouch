@@ -1117,6 +1117,7 @@ class TestFunctions(TestCase):
         keys = (
             'bind_address',
             'port',
+            'chttpd_port',
             'databases',
             'views',
             'file_compression',
@@ -1140,16 +1141,9 @@ class TestFunctions(TestCase):
             self.assertEqual(str(cm.exception), repr(key))
 
         # Test with auth='basic'
-        keys = (
-            'bind_address',
-            'port',
-            'databases',
-            'views',
-            'file_compression',
-            'uuid',
-            'logfile',
-            'loglevel',
-            'username', 'hashed',
+        keys += (
+            'username',
+            'hashed',
         )
         kw = dict(
             (key, random_id())
@@ -1167,17 +1161,11 @@ class TestFunctions(TestCase):
             self.assertEqual(str(cm.exception), repr(key))
 
         # Test with auth='oauth'
-        keys = (
-            'bind_address',
-            'port',
-            'databases',
-            'views',
-            'file_compression',
-            'uuid',
-            'logfile',
-            'loglevel',
-            'username', 'hashed',
-            'token', 'token_secret', 'consumer_key', 'consumer_secret',
+        keys += (
+            'token',
+            'token_secret',
+            'consumer_key',
+            'consumer_secret',
         )
         kw = dict(
             (key, random_id())
@@ -1197,7 +1185,8 @@ class TestFunctions(TestCase):
         # Test with auth='basic' and SSL
         keys = (
             'bind_address',
-            'port',
+            'port',\
+            'chttpd_port',
             'databases',
             'views',
             'file_compression',
@@ -1228,6 +1217,7 @@ class TestFunctions(TestCase):
         keys = (
             'bind_address',
             'port',
+            'chttpd_port',
             'databases',
             'views',
             'file_compression',
@@ -1265,6 +1255,7 @@ class TestFunctions(TestCase):
         keys = (
             'bind_address',
             'port',
+            'chttpd_port',
             'databases',
             'views',
             'file_compression',
