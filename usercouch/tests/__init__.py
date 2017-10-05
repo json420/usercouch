@@ -2002,13 +2002,13 @@ class TestUserCouch(TestCase):
         if usercouch.couch_version.couchdb2:
             self.skipTest('FIXME: broken with CouchDB 2.1.0')
         tmp = TempDir()
+        uri = '/_config/httpd_global_handlers/_intree'
         handler = '{couch_httpd_misc_handlers, handle_utils_dir_req, "/foo/bar"}'
         body = json.dumps(handler).encode()
 
         # Make sure config can't be set:
         uc = usercouch.UserCouch(tmp.dir)
         env = uc.bootstrap()
-        uri = '/_node/{}/_config/httpd_global_handlers/_intree'.format(uc.node)
         client = Client(env['address'])
         conn = client.connect()
         headers = usercouch.get_headers(env)
