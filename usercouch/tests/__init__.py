@@ -116,6 +116,14 @@ class TestConstants(TestCase):
         self.assertIn(usercouch.couch_version._couchdb2, (None, True, False))
 
 
+def _get_configs(*names):
+    return ''.join(getattr(usercouch, n) for n in names)
+
+
+def _format_configs(*names, **kw):
+    return _get_configs(*names).format(**kw)
+
+
 class TestFunctions(TestCase):
     def test_check_for_couchdb2(self):
         p1 = ('usr', 'bin', 'couchdb')
@@ -929,7 +937,7 @@ class TestFunctions(TestCase):
         )
         self.assertEqual(
             usercouch.build_session_ini(1, 'open', deepcopy(kw)),
-            usercouch.OPEN.format(**kw)
+            _format_configs('OPEN', **kw)
         )
         for key in keys:
             bad = deepcopy(kw)
@@ -956,7 +964,7 @@ class TestFunctions(TestCase):
         )
         self.assertEqual(
             usercouch.build_session_ini(1, 'basic', deepcopy(kw)),
-            usercouch.BASIC.format(**kw)
+            _format_configs('OPEN', 'BASIC', **kw)
         )
         for key in keys:
             bad = deepcopy(kw)
@@ -984,7 +992,7 @@ class TestFunctions(TestCase):
         )
         self.assertEqual(
             usercouch.build_session_ini(1, 'oauth', deepcopy(kw)),
-            usercouch.OAUTH.format(**kw)
+            _format_configs('OPEN', 'BASIC', 'OAUTH', **kw)
         )
         for key in keys:
             bad = deepcopy(kw)
@@ -1010,10 +1018,9 @@ class TestFunctions(TestCase):
             (key, random_id())
             for key in keys
         )
-        template = usercouch.BASIC + usercouch.SSL
         self.assertEqual(
             usercouch.build_session_ini(1, 'basic', deepcopy(kw)),
-            template.format(**kw)
+            _format_configs('OPEN', 'BASIC', 'SSL', **kw)
         )
         for key in keys:
             if key == 'ssl_port':
@@ -1044,10 +1051,9 @@ class TestFunctions(TestCase):
             'ca_file': random_id(),
             'max_depth': 2,
         }
-        template = usercouch.BASIC + usercouch.REPLICATOR
         self.assertEqual(
             usercouch.build_session_ini(1, 'basic', deepcopy(kw)),
-            template.format(**kw)
+            _format_configs('OPEN', 'BASIC', 'REPLICATOR', **kw)
         )
         for key in keys:
             bad = deepcopy(kw)
@@ -1084,10 +1090,9 @@ class TestFunctions(TestCase):
             'cert_file': random_id(),
             'key_file': random_id(),
         }
-        template = usercouch.BASIC + usercouch.REPLICATOR_EXTRA
         self.assertEqual(
             usercouch.build_session_ini(1, 'basic', deepcopy(kw)),
-            template.format(**kw)
+            _format_configs('OPEN', 'BASIC', 'REPLICATOR_EXTRA', **kw)
         )
         for key in keys:
             bad = deepcopy(kw)
@@ -1125,7 +1130,7 @@ class TestFunctions(TestCase):
         )
         self.assertEqual(
             usercouch.build_session_ini(2, 'open', deepcopy(kw)),
-            usercouch.OPEN.format(**kw)
+            _format_configs('OPEN', 'OPEN_2', **kw)
         )
         for key in keys:
             bad = deepcopy(kw)
@@ -1152,7 +1157,7 @@ class TestFunctions(TestCase):
         )
         self.assertEqual(
             usercouch.build_session_ini(2, 'basic', deepcopy(kw)),
-            usercouch.BASIC.format(**kw)
+            _format_configs('OPEN', 'OPEN_2', 'BASIC', **kw)
         )
         for key in keys:
             bad = deepcopy(kw)
@@ -1180,7 +1185,7 @@ class TestFunctions(TestCase):
         )
         self.assertEqual(
             usercouch.build_session_ini(2, 'oauth', deepcopy(kw)),
-            usercouch.OAUTH.format(**kw)
+            _format_configs('OPEN', 'OPEN_2', 'BASIC', 'OAUTH', **kw)
         )
         for key in keys:
             bad = deepcopy(kw)
@@ -1206,10 +1211,9 @@ class TestFunctions(TestCase):
             (key, random_id())
             for key in keys
         )
-        template = usercouch.BASIC + usercouch.SSL
         self.assertEqual(
             usercouch.build_session_ini(2, 'basic', deepcopy(kw)),
-            template.format(**kw)
+            _format_configs('OPEN', 'OPEN_2', 'BASIC', 'SSL', **kw)
         )
         for key in keys:
             if key == 'ssl_port':
@@ -1240,10 +1244,9 @@ class TestFunctions(TestCase):
             'ca_file': random_id(),
             'max_depth': 2,
         }
-        template = usercouch.BASIC + usercouch.REPLICATOR
         self.assertEqual(
             usercouch.build_session_ini(2, 'basic', deepcopy(kw)),
-            template.format(**kw)
+            _format_configs('OPEN', 'OPEN_2', 'BASIC', 'REPLICATOR', **kw)
         )
         for key in keys:
             bad = deepcopy(kw)
@@ -1280,10 +1283,9 @@ class TestFunctions(TestCase):
             'cert_file': random_id(),
             'key_file': random_id(),
         }
-        template = usercouch.BASIC + usercouch.REPLICATOR_EXTRA
         self.assertEqual(
             usercouch.build_session_ini(2, 'basic', deepcopy(kw)),
-            template.format(**kw)
+            _format_configs('OPEN', 'OPEN_2', 'BASIC', 'REPLICATOR_EXTRA', **kw)
         )
         for key in keys:
             bad = deepcopy(kw)

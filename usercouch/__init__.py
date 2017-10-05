@@ -153,7 +153,7 @@ worker_batch_size = 250 ; default is 500
 http_connections = 10 ; default is 20 (we want more connection reuse)
 """
 
-BASIC = OPEN + """
+BASIC = """
 [couch_httpd_auth]
 require_valid_user = true
 
@@ -161,7 +161,7 @@ require_valid_user = true
 {username} = {hashed}
 """
 
-OAUTH = BASIC + """
+OAUTH = """
 [oauth_token_users]
 {token} = {username}
 
@@ -172,7 +172,7 @@ OAUTH = BASIC + """
 {consumer_key} = {consumer_secret}
 """
 
-OPEN_COUCHDB2 = """
+OPEN_2 = """
 [cluster]
 q = 1
 r = 1
@@ -180,92 +180,16 @@ w = 1
 n = 1
 """
 
-TEMPLATES = {
-    'open': OPEN,
-    'basic': BASIC,
-    'oauth': OAUTH,
-}
-
-OPEN_COMMON = """
-[couchdb]
-uuid = {uuid}
-database_dir = {databases}
-view_index_dir = {views}
-file_compression = {file_compression}
-delayed_commits = true
-uri_file =
-
-[httpd]
-bind_address = {bind_address}
-port = {port}
-socket_options = [{{recbuf, 262144}}, {{sndbuf, 262144}}, {{nodelay, true}}]
-config_whitelist = [] ; Don't allow any config changes through REST API
-
-[log]
-file = {logfile}
-level = {loglevel}
-
-[daemons]
-stats_aggregator =
-stats_collector =
-os_daemons =
-external_manager =
-
-[httpd_global_handlers]
-_apps = {{couch_httpd_misc_handlers, handle_utils_dir_req, "/usr/share/couchdb/apps"}}
-_stats =
-
-[stats]
-rate =
-samples =
-
-[database_compaction]
-doc_buffer_size = 4194304 ; 4 MiB
-checkpoint_after = 8388608 ; 8 MiB
-
-[compaction_daemon]
-check_interval = 300 ; 5 minutes (5 * 60)
-min_file_size = 1048576 ; 1 MiB
-
-[compactions]
-_default = [{{db_fragmentation, "60%"}}, {{view_fragmentation, "60%"}}]
-
-[replicator]
-socket_options = [{{recbuf, 262144}}, {{sndbuf, 262144}}, {{nodelay, true}}]
-max_replication_retry_count = 20 ; default is 10
-worker_batch_size = 250 ; default is 500
-http_connections = 10 ; default is 20 (we want more connection reuse)
-"""
-
-BASIC_COMMON = """
-[couch_httpd_auth]
-require_valid_user = true
-
-[admins]
-{username} = {hashed}
-"""
-
-OAUTH_COMMON = """
-[oauth_token_users]
-{token} = {username}
-
-[oauth_token_secrets]
-{token} = {token_secret}
-
-[oauth_consumer_secrets]
-{consumer_key} = {consumer_secret}
-"""
-
 VERSION_TEMPLATE = {
     1: {
-        'open': (OPEN_COMMON,),
-        'basic': (OPEN_COMMON, BASIC_COMMON),
-        'oauth': (OPEN_COMMON, BASIC_COMMON, OAUTH_COMMON),
+        'open': (OPEN,),
+        'basic': (OPEN, BASIC),
+        'oauth': (OPEN, BASIC, OAUTH),
     },
     2: {
-        'open': (OPEN_COMMON,),
-        'basic': (OPEN_COMMON, BASIC_COMMON),
-        'oauth': (OPEN_COMMON, BASIC_COMMON, OAUTH_COMMON),
+        'open': (OPEN, OPEN_2),
+        'basic': (OPEN, OPEN_2, BASIC),
+        'oauth': (OPEN, OPEN_2, BASIC, OAUTH),
     },
 }
 
@@ -497,8 +421,7 @@ def check_replicator_config(cfg):
 
 
 def build_config(auth, overrides=None):
-    if auth not in TEMPLATES:
-        raise ValueError('invalid auth: {!r}'.format(auth))
+    check_auth(1, auth)
     config = dict(DEFAULT_CONFIG)
     if overrides:
         config.update(overrides)
@@ -583,8 +506,7 @@ def _basic_authorization(basic):
 
 
 def build_env(auth, config, ports):
-    if auth not in TEMPLATES:
-        raise ValueError('invalid auth: {!r}'.format(auth))
+    check_auth(1, auth)
     bind_address = config['bind_address']
     port = ports['port']
     env = {
@@ -610,8 +532,7 @@ def build_env(auth, config, ports):
 
 
 def build_template_kw(auth, config, ports, paths):
-    if auth not in TEMPLATES:
-        raise ValueError('invalid auth: {!r}'.format(auth))
+    check_auth(1, auth)
     kw = {
         'bind_address': config['bind_address'],
         'loglevel': config['loglevel'],
