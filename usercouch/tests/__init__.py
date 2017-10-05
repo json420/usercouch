@@ -2018,6 +2018,10 @@ class TestUserCouch(TestCase):
         conn.close()
         uc.__del__()
 
+        # With changes needed for CouchDB 2.x compatability, we can no longer
+        # re-able the config API (which is a good thing, security wise).
+        return
+
         # But also make sure you can override it with extra
         uc = usercouch.UserCouch(tmp.dir)
         env = uc.bootstrap(extra=usercouch.ALLOW_CONFIG)
