@@ -2015,12 +2015,15 @@ class TestUserCouch(TestCase):
             ),
         }
         version = (2 if usercouch.couch_version.couchdb2 else 1)
+        if version == 2:
+            kw['chttpd_port'] = env['chttpd_address'][1]
         self.assertEqual(
             open(uc.paths.ini, 'r').read(),
             usercouch.get_template(version, 'basic').format(**kw)
         )
 
     def test_bootstrap_override_oauth(self):
+        self.maxDiff = None
         overrides = {
             'loglevel': 'debug',
             'bind_address': '::1',
@@ -2034,9 +2037,10 @@ class TestUserCouch(TestCase):
         uc = usercouch.UserCouch(tmp.dir)
         env = uc.bootstrap('oauth', deepcopy(overrides))
         self.assertIsInstance(env, dict)
-        self.assertEqual(set(env),
-            {'port', 'address', 'url', 'basic', 'authorization', 'oauth'}
-        )
+        expected = {'port', 'address', 'url', 'basic', 'authorization', 'oauth'}
+        if usercouch.couch_version.couchdb2:
+            expected.add('chttpd_address')
+        self.assertEqual(set(env), expected)
         self.assertIsInstance(env['port'], int)
         self.assertEqual(env['url'],
             'http://[::1]:{}/'.format(env['port'])
@@ -2070,6 +2074,8 @@ class TestUserCouch(TestCase):
             'consumer_secret': overrides['oauth']['consumer_secret'],
         }
         version = (2 if usercouch.couch_version.couchdb2 else 1)
+        if version == 2:
+            kw['chttpd_port'] = env['chttpd_address'][1]
         self.assertEqual(
             open(uc.paths.ini, 'r').read(),
             usercouch.get_template(version, 'oauth').format(**kw)

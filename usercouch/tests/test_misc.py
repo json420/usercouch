@@ -103,9 +103,10 @@ class SelfTest1(CouchTestCase):
         self.assertEqual(self.auth, 'basic')
         self.assertEqual(self.bind_address, '127.0.0.1')
         self.assertIsInstance(self.tmpcouch, TempCouch)
-        self.assertEqual(set(self.env),
-            {'port', 'address', 'url', 'authorization', 'basic'}
-        )
+        expected = {'port', 'address', 'url', 'authorization', 'basic'}
+        if usercouch.couch_version.couchdb2:
+            expected.add('chttpd_address')
+        self.assertEqual(set(self.env), expected)
         self.assertTrue(self.env['url'].startswith('http://127.0.0.1:'))
 
 
@@ -115,9 +116,10 @@ class SelfTest2(CouchTestCase):
     def test_self(self):
         self.assertEqual(self.auth, 'basic')
         self.assertIsInstance(self.tmpcouch, TempCouch)
-        self.assertEqual(set(self.env),
-            {'port', 'address', 'url', 'authorization', 'basic'}
-        )
+        expected = {'port', 'address', 'url', 'authorization', 'basic'}
+        if usercouch.couch_version.couchdb2:
+            expected.add('chttpd_address')
+        self.assertEqual(set(self.env), expected)
         self.assertTrue(self.env['url'].startswith('http://[::1]:'))
 
 
@@ -127,7 +129,10 @@ class SelfTest3(CouchTestCase):
     def test_self(self):
         self.assertEqual(self.bind_address, '127.0.0.1')
         self.assertIsInstance(self.tmpcouch, TempCouch)
-        self.assertEqual(set(self.env), {'port', 'address', 'url'})
+        expected = {'port', 'address', 'url'}
+        if usercouch.couch_version.couchdb2:
+            expected.add('chttpd_address')
+        self.assertEqual(set(self.env), expected)
         self.assertTrue(self.env['url'].startswith('http://127.0.0.1:'))
 
 
@@ -137,9 +142,9 @@ class SelfTest4(CouchTestCase):
     def test_self(self):
         self.assertEqual(self.bind_address, '127.0.0.1')
         self.assertIsInstance(self.tmpcouch, TempCouch)
-        self.assertEqual(set(self.env),
-            {'port', 'address', 'url', 'authorization', 'basic', 'oauth'}
-        )
+        expected = {'port', 'address', 'url', 'authorization', 'basic', 'oauth'}
+        if usercouch.couch_version.couchdb2:
+            expected.add('chttpd_address')
+        self.assertEqual(set(self.env), expected)
         self.assertTrue(self.env['url'].startswith('http://127.0.0.1:'))
-
 
