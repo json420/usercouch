@@ -805,7 +805,8 @@ class UserCouch:
         open(self.paths.ini, 'w').write(session_ini)
         if couch_version.couchdb2:
             open(self.paths.vm_args, 'w').write(build_vm_args(kw))
-        self._client = Client(env['address'],
+        address = (env['chttpd_address'] if 'chttpd_address' in env else env['address'])
+        self._client = Client(address,
             host=None,
             authorization=env.get('authorization'),
         )
@@ -829,6 +830,10 @@ class UserCouch:
             time.sleep(t)
             t *= 1.25
             if self.isalive():
+                if couch_version.couchdb2:
+                    self._request('PUT', '/_users')
+                    self._request('PUT', '/_replicator')
+                    self._request('PUT', '/_global_changes')
                 return True
         raise Exception('could not start CouchDB')
 
