@@ -114,6 +114,8 @@ uri_file =
 [httpd]
 bind_address = {bind_address}
 port = {port}
+socket_options = [{{recbuf, 262144}}, {{sndbuf, 262144}}, {{nodelay, true}}]
+config_whitelist = [] ; Don't allow any config changes through REST API
 
 [log]
 file = {logfile}
