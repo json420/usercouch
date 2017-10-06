@@ -1839,7 +1839,10 @@ class TestUserCouch(TestCase):
 
         # check env
         self.assertIsInstance(env, dict)
-        self.assertEqual(set(env), {'port', 'address', 'url'})
+        expected = {'port', 'address', 'url'}
+        if usercouch.couch_version.couchdb2:
+            expected.add('chttpd_address')
+        self.assertEqual(set(env), expected)
         port = env['port']
         self.assertIsInstance(port, int)
         self.assertGreater(port, 1024)
@@ -1870,9 +1873,10 @@ class TestUserCouch(TestCase):
 
         # check env
         self.assertIsInstance(env, dict)
-        self.assertEqual(set(env),
-            {'port', 'address', 'url', 'basic', 'authorization'}
-        )
+        expected = {'port', 'address', 'url', 'basic', 'authorization'}
+        if usercouch.couch_version.couchdb2:
+            expected.add('chttpd_address')
+        self.assertEqual(set(env), expected)
         port = env['port']
         self.assertIsInstance(port, int)
         self.assertGreater(port, 1024)
@@ -1924,9 +1928,10 @@ class TestUserCouch(TestCase):
 
         # check env
         self.assertIsInstance(env, dict)
-        self.assertEqual(set(env),
-            {'port', 'address', 'url', 'basic', 'authorization', 'oauth'}
-        )
+        expected = {'port', 'address', 'url', 'basic', 'authorization', 'oauth'}
+        if usercouch.couch_version.couchdb2:
+            expected.add('chttpd_address')
+        self.assertEqual(set(env), expected)
         port = env['port']
         self.assertIsInstance(port, int)
         self.assertGreater(port, 1024)
@@ -1979,9 +1984,10 @@ class TestUserCouch(TestCase):
         uc = usercouch.UserCouch(tmp.dir)
         env = uc.bootstrap('basic', deepcopy(overrides))
         self.assertIsInstance(env, dict)
-        self.assertEqual(set(env),
-            {'port', 'address', 'url', 'basic', 'authorization'}
-        )
+        expected = {'port', 'address', 'url', 'basic', 'authorization'}
+        if usercouch.couch_version.couchdb2:
+            expected.add('chttpd_address')
+        self.assertEqual(set(env), expected)
         self.assertIsInstance(env['port'], int)
         self.assertEqual(env['url'],
             'http://[::1]:{}/'.format(env['port'])
