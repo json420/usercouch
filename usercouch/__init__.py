@@ -150,6 +150,7 @@ javascript = /opt/couchdb/bin/couchjs /opt/couchdb/share/server/main.js
 [chttpd]
 bind_address = {bind_address}
 port = {chttpd_port}
+config_whitelist = [] ; Don't allow any config changes through REST API
 docroot	= /opt/couchdb/share/www
 
 [cluster]

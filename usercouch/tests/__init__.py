@@ -2250,9 +2250,6 @@ class TestUserCouch(TestCase):
         """
         Make sure _config whitelist is empty by default.
         """
-        # Does `config_whitelist = []` even do anything with 2.1?
-        if usercouch.couch_version.couchdb2:
-            self.skipTest('FIXME: broken with CouchDB 2.1.0')
         tmp = TempDir()
         uri = '/_config/httpd_global_handlers/_intree'
         handler = '{couch_httpd_misc_handlers, handle_utils_dir_req, "/foo/bar"}'
@@ -2272,7 +2269,8 @@ class TestUserCouch(TestCase):
 
         # With changes needed for CouchDB 2.x compatability, we can no longer
         # re-able the config API (which is a good thing, security wise).
-        return
+        if usercouch.couch_version.couchdb2:
+            return
 
         # But also make sure you can override it with extra
         uc = usercouch.UserCouch(tmp.dir)
