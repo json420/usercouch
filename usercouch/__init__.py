@@ -112,10 +112,12 @@ delayed_commits = true
 uri_file =
 
 [httpd]
+allow_jsonp	= false
 bind_address = {bind_address}
 port = {port}
 socket_options = [{{recbuf, 262144}}, {{sndbuf, 262144}}, {{nodelay, true}}]
 config_whitelist = [] ; Don't allow any config changes through REST API
+authentication_handlers	= {{couch_httpd_auth, cookie_authentication_handler}}, {{couch_httpd_auth, default_authentication_handler}}
 
 [log]
 file = {logfile}
@@ -142,9 +144,13 @@ http_connections = 10 ; default is 20 (we want more connection reuse)
 """
 
 OPEN_2 = """
+[query_servers]
+javascript = /opt/couchdb/bin/couchjs /opt/couchdb/share/server/main.js
+
 [chttpd]
 bind_address = {bind_address}
 port = {chttpd_port}
+docroot	= /opt/couchdb/share/www
 
 [cluster]
 q = 1
@@ -255,12 +261,15 @@ VM_ARGS = """
 # (specified using -sname) or it can by fully qualified (-name).  There can be
 # no communication between nodes running with the -sname flag and those running 
 # with the -name flag.
--name {uuid}@localhost
+#-name {uuid}@localhost
 
 # All nodes must share the same magic cookie for distributed Erlang to work.
 # Comment out this line if you synchronized the cookies by other means (using
 # the ~/.erlang.cookie file, for example).
--setcookie monster
+#-setcookie monster
+
+# http://erlang.org/doc/man/erl.html
+-start_epmd false
 
 # Tell kernel and SASL not to log anything
 -kernel error_logger silent
