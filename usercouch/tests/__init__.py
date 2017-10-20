@@ -1420,7 +1420,7 @@ class TestFunctions(TestCase):
                 '-boot', '/opt/couchdb/releases/2.1.0/couchdb',
                 '-args_file', paths.vm_args,
                 '-config', '/opt/couchdb/releases/2.1.0/sys.config',
-                '-couch_ini', paths.ini,
+                '-couch_ini', '/etc/couchdb/default.ini', paths.ini,
             ]
         )
 
@@ -2181,10 +2181,10 @@ class TestUserCouch(TestCase):
             )
         if 'vendor' in uc._welcome:
             self.assertIsInstance(uc._welcome['vendor'], dict)
-            self.assertEqual(set(uc._welcome['vendor']), 
-                set(['name', 'version'])
-            )
-
+            if usercouch.couch_version.couchdb2:
+                self.assertEqual(set(uc._welcome['vendor']), {'name'})
+            else:
+                self.assertEqual(set(uc._welcome['vendor']), {'name', 'version'})
         self.assertFalse(uc.start())
         self.assertTrue(uc.kill())
         self.assertIsNone(uc.couchdb)

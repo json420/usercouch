@@ -669,7 +669,7 @@ def build_command(paths, sd, environ):
         '-boot', path.join(appdir, 'couchdb'),
         '-args_file', paths.vm_args,
         '-config', path.join(appdir, 'sys.config'),
-        '-couch_ini', paths.ini,
+        '-couch_ini', '/etc/couchdb/default.ini', paths.ini,
     ]
 
 
