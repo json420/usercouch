@@ -120,17 +120,6 @@ file_compression = {file_compression}
 [log]
 file = {logfile}
 level = {loglevel}
-
-[database_compaction]
-doc_buffer_size = 4194304 ; 4 MiB
-checkpoint_after = 8388608 ; 8 MiB
-
-[compaction_daemon]
-check_interval = 300 ; 5 minutes (5 * 60)
-min_file_size = 1048576 ; 1 MiB
-
-[compactions]
-_default = [{{db_fragmentation, "60%"}}, {{view_fragmentation, "60%"}}]
 """
 
 OPEN_2 = """
