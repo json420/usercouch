@@ -836,7 +836,6 @@ class UserCouch:
                 if couch_version.couchdb2:
                     self._request('PUT', '/_users')
                     self._request('PUT', '/_replicator')
-                    self._request('PUT', '/_global_changes')
                 return True
         raise Exception('could not start CouchDB')
 
