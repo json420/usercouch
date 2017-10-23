@@ -138,6 +138,9 @@ n = 1
 [query_servers]
 javascript = /opt/couchdb/bin/couchjs /opt/couchdb/share/server/main.js
 coffeescript = /opt/couchdb/bin/couchjs /opt/couchdb/share/server/main-coffee.js
+
+[log]
+writer = file
 """
 
 BASIC = """
