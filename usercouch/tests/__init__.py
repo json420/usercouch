@@ -175,15 +175,15 @@ class TestFunctions(TestCase):
     def test_get_template(self):
         self.assertEqual(
             usercouch.get_template(1, 'open'),
-            _get_configs('OPEN', 'OPEN_1')
+            _get_configs('OPEN')
         )
         self.assertEqual(
             usercouch.get_template(1, 'basic'),
-            _get_configs('OPEN', 'OPEN_1', 'BASIC')
+            _get_configs('OPEN', 'BASIC')
         )
         self.assertEqual(
             usercouch.get_template(1, 'oauth'),
-            _get_configs('OPEN', 'OPEN_1', 'BASIC', 'OAUTH')
+            _get_configs('OPEN', 'BASIC', 'OAUTH')
         )
         self.assertEqual(
             usercouch.get_template(2, 'open'),
@@ -953,7 +953,7 @@ class TestFunctions(TestCase):
         )
         self.assertEqual(
             usercouch.build_session_ini(1, 'open', deepcopy(kw)),
-            _format_configs('OPEN', 'OPEN_1', **kw)
+            _format_configs('OPEN', **kw)
         )
         for key in keys:
             bad = deepcopy(kw)
@@ -980,7 +980,7 @@ class TestFunctions(TestCase):
         )
         self.assertEqual(
             usercouch.build_session_ini(1, 'basic', deepcopy(kw)),
-            _format_configs('OPEN', 'OPEN_1', 'BASIC', **kw)
+            _format_configs('OPEN', 'BASIC', **kw)
         )
         for key in keys:
             bad = deepcopy(kw)
@@ -1008,7 +1008,7 @@ class TestFunctions(TestCase):
         )
         self.assertEqual(
             usercouch.build_session_ini(1, 'oauth', deepcopy(kw)),
-            _format_configs('OPEN', 'OPEN_1', 'BASIC', 'OAUTH', **kw)
+            _format_configs('OPEN', 'BASIC', 'OAUTH', **kw)
         )
         for key in keys:
             bad = deepcopy(kw)
@@ -1036,7 +1036,7 @@ class TestFunctions(TestCase):
         )
         self.assertEqual(
             usercouch.build_session_ini(1, 'basic', deepcopy(kw)),
-            _format_configs('OPEN', 'OPEN_1', 'BASIC', 'SSL', **kw)
+            _format_configs('OPEN', 'BASIC', 'SSL', **kw)
         )
         for key in keys:
             if key == 'ssl_port':
@@ -1069,7 +1069,7 @@ class TestFunctions(TestCase):
         }
         self.assertEqual(
             usercouch.build_session_ini(1, 'basic', deepcopy(kw)),
-            _format_configs('OPEN', 'OPEN_1', 'BASIC', 'REPLICATOR', **kw)
+            _format_configs('OPEN', 'BASIC', 'REPLICATOR', **kw)
         )
         for key in keys:
             bad = deepcopy(kw)
@@ -1108,7 +1108,7 @@ class TestFunctions(TestCase):
         }
         self.assertEqual(
             usercouch.build_session_ini(1, 'basic', deepcopy(kw)),
-            _format_configs('OPEN', 'OPEN_1', 'BASIC', 'REPLICATOR_EXTRA', **kw)
+            _format_configs('OPEN', 'BASIC', 'REPLICATOR_EXTRA', **kw)
         )
         for key in keys:
             bad = deepcopy(kw)
@@ -1359,6 +1359,7 @@ class TestFunctions(TestCase):
                 '/usr/bin/couchdb',
                 '-n',
                 '-a', '/etc/couchdb/default.ini',
+                '-a', usercouch.USERCOUCH_INI,
                 '-a', ini,
             ]
         )

@@ -116,8 +116,6 @@ uuid = {uuid}
 database_dir = {databases}
 view_index_dir = {views}
 file_compression = {file_compression}
-delayed_commits = true
-uri_file =
 
 [log]
 file = {logfile}
@@ -133,14 +131,6 @@ min_file_size = 1048576 ; 1 MiB
 
 [compactions]
 _default = [{{db_fragmentation, "60%"}}, {{view_fragmentation, "60%"}}]
-"""
-
-OPEN_1 = """
-[replicator]
-socket_options = [{{recbuf, 262144}}, {{sndbuf, 262144}}, {{nodelay, true}}]
-max_replication_retry_count = 20 ; default is 10
-worker_batch_size = 250 ; default is 500
-http_connections = 10 ; default is 20 (we want more connection reuse)
 """
 
 OPEN_2 = """
@@ -181,9 +171,9 @@ OAUTH = """
 
 VERSION_TEMPLATE = {
     1: {
-        'open': (OPEN, OPEN_1),
-        'basic': (OPEN, OPEN_1, BASIC),
-        'oauth': (OPEN, OPEN_1, BASIC, OAUTH),
+        'open': (OPEN,),
+        'basic': (OPEN, BASIC),
+        'oauth': (OPEN, BASIC, OAUTH),
     },
     2: {
         'open': (OPEN, OPEN_2),
@@ -640,6 +630,7 @@ def get_cmd(session_ini):
         '/usr/bin/couchdb',
         '-n',  # reset configuration file chain (including system default)
         '-a', '/etc/couchdb/default.ini',
+        '-a', USERCOUCH_INI,
         '-a', session_ini,
     ]
 
