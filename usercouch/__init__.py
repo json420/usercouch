@@ -103,7 +103,7 @@ POSSIBLE_SSL_CONFIG = REQUIRED_SSL_CONFIG + ('ca_file',)
 
 DEFAULT_CONFIG = (
     ('bind_address', '127.0.0.1'),
-    ('loglevel', 'notice'),
+    ('loglevel', 'warning'),
     ('file_compression', 'snappy'),
 )
 

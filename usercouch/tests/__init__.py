@@ -530,7 +530,7 @@ class TestFunctions(TestCase):
             set(['bind_address', 'loglevel', 'file_compression', 'uuid'])
         )
         self.assertEqual(config['bind_address'], '127.0.0.1')
-        self.assertEqual(config['loglevel'], 'notice')
+        self.assertEqual(config['loglevel'], 'warning')
         self.assertEqual(config['file_compression'], 'snappy')
 
         # auth='open' with overrides
@@ -559,7 +559,7 @@ class TestFunctions(TestCase):
             ])
         )
         self.assertEqual(config['bind_address'], '127.0.0.1')
-        self.assertEqual(config['loglevel'], 'notice')
+        self.assertEqual(config['loglevel'], 'warning')
         self.assertEqual(config['file_compression'], 'snappy')
 
         # auth='basic' with overrides
@@ -618,7 +618,7 @@ class TestFunctions(TestCase):
             ])
         )
         self.assertEqual(config['bind_address'], '127.0.0.1')
-        self.assertEqual(config['loglevel'], 'notice')
+        self.assertEqual(config['loglevel'], 'warning')
         self.assertEqual(config['file_compression'], 'snappy')
         self.assertIsInstance(config['oauth'], dict)
         self.assertEqual(set(config['oauth']),
