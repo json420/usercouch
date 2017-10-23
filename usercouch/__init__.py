@@ -74,6 +74,11 @@ class CouchVersion:
 couch_version = CouchVersion()
 StartData = namedtuple('StartData', 'erts app')
 
+USERCOUCH_INI = path.join(
+    path.dirname(path.abspath(__file__)), 'data', 'usercouch.ini'
+)
+assert path.isfile(USERCOUCH_INI)
+
 # Allowed values for `file_compression`:
 FILE_COMPRESSION = (
     'none',

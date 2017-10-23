@@ -116,5 +116,6 @@ setup(
         'usercouch',
         'usercouch.tests',
     ],
+    package_data={'usercouch': ['data/usercouch.ini']},
     cmdclass={'test': Test},
 )
