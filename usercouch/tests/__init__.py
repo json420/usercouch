@@ -1421,7 +1421,10 @@ class TestFunctions(TestCase):
                 '-boot', '/opt/couchdb/releases/2.1.0/couchdb',
                 '-args_file', paths.vm_args,
                 '-config', '/opt/couchdb/releases/2.1.0/sys.config',
-                '-couch_ini', '/etc/couchdb/default.ini', paths.ini,
+                '-couch_ini',
+                '/etc/couchdb/default.ini',
+                usercouch.USERCOUCH_INI,
+                paths.ini,
             ]
         )
 
