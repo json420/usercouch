@@ -102,7 +102,10 @@ DEFAULT_CONFIG = (
     ('file_compression', 'snappy'),
 )
 
-OPEN = """
+OPEN = """[httpd]
+bind_address = {bind_address}
+port = {port}
+
 [couchdb]
 uuid = {uuid}
 database_dir = {databases}
@@ -110,14 +113,6 @@ view_index_dir = {views}
 file_compression = {file_compression}
 delayed_commits = true
 uri_file =
-
-[httpd]
-allow_jsonp	= false
-bind_address = {bind_address}
-port = {port}
-socket_options = [{{recbuf, 262144}}, {{sndbuf, 262144}}, {{nodelay, true}}]
-config_whitelist = [] ; Don't allow any config changes through REST API
-authentication_handlers	= {{couch_httpd_auth, cookie_authentication_handler}}, {{couch_httpd_auth, default_authentication_handler}}
 
 [log]
 file = {logfile}
