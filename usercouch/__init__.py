@@ -127,6 +127,7 @@ OPEN_2 = """
 bind_address = {bind_address}
 port = {chttpd_port}
 config_whitelist = [] ; Don't allow any config changes through REST API
+require_valid_user = true
 
 [cluster]
 q = 1

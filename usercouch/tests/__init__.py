@@ -1911,6 +1911,17 @@ class TestUserCouch(TestCase):
             'UserCouch.bootstrap() already called'
         )
 
+        # Check that a valid username is required:
+        keys = ['address']
+        if usercouch.couch_version.couchdb2:
+            keys.append('chttpd_address')
+        for k in keys:
+            client = Client(env[k])
+            conn = client.connect()
+            r = conn.get('/', {})
+            self.assertEqual(r.status, 401, k)
+            self.assertEqual(r.reason, 'Unauthorized', k)
+
         # Test with extra
         extra = random_id()
         tmp = TempDir()
