@@ -134,14 +134,10 @@ _default = [{{db_fragmentation, "60%"}}, {{view_fragmentation, "60%"}}]
 """
 
 OPEN_2 = """
-[query_servers]
-javascript = /opt/couchdb/bin/couchjs /opt/couchdb/share/server/main.js
-
 [chttpd]
 bind_address = {bind_address}
 port = {chttpd_port}
 config_whitelist = [] ; Don't allow any config changes through REST API
-docroot	= /opt/couchdb/share/www
 
 [cluster]
 q = 1
