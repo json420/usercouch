@@ -778,7 +778,7 @@ class UserCouch:
 
     def __del__(self):
         self.kill()
-        if not self.lockfile.closed:
+        if hasattr(self, 'lockfile') and not self.lockfile.closed:
             fcntl.flock(self.lockfile.fileno(), fcntl.LOCK_UN)
             self.lockfile.close()
 
