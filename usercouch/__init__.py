@@ -828,6 +828,7 @@ class UserCouch:
             time.sleep(t)
             if self.isalive():
                 if couch_version.couchdb2:
+                    time.sleep(0.25)
                     self._request('PUT', '/_users')
                     self._request('PUT', '/_replicator')
                 return True
