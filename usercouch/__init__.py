@@ -828,9 +828,8 @@ class UserCouch:
             time.sleep(t)
             if self.isalive():
                 if couch_version.couchdb2:
-                    time.sleep(1)
-                    self._request('PUT', '/_users')
-                    self._request('PUT', '/_replicator')
+                    self._raw_request('PUT', '/_users')
+                    self._raw_request('PUT', '/_replicator')
                 return True
         raise Exception('could not start CouchDB')
 
@@ -842,13 +841,17 @@ class UserCouch:
         self.couchdb = None
         return True
 
-    def _request(self, method, path):
+    def _raw_request(self, method, path):
         conn = self._client.connect()
         try:
             response = conn.request(method, path, {}, None)
             data = (response.body.read() if response.body else b'')
         finally:
             conn.close()   
+        return (response, data)
+
+    def _request(self, method, path):
+        (response, data) = self._raw_request(method, path)   
         if response.status >= 400:
             raise HTTPError(response, method, path)
         return (response, data)
