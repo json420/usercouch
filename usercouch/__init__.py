@@ -35,12 +35,44 @@ from hashlib import sha1, pbkdf2_hmac
 import binascii
 from base64 import b64encode
 import json
+from collections import namedtuple
 
 from dbase32 import random_id
 from degu.client import Client
 
 
 __version__ = '17.09.0'
+
+
+def _check_for_couchdb2(rootdir):
+    couch2 = path.join(rootdir, 'opt', 'couchdb', 'bin', 'couchdb')
+    if path.isfile(couch2):
+        return True
+    couch1 = path.join(rootdir, 'usr', 'bin', 'couchdb')
+    if path.isfile(couch1):
+        return False
+    raise RuntimeError(
+        'No CouchDB? Checked:\n{!r}\n{!r}'.format(couch2, couch1)
+    )
+
+
+class CouchVersion:
+    __slots__ = ('rootdir', '_couchdb2')
+
+    def __init__(self, rootdir='/'):
+        self.rootdir = rootdir
+        self._couchdb2 = None
+
+    @property
+    def couchdb2(self):
+        if self._couchdb2 is None:
+            self._couchdb2 = _check_for_couchdb2(self.rootdir)
+        assert type(self._couchdb2) is bool
+        return self._couchdb2
+
+
+couch_version = CouchVersion()
+StartData = namedtuple('StartData', 'erts app')
 
 USERCOUCH_INI = path.join(
     path.dirname(path.abspath(__file__)), 'data', 'usercouch.ini'
@@ -71,7 +103,7 @@ POSSIBLE_SSL_CONFIG = REQUIRED_SSL_CONFIG + ('ca_file',)
 
 DEFAULT_CONFIG = (
     ('bind_address', '127.0.0.1'),
-    ('loglevel', 'notice'),
+    ('loglevel', 'warning'),
     ('file_compression', 'snappy'),
 )
 
@@ -90,7 +122,29 @@ file = {logfile}
 level = {loglevel}
 """
 
-BASIC = OPEN + """
+OPEN_2 = """
+[chttpd]
+bind_address = {bind_address}
+port = {chttpd_port}
+config_whitelist = [] ; Don't allow any config changes through REST API
+require_valid_user = true
+docroot = /opt/couchdb/share/www
+
+[cluster]
+q = 1
+r = 1
+w = 1
+n = 1
+
+[query_servers]
+javascript = /opt/couchdb/bin/couchjs /opt/couchdb/share/server/main.js
+coffeescript = /opt/couchdb/bin/couchjs /opt/couchdb/share/server/main-coffee.js
+
+[log]
+writer = file
+"""
+
+BASIC = """
 [couch_httpd_auth]
 require_valid_user = true
 
@@ -98,7 +152,7 @@ require_valid_user = true
 {username} = {hashed}
 """
 
-OAUTH = BASIC + """
+OAUTH = """
 [oauth_token_users]
 {token} = {username}
 
@@ -109,11 +163,31 @@ OAUTH = BASIC + """
 {consumer_key} = {consumer_secret}
 """
 
-TEMPLATES = {
-    'open': OPEN,
-    'basic': BASIC,
-    'oauth': OAUTH,
+VERSION_TEMPLATE = {
+    1: {
+        'open': (OPEN,),
+        'basic': (OPEN, BASIC),
+        'oauth': (OPEN, BASIC, OAUTH),
+    },
+    2: {
+        'open': (OPEN, OPEN_2),
+        'basic': (OPEN, OPEN_2, BASIC),
+        'oauth': (OPEN, OPEN_2, BASIC, OAUTH),
+    },
 }
+
+
+def check_auth(version, auth):
+    templates = VERSION_TEMPLATE[version]
+    value = templates.get(auth)
+    if value is None:
+        raise ValueError('invalid auth: {!r}'.format(auth))
+    return value
+
+
+def get_template(version, auth):
+    parts = check_auth(version, auth)
+    return ''.join(parts)
 
 
 # Wether or not this couch is using SSL, we can make the replicator
@@ -153,6 +227,47 @@ verify_fun = ???
 ALLOW_CONFIG = """
 [httpd]
 config_whitelist =
+"""
+
+VM_ARGS = """
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy of
+# the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+# License for the specific language governing permissions and limitations under
+# the License.
+
+# Each node in the system must have a unique name.  A name can be short
+# (specified using -sname) or it can by fully qualified (-name).  There can be
+# no communication between nodes running with the -sname flag and those running 
+# with the -name flag.
+#-name {uuid}@localhost
+
+# All nodes must share the same magic cookie for distributed Erlang to work.
+# Comment out this line if you synchronized the cookies by other means (using
+# the ~/.erlang.cookie file, for example).
+#-setcookie monster
+
+# http://erlang.org/doc/man/erl.html
+-start_epmd false
+
+# Tell kernel and SASL not to log anything
+-kernel error_logger silent
+-sasl sasl_error_logger false
+
+# Use kernel poll functionality if supported by emulator
++K true
+
+# Start a pool of asynchronous IO threads
++A 16
+
+# Comment this line out to enable the interactive Erlang shell on startup
++Bd -noinput
 """
 
 
@@ -289,8 +404,7 @@ def check_replicator_config(cfg):
 
 
 def build_config(auth, overrides=None):
-    if auth not in TEMPLATES:
-        raise ValueError('invalid auth: {!r}'.format(auth))
+    check_auth(1, auth)
     config = dict(DEFAULT_CONFIG)
     if overrides:
         config.update(overrides)
@@ -375,15 +489,16 @@ def _basic_authorization(basic):
 
 
 def build_env(auth, config, ports):
-    if auth not in TEMPLATES:
-        raise ValueError('invalid auth: {!r}'.format(auth))
+    check_auth(1, auth)
     bind_address = config['bind_address']
     port = ports['port']
     env = {
-        'port': ports['port'],
+        'port': port,
         'address': (bind_address, port),
         'url': build_url('http', bind_address, port),
     }
+    if 'chttpd_port' in ports:
+        env['chttpd_address'] = (bind_address, ports['chttpd_port'])
     if auth in ('basic', 'oauth'):
         env['basic'] = {
             'username': config['username'],
@@ -402,8 +517,7 @@ def build_env(auth, config, ports):
 
 
 def build_template_kw(auth, config, ports, paths):
-    if auth not in TEMPLATES:
-        raise ValueError('invalid auth: {!r}'.format(auth))
+    check_auth(1, auth)
     kw = {
         'bind_address': config['bind_address'],
         'loglevel': config['loglevel'],
@@ -429,10 +543,8 @@ def build_template_kw(auth, config, ports, paths):
     return kw
 
 
-def build_session_ini(auth, kw):
-    if auth not in TEMPLATES:
-        raise ValueError('invalid auth: {!r}'.format(auth))
-    template = TEMPLATES[auth]
+def build_session_ini(version, auth, kw):
+    template = get_template(version, auth)
     if 'ssl_port' in kw:
         template += SSL
     if 'replicator' in kw:
@@ -441,6 +553,10 @@ def build_session_ini(auth, kw):
         else:
             template += REPLICATOR
     return template.format(**kw)
+
+
+def build_vm_args(kw):
+    return VM_ARGS.format(**kw)
 
 
 def bind_socket(bind_address):
@@ -472,15 +588,25 @@ def bind_socket(bind_address):
 
 class Sockets:
     """
-    A helper class to make it easy to deal with one or two random ports.
+    Helper class to make it easy to deal with one or more random ports.
     """
+
+    __slots__ = ('bind_address', 'socks')
 
     def __init__(self, bind_address):
         self.bind_address = bind_address
-        self.socks = {'port': bind_socket(bind_address)}
+        self.socks = {}
+        self.add_port('port')
+        if couch_version.couchdb2:
+            self.add_port('chttpd_port')
+
+    def add_port(self, name):
+        assert isinstance(name, str)
+        assert name not in self.socks
+        self.socks[name] = bind_socket(self.bind_address)
 
     def add_ssl(self):
-        self.socks['ssl_port'] = bind_socket(self.bind_address)
+        self.add_port('ssl_port')
 
     def get_ports(self):
         return dict(
@@ -502,6 +628,47 @@ def get_cmd(session_ini):
         '-a', session_ini,
     ]
 
+
+def read_start_data(prefix='/opt/couchdb'):
+    filename = path.join(prefix, 'releases', 'start_erl.data')
+    with open(filename, 'r') as fp:
+        content = fp.read(4096)
+        items = content.split()
+        assert len(items) == 2
+        return StartData(*items)
+
+
+def build_environ(sd, prefix='/opt/couchdb'):
+    assert isinstance(sd, StartData)
+    return {
+        'ROOTDIR': prefix,
+        'BINDIR': path.join(prefix, 'erts-' + sd.erts, 'bin'),
+        'EMU': 'beam',
+        'PROGNAME': 'couchdb'
+    }
+
+
+def build_command(paths, sd, environ):
+    appdir = path.join(environ['ROOTDIR'], 'releases', sd.app)
+    return [
+        path.join(environ['BINDIR'], 'erlexec'),
+        '-boot', path.join(appdir, 'couchdb'),
+        '-args_file', paths.vm_args,
+        '-config', path.join(appdir, 'sys.config'),
+        '-couch_ini', '/etc/couchdb/default.ini', USERCOUCH_INI, paths.ini,
+    ]
+
+
+def start_couchdb(paths, prefix='/opt/couchdb'):
+    if couch_version.couchdb2:
+        sd = read_start_data(prefix)
+        environ = dict(os.environ)
+        environ.update(build_environ(sd, prefix))
+        command = build_command(paths, sd, environ)
+    else:
+        command = get_cmd(paths.ini)
+        environ = None
+    return Popen(command, env=environ)
 
 
 #######################
@@ -530,10 +697,20 @@ class Paths:
     Just a namespace for the various files and directories in *basedir*.
     """
 
-    __slots__ = ('ini', 'databases', 'views', 'dump', 'ssl', 'log', 'logfile')
+    __slots__ = (
+        'ini',
+        'vm_args',
+        'databases',
+        'views',
+        'dump',
+        'ssl',
+        'log',
+        'logfile',
+    )
 
     def __init__(self, basedir):
         self.ini = path.join(basedir, 'session.ini')
+        self.vm_args = path.join(basedir, 'vm.args')
         self.databases = mkdir(basedir, 'databases')
         self.views = mkdir(basedir, 'views')
         self.dump = mkdir(basedir, 'dump')
@@ -594,7 +771,6 @@ class UserCouch:
         except IOError:
             raise LockError(self.lockfile.name)
         self.paths = Paths(self.basedir)
-        self.cmd = get_cmd(self.paths.ini)
         self.__bootstraped = False
 
     def __repr__(self):
@@ -602,7 +778,7 @@ class UserCouch:
 
     def __del__(self):
         self.kill()
-        if not self.lockfile.closed:
+        if hasattr(self, 'lockfile') and not self.lockfile.closed:
             fcntl.flock(self.lockfile.fileno(), fcntl.LOCK_UN)
             self.lockfile.close()
 
@@ -619,11 +795,15 @@ class UserCouch:
         ports = socks.get_ports()
         env = build_env(auth, config, ports)
         kw = build_template_kw(auth, config, ports, self.paths)
-        session_ini = build_session_ini(auth, kw)
+        version = (2 if couch_version.couchdb2 else 1)
+        session_ini = build_session_ini(version, auth, kw)
         if extra:
             session_ini += extra
         open(self.paths.ini, 'w').write(session_ini)
-        self._client = Client(env['address'],
+        if couch_version.couchdb2:
+            open(self.paths.vm_args, 'w').write(build_vm_args(kw))
+        address = (env['chttpd_address'] if 'chttpd_address' in env else env['address'])
+        self._client = Client(address,
             host=None,
             authorization=env.get('authorization'),
         )
@@ -640,13 +820,16 @@ class UserCouch:
             )
         if self.couchdb is not None:
             return False
-        self.couchdb = Popen(self.cmd)
-        # We give CouchDB ~67 seconds to start:
+        self.couchdb = start_couchdb(self.paths)
+        # We give CouchDB ~17 seconds to start:
         t = 0.1
-        for i in range(23):
+        for i in range(10):
+            t *= 1.5
             time.sleep(t)
-            t *= 1.25
             if self.isalive():
+                if couch_version.couchdb2:
+                    self._request('PUT', '/_users')
+                    self._request('PUT', '/_replicator')
                 return True
         raise Exception('could not start CouchDB')
 
