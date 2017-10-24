@@ -821,11 +821,11 @@ class UserCouch:
         if self.couchdb is not None:
             return False
         self.couchdb = start_couchdb(self.paths)
-        # We give CouchDB ~67 seconds to start:
+        # We give CouchDB ~17 seconds to start:
         t = 0.1
-        for i in range(5):
+        for i in range(10):
+            t *= 1.5
             time.sleep(t)
-            t *= 1.25
             if self.isalive():
                 if couch_version.couchdb2:
                     self._request('PUT', '/_users')
