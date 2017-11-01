@@ -127,7 +127,7 @@ def _format_configs(*names, **kw):
 class TestFunctions(TestCase):
     def test_check_for_couchdb2(self):
         p1 = ('usr', 'bin', 'couchdb')
-        p2 = ('opt', 'couchdb', 'bin', 'couchdb')
+        p2 = ('opt', 'couchdb', 'releases', 'RELEASES')
         tmp = TempDir()
         couch1 = tmp.join(*p1)
         couch2 = tmp.join(*p2)
@@ -1444,7 +1444,7 @@ class TestCouchVersion(TestCase):
         tmp = TempDir()
         cv = usercouch.CouchVersion(tmp.dir)
         p1 = ('usr', 'bin', 'couchdb')
-        p2 = ('opt', 'couchdb', 'bin', 'couchdb')
+        p2 = ('opt', 'couchdb', 'releases', 'RELEASES')
         couch1 = tmp.join(*p1)
         couch2 = tmp.join(*p2)
 

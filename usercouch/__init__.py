@@ -45,7 +45,7 @@ __version__ = '17.09.0'
 
 
 def _check_for_couchdb2(rootdir):
-    couch2 = path.join(rootdir, 'opt', 'couchdb', 'bin', 'couchdb')
+    couch2 = path.join(rootdir, 'opt', 'couchdb', 'releases', 'RELEASES')
     if path.isfile(couch2):
         return True
     couch1 = path.join(rootdir, 'usr', 'bin', 'couchdb')
