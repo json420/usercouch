@@ -865,6 +865,7 @@ class UserCouch:
         try:
             (response, data) = self._request('GET', '/')
             self._welcome = json.loads(data.decode('utf-8'))
+            self._version = self._welcome.get('version')
             return True
         except OSError:
             return False
