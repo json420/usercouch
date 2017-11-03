@@ -2186,7 +2186,7 @@ class TestUserCouch(TestCase):
             )
         )
         self.assertIn(uc._welcome['version'],
-            ('1.4.0', '1.5.0', '1.5.1', '1.6.0', '1.6.1', '2.0.0', '2.1.0')
+            ('1.4.0', '1.5.0', '1.5.1', '1.6.0', '1.6.1', '1.7.0', '2.0.0', '2.1.0')
         )
         if 'uuid' in uc._welcome:
             self.assertIsInstance(uc._welcome['uuid'], str)
@@ -2277,12 +2277,19 @@ class TestUserCouch(TestCase):
         conn = client.connect()
         headers = usercouch.get_headers(env)
         r = conn.put(uri, headers, body)
-        self.assertEqual(r.status, 400)
-        self.assertEqual(r.reason, 'Bad Request')
+        if uc._version.startswith('1.7'):
+            self.assertEqual(r.status, 403)
+            self.assertEqual(r.reason, 'Forbidden')
+        else:
+            self.assertEqual(r.status, 400)
+            self.assertEqual(r.reason, 'Bad Request')
         conn.close()
         uc.__del__()
 
-        # But also make sure you can override it with extra
+        # But also make sure you can override it with extra, except this dosen't
+        # work on CouchDB 1.7.x:
+        if uc._version.startswith('1.7'):
+            return
         uc = usercouch.UserCouch(tmp.dir)
         env = uc.bootstrap(extra=usercouch.ALLOW_CONFIG)
         client = Client(env['address'])
