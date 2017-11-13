@@ -41,7 +41,7 @@ from dbase32 import random_id
 from degu.client import Client
 
 
-__version__ = '17.09.0'
+__version__ = '17.11.0'
 
 
 def _check_for_couchdb2(rootdir):
