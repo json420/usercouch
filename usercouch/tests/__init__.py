@@ -2277,7 +2277,7 @@ class TestUserCouch(TestCase):
         conn = client.connect()
         headers = usercouch.get_headers(env)
         r = conn.put(uri, headers, body)
-        if uc._version.startswith('1.7'):
+        if uc._version.startswith('1.7.'):
             self.assertEqual(r.status, 403)
             self.assertEqual(r.reason, 'Forbidden')
         else:
